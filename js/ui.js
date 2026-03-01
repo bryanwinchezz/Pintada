@@ -113,6 +113,31 @@ function initRegisterForm() {
     }
 }
 
+// No final do ui.js, dentro do DOMContentLoaded
+const formProfile = document.getElementById('form-profile');
+if (formProfile) {
+    formProfile.onsubmit = async(e) => {
+        e.preventDefault();
+        const activeUsername = AuthService.getCurrentUser();
+        const user = await AuthService.getUserData(activeUsername);
+
+        if (user) {
+            const oldUsername = user.username;
+            user.name = document.getElementById('edit-name').value;
+            user.username = document.getElementById('edit-username').value;
+            user.bio = document.getElementById('edit-bio').value;
+
+            try {
+                await AuthService.updateUser(oldUsername, user);
+                showToast('Perfil atualizado com sucesso! 🐆');
+                location.reload(); // Recarrega para aplicar as mudanças
+            } catch (error) {
+                showToast('Erro ao atualizar: ' + error.message, 'error');
+            }
+        }
+    };
+}
+
 // 5. INICIALIZAÇÃO GERAL
 document.addEventListener('DOMContentLoaded', () => {
     initAuthToggles();

@@ -273,6 +273,33 @@ document.querySelectorAll('.feed-container').forEach(container => {
     });
 });
 
+async function renderTrendingTopics() {
+    const trendingContainer = document.querySelector('.sidebar-right .widget');
+    if (!trendingContainer) return;
+
+    // Aqui simulamos assuntos baseados nos posts reais ou definimos fixos
+    const topics = [
+        { category: 'Tecnologia', title: '#PintadaChegou', stats: '15.4K posts' },
+        { category: 'Desenvolvimento', title: 'JavaScript', stats: '8.1K posts' },
+        { category: 'Esportes', title: 'Corinthians', stats: 'Trending em SP' }
+    ];
+
+    const html = `
+        <h3 class="widget-title">O que está acontecendo</h3>
+        ${topics.map(t => `
+            <div class="trending-item">
+                <span class="trending-meta">${t.category} • Assunto do Momento</span>
+                <h4 class="trending-title">${t.title}</h4>
+                <span class="trending-stats">${t.stats}</span>
+            </div>
+        `).join('')}
+    `;
+    trendingContainer.innerHTML = html;
+}
+
+// Torna a função global para o feed.js conseguir chamar
+window.renderTrendingTopics = renderTrendingTopics;
+
 document.querySelectorAll('.profile-tab').forEach(btn => {
     btn.addEventListener('click', async() => {
         document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));

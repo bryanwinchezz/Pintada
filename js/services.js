@@ -61,7 +61,9 @@ const PostService = {
                 newCount++;
             }
             await updateDoc(postRef, {
-                [listField]: newList, [countField]: newCount });
+                [listField]: newList,
+                [countField]: newCount
+            });
         }
     },
 
@@ -124,6 +126,21 @@ const AuthService = {
             bio: userData.bio || "Novo membro da Pintada! 🐆"
         });
         localStorage.setItem('pintada_active_user', userData.username);
+    },
+
+    // Dentro do AuthService no services.js
+    async updateUser(oldUsername, updatedData) {
+        const userRef = doc(window.db, "users", oldUsername);
+
+        // Se o usuário mudou o @username, precisamos criar um novo documento e deletar o antigo
+        if (oldUsername !== updatedData.username) {
+            await setDoc(doc(window.db, "users", updatedData.username), updatedData);
+            await deleteDoc(userRef);
+            localStorage.setItem('pintada_active_user', updatedData.username);
+        } else {
+            // Se for apenas nome/bio, apenas atualizamos o existente
+            await setDoc(userRef, updatedData, { merge: true });
+        }
     },
 
     getCurrentUser() {
