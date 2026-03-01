@@ -30,9 +30,11 @@ function generatePostHTML(post, currentUser) {
     let displayTime = post.timestamp ? timeAgo(post.timestamp) : post.time;
     let parsedContent = window.escapeHTML(post.content).replace(/\n/g, '<br>');
 
+    // TAG DE EDITADO
+    let editedTag = post.isEdited ? `<span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 5px;">(Editado)</span>` : '';
+
     let mediaHTML = post.gif ? `<div class="post-media-container" style="margin-top: 12px;"><img src="${post.gif}" style="border-radius: 12px; max-width: 100%; border: 1px solid var(--border-color);"></div>` : '';
 
-    // NOVO: DESIGN MELHORADO DA ENQUETE
     let pollHTML = '';
     if (post.poll) {
         const totalVotes = Object.keys(post.poll.voters || {}).length;
@@ -46,7 +48,6 @@ function generatePostHTML(post, currentUser) {
             pollHTML += `
                 <div class="poll-option-result ${isVoted}" data-option-id="${opt.id}" style="position: relative; margin-bottom: 10px; border-radius: 10px; overflow: hidden; background: var(--card-bg); cursor: pointer; border: 1px solid ${isVoted ? '#F4B41A' : 'var(--border-color)'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;">
                     <div class="poll-bar" style="position: absolute; left: 0; top: 0; height: 100%; width: ${userVote !== undefined ? percent : 0}%; background: ${isVoted ? 'rgba(244, 180, 26, 0.25)' : 'rgba(0,0,0,0.05)'}; transition: width 0.6s ease;"></div>
-                    
                     <div style="position: relative; padding: 12px 16px; display: flex; justify-content: space-between; font-weight: ${isVoted ? 'bold' : '500'}; color: var(--text-main); align-items: center; width: 100%; box-sizing: border-box;">
                         <span class="poll-text" style="z-index: 1;">${window.escapeHTML(opt.text)}</span>
                         <span class="poll-percent" style="z-index: 1; font-size: 0.9rem; color: var(--text-muted);">${userVote !== undefined ? percent + '%' : ''}</span>
@@ -72,7 +73,7 @@ function generatePostHTML(post, currentUser) {
                 </a>
                 <div class="post-info" style="flex-grow: 1; display: flex; flex-direction: column;">
                     <a href="profile.html?user=${post.authorUsername}" style="text-decoration: none; color: var(--text-main); font-weight: bold; font-size: 1.05rem;">${post.authorName}</a>
-                    <span class="post-meta" style="color: var(--text-muted); font-size: 0.9rem;">@${post.authorUsername} • ${displayTime}</span>
+                    <span class="post-meta" style="color: var(--text-muted); font-size: 0.9rem;">@${post.authorUsername} • ${displayTime} ${editedTag}</span>
                 </div>
                 ${followBtnHTML}
                 ${isAuthor ? `<div class="post-options-wrapper" style="position: relative; margin-left: 8px;"><button class="icon-btn more-options" style="background: none; border: none; cursor: pointer; color: var(--text-muted);"><span class="material-symbols-outlined">more_horiz</span></button><div class="post-dropdown"><button class="dropdown-item edit-post-btn">Editar</button><button class="dropdown-item text-danger delete-post-btn">Apagar</button></div></div>` : ''}
@@ -111,16 +112,36 @@ async function renderAllFeeds() {
     const currentUser = await window.AuthService.getUserData(activeUsername);
     if (!currentUser) return;
 
+    const homeArea = document.getElementById('posts-render-area');
+    const profileArea = document.getElementById('profile-posts-render-area');
+    
+    // SISTEMA DE CARREGAMENTO SKELETON DE 3 SEGUNDOS
+    if (homeArea && !window.hasClearedFakePosts) {
+        // Apaga o HTML antigo IMEDIATAMENTE e coloca o esqueleto
+        const skeletonHTML = `
+            <div class="post-card" style="padding: 16px; margin-bottom: 20px; border-radius: 16px; background: var(--card-bg);">
+                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+                    <div class="skeleton" style="width: 48px; height: 48px; border-radius: 50%;"></div>
+                    <div><div class="skeleton" style="width: 120px; height: 16px; margin-bottom: 6px; border-radius: 4px;"></div><div class="skeleton" style="width: 80px; height: 12px; border-radius: 4px;"></div></div>
+                </div>
+                <div class="skeleton" style="width: 100%; height: 60px; border-radius: 8px;"></div>
+            </div>`.repeat(3);
+        
+        homeArea.innerHTML = skeletonHTML;
+        if (profileArea) profileArea.innerHTML = skeletonHTML;
+        
+        window.hasClearedFakePosts = true;
+        await new Promise(r => setTimeout(r, 3000)); // Aguarda 3 segundos exatos
+    }
+
     const allPosts = await window.PostService.getPosts();
     const createAvatar = document.querySelector('.create-post-header .post-avatar');
     if (createAvatar) createAvatar.src = currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=F4B41A&color=fff`;
 
-    const homeArea = document.getElementById('posts-render-area');
     if (homeArea) homeArea.innerHTML = allPosts.map(p => generatePostHTML(p, currentUser)).join('');
 
     const urlParams = new URLSearchParams(window.location.search);
     const viewedUsername = urlParams.get('user') || currentUser.username;
-    const profileArea = document.getElementById('profile-posts-render-area');
     const activeTab = document.querySelector('.profile-tab.active');
 
     if (profileArea && activeTab) {
@@ -147,24 +168,11 @@ async function renderAllFeeds() {
 window.renderTrendingTopics = async function() {
     const trendingContainer = document.querySelector('.sidebar-right .widget');
     if (!trendingContainer) return;
-
     const allPosts = await window.PostService.getPosts();
     let hashtagCounts = {};
-
-    allPosts.forEach(post => {
-        const words = post.content.match(/#[a-zA-Z0-9_À-ÿ]+/gi) || [];
-        words.forEach(w => { hashtagCounts[w] = (hashtagCounts[w] || 0) + 1; });
-    });
-
+    allPosts.forEach(post => { const words = post.content.match(/#[a-zA-Z0-9_À-ÿ]+/gi) || []; words.forEach(w => { hashtagCounts[w] = (hashtagCounts[w] || 0) + 1; }); });
     const sortedHashtags = Object.entries(hashtagCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    let topics = [];
-
-    if (sortedHashtags.length > 0) {
-        topics = sortedHashtags.map(h => ({ category: 'Em Alta na Pintada', title: h[0], stats: `${h[1]} publicações` }));
-    } else {
-        topics = [{ category: 'Bem-vindo', title: '#NovaPintada', stats: 'Recomendado' }];
-    }
-
+    let topics = sortedHashtags.length > 0 ? sortedHashtags.map(h => ({ category: 'Em Alta na Pintada', title: h[0], stats: `${h[1]} publicações` })) : [{ category: 'Bem-vindo', title: '#NovaPintada', stats: 'Recomendado' }];
     trendingContainer.innerHTML = `<h3 class="widget-title">O que está acontecendo</h3>` + topics.map(t => `<div class="trending-item"><span class="trending-meta">${t.category}</span><h4 class="trending-title" style="color: #D97A00;">${t.title}</h4><span class="trending-stats">${t.stats}</span></div>`).join('');
 };
 
@@ -175,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnEmoji = document.getElementById('add-emoji-btn');
     const btnGif = document.getElementById('add-gif-btn');
     const btnPoll = document.getElementById('add-poll-btn');
-
     const panelEmoji = document.getElementById('emoji-panel');
     const panelGif = document.getElementById('gif-panel');
     const panelPoll = document.getElementById('poll-panel');
@@ -187,35 +194,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if(panelPoll) panelPoll.style.display = 'none';
     }
 
-    if (btnEmoji) {
-        btnEmoji.addEventListener('click', () => {
-            const isHidden = panelEmoji.style.display === 'none' || panelEmoji.style.display === '';
-            hideAllPanels();
-            if (isHidden) panelEmoji.style.display = 'grid'; 
-        });
-    }
-
-    document.querySelectorAll('.emoji-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            if (postInput) postInput.value += e.target.textContent;
-        });
-    });
-
-    if (btnGif) {
-        btnGif.addEventListener('click', () => {
-            const isHidden = panelGif.style.display === 'none' || panelGif.style.display === '';
-            hideAllPanels();
-            if (isHidden) panelGif.style.display = 'block';
-        });
-    }
-
-    if (btnPoll) {
-        btnPoll.addEventListener('click', () => {
-            const isHidden = panelPoll.style.display === 'none' || panelPoll.style.display === '';
-            hideAllPanels();
-            if (isHidden) panelPoll.style.display = 'block';
-        });
-    }
+    if (btnEmoji) { btnEmoji.addEventListener('click', () => { const isHidden = panelEmoji.style.display === 'none' || panelEmoji.style.display === ''; hideAllPanels(); if (isHidden) panelEmoji.style.display = 'grid'; }); }
+    document.querySelectorAll('.emoji-btn').forEach(btn => { btn.addEventListener('click', (e) => { if (postInput) postInput.value += e.target.textContent; }); });
+    if (btnGif) { btnGif.addEventListener('click', () => { const isHidden = panelGif.style.display === 'none' || panelGif.style.display === ''; hideAllPanels(); if (isHidden) panelGif.style.display = 'block'; }); }
+    if (btnPoll) { btnPoll.addEventListener('click', () => { const isHidden = panelPoll.style.display === 'none' || panelPoll.style.display === ''; hideAllPanels(); if (isHidden) panelPoll.style.display = 'block'; }); }
 
     const gifInput = document.getElementById('gif-search-input');
     const GIPHY_API_KEY = "k1rI7vq3jlZ37VjBIlpGcgbVCndPwghP"; 
@@ -225,23 +207,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const query = e.target.value.trim();
             const resultsDiv = document.getElementById('gif-results');
             if (query.length < 2) return;
-
             resultsDiv.innerHTML = '<p style="color:var(--text-muted); font-size:12px;">A pesquisar...</p>';
             try {
                 const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=15&lang=pt`);
                 const json = await res.json();
                 resultsDiv.innerHTML = json.data.map(gif => `<img src="${gif.images.fixed_height_small.url}" data-full="${gif.images.downsized_medium.url}" style="height:80px; margin:2px; cursor:pointer; border-radius:4px;">`).join('');
-
                 resultsDiv.querySelectorAll('img').forEach(img => {
                     img.addEventListener('click', () => {
                         window.selectedGifUrl = img.getAttribute('data-full');
                         let previewImg = previewContainer.querySelector('img');
-                        if (!previewImg) {
-                            previewImg = document.createElement('img');
-                            previewImg.style.maxWidth = '100%';
-                            previewImg.style.borderRadius = '8px';
-                            previewContainer.insertBefore(previewImg, previewContainer.firstChild);
-                        }
+                        if (!previewImg) { previewImg = document.createElement('img'); previewImg.style.maxWidth = '100%'; previewImg.style.borderRadius = '8px'; previewContainer.insertBefore(previewImg, previewContainer.firstChild); }
                         previewImg.src = window.selectedGifUrl;
                         previewContainer.style.display = 'block';
                         hideAllPanels();
@@ -251,11 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('remove-gif-btn')?.addEventListener('click', () => {
-        window.selectedGifUrl = null;
-        if(previewContainer) previewContainer.style.display = 'none';
-    });
-
+    document.getElementById('remove-gif-btn')?.addEventListener('click', () => { window.selectedGifUrl = null; if(previewContainer) previewContainer.style.display = 'none'; });
     document.getElementById('add-poll-opt-btn')?.addEventListener('click', () => {
         const cont = document.getElementById('poll-options-container');
         const inputs = cont.querySelectorAll('.poll-opt-input');
@@ -272,23 +243,13 @@ document.addEventListener('DOMContentLoaded', () => {
         publishBtn.addEventListener('click', async () => {
             const activeUsername = window.AuthService.getCurrentUser();
             if (!activeUsername) return showToast("Sessão expirada!", "error");
-
             const content = postInput ? postInput.value.trim() : '';
             const pollInputs = Array.from(document.querySelectorAll('.poll-opt-input')).map(i => i.value.trim()).filter(v => v);
             let pollData = null;
-            if (pollInputs.length >= 2) {
-                pollData = {
-                    question: document.getElementById('poll-question-input') ? document.getElementById('poll-question-input').value.trim() : '',
-                    options: pollInputs.map((opt, idx) => ({ id: idx, text: opt, votes: 0 })),
-                    voters: {}
-                };
-            }
-
+            if (pollInputs.length >= 2) { pollData = { question: document.getElementById('poll-question-input') ? document.getElementById('poll-question-input').value.trim() : '', options: pollInputs.map((opt, idx) => ({ id: idx, text: opt, votes: 0 })), voters: {} }; }
             if (!content && !window.selectedGifUrl && !pollData) return;
-
             const userFullData = await window.AuthService.getUserData(activeUsername);
             await window.PostService.addPost(content, userFullData, window.selectedGifUrl, pollData);
-            
             if (postInput) postInput.value = '';
             window.selectedGifUrl = null;
             if (previewContainer) previewContainer.style.display = 'none';
@@ -304,51 +265,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const postCard = e.target.closest('.post-card');
         const postId = postCard ? postCard.getAttribute('data-post-id') : null;
-
         const pollOption = e.target.closest('.poll-option-result');
+
         if (pollOption && activeUsername) {
             const pollPostId = pollOption.closest('.poll-container').getAttribute('data-post-id');
-            const optionId = parseInt(pollOption.getAttribute('data-option-id'));
-            await window.PostService.votePoll(pollPostId, activeUsername, optionId);
+            await window.PostService.votePoll(pollPostId, activeUsername, parseInt(pollOption.getAttribute('data-option-id')));
             renderAllFeeds();
             return;
         }
 
-if (e.target.closest('.follow-btn')) { 
+        if (e.target.closest('.follow-btn')) { 
             const btn = e.target.closest('.follow-btn');
             const targetUser = btn.getAttribute('data-target-user');
             const isFollowing = btn.classList.toggle('following');
-            
-            // Altera visual
             btn.textContent = isFollowing ? 'Seguindo' : 'Seguir';
-            if(isFollowing) {
-                btn.style.background = 'transparent';
-                btn.style.color = 'var(--text-main)';
-                btn.style.border = '1px solid var(--border-color)';
-            } else {
-                btn.style.background = 'var(--brand-gradient)';
-                btn.style.color = 'white';
-                btn.style.border = 'none';
-            }
-
-            // Atualiza o banco de dados
+            if(isFollowing) { btn.style.background = 'transparent'; btn.style.color = 'var(--text-main)'; btn.style.border = '1px solid var(--border-color)'; } 
+            else { btn.style.background = 'var(--brand-gradient)'; btn.style.color = 'white'; btn.style.border = 'none'; }
             await window.AuthService.toggleFollow(targetUser); 
-
-            // Atualiza o contador na tela se estiver no perfil da pessoa
+            
             const followersCountEl = document.getElementById('profile-followers-count');
             const urlParams = new URLSearchParams(window.location.search);
             if (followersCountEl && urlParams.get('user') === targetUser) {
                 let currentCount = parseInt(followersCountEl.textContent) || 0;
                 followersCountEl.textContent = isFollowing ? currentCount + 1 : currentCount - 1;
             }
-
-            // Atualiza botões no feed silenciosamente sem recarregar a tela inteira
-            document.querySelectorAll(`.follow-btn[data-target-user="${targetUser}"]`).forEach(b => {
-                if (b !== btn) {
-                    b.classList.toggle('following', isFollowing);
-                    b.textContent = isFollowing ? 'Seguindo' : 'Seguir';
-                }
-            });
             return; 
         }
 
@@ -375,21 +315,28 @@ if (e.target.closest('.follow-btn')) {
             dropdown.classList.toggle('active');
         }
 
-        // NOVO: Função para Editar publicação
         if (e.target.closest('.edit-post-btn')) {
             const pTag = postCard.querySelector('.post-content p');
             const currentContent = pTag.innerHTML.replace(/<br>/g, '\n').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
             const newContent = prompt("Edite a sua publicação:", currentContent);
-            
             if (newContent !== null && newContent.trim() !== "") {
                 await window.PostService.editPost(postId, newContent.trim());
                 renderAllFeeds();
-                showToast("Publicação editada com sucesso!");
+                showToast("Publicação editada!");
             }
         }
 
         if (e.target.closest('.delete-post-btn') && confirm("Apagar permanentemente?")) { await window.PostService.deletePost(postId); renderAllFeeds(); }
-        if (e.target.closest('.share-btn')) postCard.querySelector('.share-section').classList.toggle('active');
+        
+        // LÓGICA DE COMPARTILHAR REAL NO CELULAR / PC
+        if (e.target.closest('.share-btn')) {
+            const postUrl = `https://pintada.app/p/${postId}`;
+            if (navigator.share) {
+                navigator.share({ title: 'Pintada', text: 'Veja esta publicação na Pintada!', url: postUrl }).catch(err => console.log('Erro ao compartilhar', err));
+            } else {
+                postCard.querySelector('.share-section').classList.toggle('active');
+            }
+        }
         if (e.target.closest('.copy-btn')) {
             const btn = e.target.closest('.copy-btn');
             navigator.clipboard.writeText(btn.previousElementSibling.value).then(() => { btn.textContent = 'Copiado!'; setTimeout(() => btn.textContent = 'Copiar', 2000); });

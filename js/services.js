@@ -1,24 +1,8 @@
 // ==========================================
 // js/services.js - SERVIÇOS DO FIREBASE
 // ==========================================
-import {
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut
-} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-
-import {
-    collection,
-    addDoc,
-    getDocs,
-    query,
-    orderBy,
-    doc,
-    updateDoc,
-    setDoc,
-    getDoc,
-    deleteDoc
-} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { collection, addDoc, getDocs, query, orderBy, doc, updateDoc, setDoc, getDoc, deleteDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const PostService = {
     async getPosts() {
@@ -27,7 +11,6 @@ const PostService = {
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     },
-
     async addPost(content, user, gifUrl = null, pollData = null) {
         try {
             await addDoc(collection(window.db, "posts"), {
@@ -43,42 +26,33 @@ const PostService = {
                 repostedBy: [],
                 comments: [],
                 timestamp: Date.now(),
-                time: "Agora mesmo"
+                time: "Agora"
             });
         } catch (e) { console.error("Erro ao salvar publicação:", e); }
     },
+    async deletePost(postId) { await deleteDoc(doc(window.db, "posts", postId)); },
 
-    async deletePost(postId) {
-        await deleteDoc(doc(window.db, "posts", postId));
-    },
-
-    // NOVO: Função para editar a publicação
+    // NOVO: Adiciona a flag isEdited para mostrar a tag de (Editado)
     async editPost(postId, newContent) {
-        const postRef = doc(window.db, "posts", postId);
-        await updateDoc(postRef, { content: newContent });
+        await updateDoc(doc(window.db, "posts", postId), { content: newContent, isEdited: true });
     },
 
     async toggleReaction(postId, username, type) {
         const postRef = doc(window.db, "posts", postId);
         const postSnap = await getDoc(postRef);
         if (postSnap.exists()) {
-            const postData = postSnap.data();
+            const data = postSnap.data();
             const listField = type === 'like' ? 'likedBy' : 'repostedBy';
             const countField = type === 'like' ? 'likes' : 'reposts';
-            let newList = postData[listField] || [];
-            let newCount = postData[countField] || 0;
-            if (newList.includes(username)) {
-                newList = newList.filter(u => u !== username);
-                newCount = Math.max(0, newCount - 1);
-            } else {
-                newList.push(username);
-                newCount++;
-            }
+            let newList = data[listField] || [];
+            let newCount = data[countField] || 0;
+            if (newList.includes(username)) { newList = newList.filter(u => u !== username);
+                newCount = Math.max(0, newCount - 1); } else { newList.push(username);
+                newCount++; }
             await updateDoc(postRef, {
                 [listField]: newList, [countField]: newCount });
         }
     },
-
     async addComment(postId, comment) {
         const postRef = doc(window.db, "posts", postId);
         const postSnap = await getDoc(postRef);
@@ -88,29 +62,16 @@ const PostService = {
             await updateDoc(postRef, { comments: comments });
         }
     },
-
     async votePoll(postId, username, optionId) {
         const postRef = doc(window.db, "posts", postId);
         const postSnap = await getDoc(postRef);
         if (postSnap.exists()) {
             let poll = postSnap.data().poll;
             if (!poll) return;
-
             if (!poll.voters) poll.voters = {};
-            const previousVoteId = poll.voters[username];
-
-            if (previousVoteId !== undefined) {
-                const oldOpt = poll.options.find(o => o.id === previousVoteId);
-                if (oldOpt) oldOpt.votes = Math.max(0, oldOpt.votes - 1);
-            }
-
-            if (previousVoteId === optionId) {
-                delete poll.voters[username];
-            } else {
-                poll.voters[username] = optionId;
-                const newOpt = poll.options.find(o => o.id === optionId);
-                if (newOpt) newOpt.votes++;
-            }
+            const prev = poll.voters[username];
+            if (prev !== undefined) { const oldOpt = poll.options.find(o => o.id === prev); if (oldOpt) oldOpt.votes = Math.max(0, oldOpt.votes - 1); }
+            if (prev === optionId) { delete poll.voters[username]; } else { poll.voters[username] = optionId; const newOpt = poll.options.find(o => o.id === optionId); if (newOpt) newOpt.votes++; }
             await updateDoc(postRef, { poll: poll });
         }
     }
@@ -135,9 +96,7 @@ const AuthService = {
         const docSnap = await getDoc(docRef);
         return docSnap.exists() ? docSnap.data() : null;
     },
-    async saveUserData(username, data) {
-        await setDoc(doc(window.db, "users", username), data, { merge: true });
-    },
+    async saveUserData(username, data) { await setDoc(doc(window.db, "users", username), data, { merge: true }); },
     async register(userData) {
         await createUserWithEmailAndPassword(window.auth, userData.email, userData.password);
         await setDoc(doc(window.db, "users", userData.username), {
@@ -153,8 +112,14 @@ const AuthService = {
         });
         localStorage.setItem('pintada_active_user', userData.username);
     },
+
+    // NOVO: Atualiza as fotos e nomes dos posts antigos!
     async updateUser(oldUsername, updatedData) {
         const userRef = doc(window.db, "users", oldUsername);
+        const oldSnap = await getDoc(userRef);
+        const oldData = oldSnap.exists() ? oldSnap.data() : {};
+        const finalAvatar = updatedData.avatar || oldData.avatar || "";
+
         if (oldUsername !== updatedData.username) {
             await setDoc(doc(window.db, "users", updatedData.username), updatedData);
             await deleteDoc(userRef);
@@ -162,6 +127,16 @@ const AuthService = {
         } else {
             await setDoc(userRef, updatedData, { merge: true });
         }
+
+        // Busca todas as publicações antigas e atualiza a foto e nome
+        const postsQ = query(collection(window.db, "posts"), where("authorUsername", "==", oldUsername));
+        const postsSnap = await getDocs(postsQ);
+        postsSnap.forEach(async(postDoc) => {
+            await updateDoc(doc(window.db, "posts", postDoc.id), {
+                authorName: updatedData.name,
+                authorAvatar: finalAvatar
+            });
+        });
     },
     async toggleFollow(targetUsername) {
         const currentUser = this.getCurrentUser();
@@ -182,28 +157,21 @@ const AuthService = {
         }
     },
     getCurrentUser() { return localStorage.getItem('pintada_active_user'); },
-    async logout() {
-        localStorage.removeItem('pintada_active_user');
-        if (window.auth) await signOut(window.auth);
-    }
+    async logout() { localStorage.removeItem('pintada_active_user'); if (window.auth) await signOut(window.auth); }
 };
 
 const MessageService = {
     async sendMessage(sender, receiver, text) {
-        try {
-            await addDoc(collection(window.db, "messages"), {
-                sender: sender,
-                receiver: receiver,
-                text: text,
-                timestamp: Date.now()
-            });
-        } catch (e) { console.error("Erro ao enviar msg para Firebase", e); }
+        await addDoc(collection(window.db, "messages"), { sender, receiver, text, timestamp: Date.now() });
+    },
+    // NOVO: Função para buscar histórico real do Firebase
+    async getMessages(user1, user2) {
+        const snapshot = await getDocs(query(collection(window.db, "messages"), orderBy("timestamp", "asc")));
+        return snapshot.docs.map(d => d.data()).filter(m => (m.sender === user1 && m.receiver === user2) || (m.sender === user2 && m.receiver === user1));
     }
 };
 
-function escapeHTML(str) {
-    return str.replace(/[&<>"']/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[tag] || tag));
-}
+function escapeHTML(str) { return str.replace(/[&<>"']/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[tag] || tag)); }
 
 window.PostService = PostService;
 window.AuthService = AuthService;
