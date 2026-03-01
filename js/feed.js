@@ -57,23 +57,23 @@ function generatePostHTML(post, currentUser) {
     let followBtnHTML = '';
     if (!isAuthor && post.authorUsername !== 'admin_pintada') {
         const isFollowing = currentUser.followingList && currentUser.followingList.includes(post.authorUsername);
-        followBtnHTML = `<button class="btn-outline follow-btn ${isFollowing ? 'following' : ''}" data-target-user="${post.authorUsername}">${isFollowing ? 'A Seguir' : 'Seguir'}</button>`;
+        followBtnHTML = `<button class="btn-outline follow-btn ${isFollowing ? 'following' : ''}" data-target-user="${post.authorUsername}">${isFollowing ? 'Seguindo' : 'Seguir'}</button>`;
     }
 
     const commentSectionClass = openCommentBoxes.includes(post.id.toString()) ? 'active' : '';
 
     return `
         <article class="post-card" data-post-id="${post.id}" style="background: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <header class="post-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <a href="profile.html?user=${post.authorUsername}"><img src="${displayAvatar}" alt="Avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;"></a>
-                    <div>
-                        <a href="profile.html?user=${post.authorUsername}" style="text-decoration: none; color: var(--text-main); font-weight: bold; font-size: 1.05rem; display: block;">${post.authorName}</a>
-                        <span style="color: var(--text-muted); font-size: 0.9rem;">@${post.authorUsername} • ${displayTime}</span>
-                    </div>
-                    ${followBtnHTML}
+            <header class="post-header" style="display: flex; align-items: center; margin-bottom: 12px;">
+                <a href="profile.html?user=${post.authorUsername}">
+                    <img src="${displayAvatar}" alt="Avatar" class="post-avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
+                </a>
+                <div class="post-info" style="flex-grow: 1; display: flex; flex-direction: column;">
+                    <a href="profile.html?user=${post.authorUsername}" style="text-decoration: none; color: var(--text-main); font-weight: bold; font-size: 1.05rem;">${post.authorName}</a>
+                    <span class="post-meta" style="color: var(--text-muted); font-size: 0.9rem;">@${post.authorUsername} • ${displayTime}</span>
                 </div>
-                ${isAuthor ? `<div class="post-options-wrapper" style="position: relative;"><button class="icon-btn more-options" style="background: none; border: none; cursor: pointer; color: var(--text-muted);"><span class="material-symbols-outlined">more_horiz</span></button><div class="post-dropdown"><button class="dropdown-item text-danger delete-post-btn">Apagar</button></div></div>` : ''}
+                ${followBtnHTML}
+                ${isAuthor ? `<div class="post-options-wrapper" style="position: relative; margin-left: 8px;"><button class="icon-btn more-options" style="background: none; border: none; cursor: pointer; color: var(--text-muted);"><span class="material-symbols-outlined">more_horiz</span></button><div class="post-dropdown"><button class="dropdown-item text-danger delete-post-btn">Apagar</button></div></div>` : ''}
             </header>
             
             <div class="post-content" style="color: var(--text-main); font-size: 1rem; line-height: 1.5; margin-bottom: 16px;">
@@ -142,15 +142,39 @@ async function renderAllFeeds() {
     if (typeof window.renderTrendingTopics === 'function') await window.renderTrendingTopics();
 }
 
+// SISTEMA REAL DE TRENDING TOPICS (Lê as Hashtags do Banco de Dados)
 window.renderTrendingTopics = async function() {
     const trendingContainer = document.querySelector('.sidebar-right .widget');
     if (!trendingContainer) return;
-    const topics = [
-        { category: 'Tecnologia', title: '#PintadaNoAr', stats: '1.2K posts' },
-        { category: 'Futebol', title: 'Corinthians', stats: '25.4K posts' },
-        { category: 'Design', title: '#UIUX', stats: '4.2K posts' }
-    ];
-    trendingContainer.innerHTML = `<h3 class="widget-title">O que está a acontecer</h3>` + topics.map(t => `<div class="trending-item"><span class="trending-meta">${t.category} • Assunto do Momento</span><h4 class="trending-title">${t.title}</h4><span class="trending-stats">${t.stats}</span></div>`).join('');
+
+    const allPosts = await window.PostService.getPosts();
+    let hashtagCounts = {};
+
+    // Extrai as hashtags de todos os posts
+    allPosts.forEach(post => {
+        const words = post.content.match(/#[a-zA-Z0-9_À-ÿ]+/gi) || [];
+        words.forEach(w => {
+            hashtagCounts[w] = (hashtagCounts[w] || 0) + 1;
+        });
+    });
+
+    // Pega as 3 mais usadas
+    const sortedHashtags = Object.entries(hashtagCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    let topics = [];
+
+    if (sortedHashtags.length > 0) {
+        topics = sortedHashtags.map(h => ({
+            category: 'Em Alta na Pintada',
+            title: h[0],
+            stats: `${h[1]} publicações`
+        }));
+    } else {
+        topics = [
+            { category: 'Bem-vindo', title: '#NovaPintada', stats: 'Recomendado' }
+        ];
+    }
+
+    trendingContainer.innerHTML = `<h3 class="widget-title">O que está acontecendo</h3>` + topics.map(t => `<div class="trending-item"><span class="trending-meta">${t.category}</span><h4 class="trending-title" style="color: #D97A00;">${t.title}</h4><span class="trending-stats">${t.stats}</span></div>`).join('');
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -299,9 +323,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // CORREÇÃO DO BOTÃO SEGUIR (Feedback Instantâneo)
+        if (e.target.closest('.follow-btn')) { 
+            const btn = e.target.closest('.follow-btn');
+            const targetUser = btn.getAttribute('data-target-user');
+            
+            const isFollowing = btn.classList.toggle('following');
+            btn.textContent = isFollowing ? 'Seguindo' : 'Seguir';
+            
+            await window.AuthService.toggleFollow(targetUser); 
+            return; 
+        }
+
         if (e.target.closest('.like-btn')) { await window.PostService.toggleReaction(postId, activeUsername, 'like'); renderAllFeeds(); }
         if (e.target.closest('.repost-btn')) { await window.PostService.toggleReaction(postId, activeUsername, 'repost'); renderAllFeeds(); }
-        if (e.target.closest('.follow-btn')) { await window.AuthService.toggleFollow(e.target.closest('.follow-btn').getAttribute('data-target-user')); renderAllFeeds(); }
         
         if (e.target.closest('.comment-toggle-btn')) {
             openCommentBoxes.includes(postId) ? openCommentBoxes = openCommentBoxes.filter(id => id !== postId) : openCommentBoxes.push(postId);

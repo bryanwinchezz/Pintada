@@ -16,6 +16,30 @@ function showToast(message, type = 'success') {
 }
 window.showToast = showToast;
 
+// NOVO: SISTEMA DE PESQUISA
+function initSearch() {
+    const searchInputs = document.querySelectorAll('.nav-search input');
+    searchInputs.forEach(input => {
+        input.addEventListener('keypress', async(e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = e.target.value.trim().toLowerCase();
+                if (!query) return;
+
+                showToast('A pesquisar...', 'success');
+                const users = await window.AuthService.getUsers();
+                const found = users.find(u => u.username.toLowerCase().includes(query) || u.name.toLowerCase().includes(query));
+
+                if (found) {
+                    window.location.href = `profile.html?user=${found.username}`;
+                } else {
+                    showToast('Utilizador não encontrado!', 'error');
+                }
+            }
+        });
+    });
+}
+
 function initPasswordToggle() {
     document.querySelectorAll('.toggle-password').forEach(btn => {
         const newBtn = btn.cloneNode(true);
@@ -40,12 +64,16 @@ function initAuthToggles() {
     const registerSection = document.getElementById('register-section');
 
     if (showRegisterBtn && showLoginBtn && loginSection && registerSection) {
-        showRegisterBtn.onclick = (e) => { e.preventDefault();
+        showRegisterBtn.onclick = (e) => {
+            e.preventDefault();
             loginSection.style.display = 'none';
-            registerSection.style.display = 'block'; };
-        showLoginBtn.onclick = (e) => { e.preventDefault();
+            registerSection.style.display = 'block';
+        };
+        showLoginBtn.onclick = (e) => {
+            e.preventDefault();
             registerSection.style.display = 'none';
-            loginSection.style.display = 'block'; };
+            loginSection.style.display = 'block';
+        };
     }
 }
 
@@ -161,6 +189,7 @@ function processImageUpload(file, type) {
 }
 
 document.addEventListener('DOMContentLoaded', async() => {
+    initSearch(); // Ativa a barra de pesquisa
     initPasswordToggle();
     initAuthToggles();
     initLoginForm();
@@ -212,8 +241,10 @@ document.addEventListener('DOMContentLoaded', async() => {
                 </div>`).join('');
         }
 
-        window.deleteHobbyTheme = function(theme) { delete savedHobbies[theme];
-            renderFinalHobbiesList(); };
+        window.deleteHobbyTheme = function(theme) {
+            delete savedHobbies[theme];
+            renderFinalHobbiesList();
+        };
 
         const hobbyInput = document.getElementById('hobby-input');
         if (hobbyInput) {
@@ -226,8 +257,10 @@ document.addEventListener('DOMContentLoaded', async() => {
                     if (!val) return;
                     if (!savedHobbies[theme]) savedHobbies[theme] = [];
                     if (savedHobbies[theme].length >= 5) return showToast(`Limite de 5 itens.`, 'error');
-                    if (!savedHobbies[theme].includes(val)) { savedHobbies[theme].push(val);
-                        renderFinalHobbiesList(); }
+                    if (!savedHobbies[theme].includes(val)) {
+                        savedHobbies[theme].push(val);
+                        renderFinalHobbiesList();
+                    }
                     hobbyInput.value = '';
                 }
             });
@@ -247,20 +280,26 @@ document.addEventListener('DOMContentLoaded', async() => {
 document.querySelectorAll('.open-modal-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const modal = document.getElementById(btn.getAttribute('data-modal'));
-        if (modal) { modal.classList.add('active');
-            document.body.style.overflow = 'hidden'; }
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
     });
 });
 
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         const modal = e.target.closest('.modal-overlay');
-        if (modal && modal.id !== 'modal-adjust-image') { modal.classList.remove('active');
-            document.body.style.overflow = ''; }
+        if (modal && modal.id !== 'modal-adjust-image') {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
     });
 });
 
 const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) logoutBtn.addEventListener('click', async(e) => { e.preventDefault();
+if (logoutBtn) logoutBtn.addEventListener('click', async(e) => {
+    e.preventDefault();
     await window.AuthService.logout();
-    window.location.href = 'auth.html'; });
+    window.location.href = 'auth.html';
+});

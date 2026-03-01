@@ -69,7 +69,9 @@ const PostService = {
                 newCount++;
             }
             await updateDoc(postRef, {
-                [listField]: newList, [countField]: newCount });
+                [listField]: newList,
+                [countField]: newCount
+            });
         }
     },
 
@@ -201,10 +203,27 @@ const AuthService = {
     }
 };
 
+// NOVO: Motor de Mensagens
+const MessageService = {
+    async sendMessage(sender, receiver, text) {
+        try {
+            await addDoc(collection(window.db, "messages"), {
+                sender: sender,
+                receiver: receiver,
+                text: text,
+                timestamp: Date.now()
+            });
+        } catch (e) {
+            console.error("Erro ao enviar msg para Firebase", e);
+        }
+    }
+};
+
 function escapeHTML(str) {
     return str.replace(/[&<>"']/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[tag] || tag));
 }
 
 window.PostService = PostService;
 window.AuthService = AuthService;
+window.MessageService = MessageService;
 window.escapeHTML = escapeHTML;
