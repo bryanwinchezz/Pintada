@@ -1,9 +1,8 @@
 // ==========================================
-// js/ui.js - INTERFACE, TOASTS E AUTENTICAÇÃO
+// js/ui.js - INTERFACE, TOASTS, AUTH E PERFIL
 // ==========================================
-import { doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// 1. FUNÇÃO GLOBAL DE NOTIFICAÇÃO (TOAST)
+// 1. TOASTS E PASSWORD TOGGLE
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast-notification toast-${type}`;
@@ -16,16 +15,12 @@ function showToast(message, type = 'success') {
         setTimeout(() => toast.remove(), 400);
     }, 3000);
 }
-window.showToast = showToast; // Garante que o HTML consegue usar o Toast
+window.showToast = showToast;
 
-// 2. ALTERNAR VISIBILIDADE DA SENHA (O OLHO)
 function initPasswordToggle() {
-    const toggles = document.querySelectorAll('.toggle-password');
-    toggles.forEach(btn => {
-        // Remove botões antigos clonando para evitar cliques duplicados
+    document.querySelectorAll('.toggle-password').forEach(btn => {
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
-
         newBtn.addEventListener('click', () => {
             const input = newBtn.previousElementSibling;
             if (input.type === 'password') {
@@ -39,7 +34,7 @@ function initPasswordToggle() {
     });
 }
 
-// 3. ALTERNAR ENTRE LOGIN E CADASTRO
+// 2. AUTH E LOGIN/REGISTO
 function initAuthToggles() {
     const showRegisterBtn = document.getElementById('show-register');
     const showLoginBtn = document.getElementById('show-login');
@@ -47,31 +42,22 @@ function initAuthToggles() {
     const registerSection = document.getElementById('register-section');
 
     if (showRegisterBtn && showLoginBtn && loginSection && registerSection) {
-        showRegisterBtn.onclick = (e) => {
-            e.preventDefault();
+        showRegisterBtn.onclick = (e) => { e.preventDefault();
             loginSection.style.display = 'none';
-            registerSection.style.display = 'block';
-        };
-        showLoginBtn.onclick = (e) => {
-            e.preventDefault();
+            registerSection.style.display = 'block'; };
+        showLoginBtn.onclick = (e) => { e.preventDefault();
             registerSection.style.display = 'none';
-            loginSection.style.display = 'block';
-        };
+            loginSection.style.display = 'block'; };
     }
 }
 
-// 4. ENVIAR FORMULÁRIO DE LOGIN
 function initLoginForm() {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.onsubmit = async(e) => {
             e.preventDefault();
-            const identifier = document.getElementById('login-identifier').value.trim();
-            const password = document.getElementById('login-password').value;
-
             try {
-                // Adicionado window. para forçar a procura correta
-                await window.AuthService.login(identifier, password);
+                await window.AuthService.login(document.getElementById('login-identifier').value.trim(), document.getElementById('login-password').value);
                 window.location.href = 'index.html';
             } catch (error) {
                 showToast("Erro ao entrar: " + error.message, "error");
@@ -80,32 +66,31 @@ function initLoginForm() {
     }
 }
 
-// 5. ENVIAR FORMULÁRIO DE REGISTRO
 function initRegisterForm() {
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
         registerForm.onsubmit = async(e) => {
             e.preventDefault();
-            const userData = {
-                name: document.getElementById('reg-name').value.trim(),
-                username: document.getElementById('reg-username').value.trim(),
-                email: document.getElementById('reg-email').value.trim(),
-                password: document.getElementById('reg-password').value
-            };
+            const pass = document.getElementById('reg-password').value;
+            if (pass.length < 6) return showToast("A senha precisa ter pelo menos 6 caracteres.", "error");
 
             try {
-                await window.AuthService.register(userData);
+                await window.AuthService.register({
+                    name: document.getElementById('reg-name').value.trim(),
+                    username: document.getElementById('reg-username').value.trim(),
+                    email: document.getElementById('reg-email').value.trim(),
+                    password: pass
+                });
                 showToast("Conta criada com sucesso! 🐆");
                 window.location.href = 'index.html';
             } catch (error) {
-                showToast("Erro no registo: O e-mail já pode estar em uso!", "error");
-                console.error(error);
+                showToast("Erro no registo: " + error.message, "error");
             }
         };
     }
 }
 
-// 6. CARREGAR DADOS DO USUÁRIO NO PERFIL E CONFIGURAÇÕES
+// 3. PERFIL, IMAGENS E HOBBIES
 async function loadUserDataUI() {
     const activeUsername = window.AuthService.getCurrentUser();
     if (!activeUsername) return;
@@ -123,30 +108,29 @@ async function loadUserDataUI() {
 
     const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=F4B41A&color=fff`;
     document.querySelectorAll('.profile-pic img, .profile-page-avatar, #settings-avatar-preview, .post-avatar').forEach(img => img.src = avatarUrl);
+
+    const bannerUrl = user.banner || 'var(--brand-gradient)';
+    if (document.getElementById('profile-page-banner')) document.getElementById('profile-page-banner').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
+    if (document.getElementById('settings-banner-preview')) document.getElementById('settings-banner-preview').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
 }
 
-// 7. SALVAR ALTERAÇÕES DO PERFIL
 function initProfileForm() {
     const formProfile = document.getElementById('form-profile');
     if (formProfile) {
         formProfile.onsubmit = async(e) => {
             e.preventDefault();
             const activeUsername = window.AuthService.getCurrentUser();
-
             const updatedData = {
                 name: document.getElementById('edit-name').value.trim(),
                 username: document.getElementById('edit-username').value.trim(),
                 bio: document.getElementById('edit-bio').value.trim()
             };
+            if (window.tempAvatarBase64) updatedData.avatar = window.tempAvatarBase64;
+            if (window.tempBannerBase64) updatedData.banner = window.tempBannerBase64;
 
             try {
-                await window.AuthService.saveUserData(activeUsername, updatedData);
+                await window.AuthService.updateUser(activeUsername, updatedData);
                 showToast('Perfil atualizado com sucesso! 🐆');
-
-                if (updatedData.username !== activeUsername) {
-                    localStorage.setItem('pintada_active_user', updatedData.username);
-                }
-
                 setTimeout(() => location.reload(), 1000);
             } catch (error) {
                 showToast('Erro ao salvar: ' + error.message, 'error');
@@ -155,8 +139,24 @@ function initProfileForm() {
     }
 }
 
-// 8. INICIALIZAÇÃO GERAL LIMPA E ÚNICA
-document.addEventListener('DOMContentLoaded', () => {
+// Lógica de Upload de Imagem
+let pendingImageType = '';
+let pendingImageBase64 = '';
+
+function processImageUpload(file, type) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        pendingImageBase64 = e.target.result;
+        pendingImageType = type;
+        document.getElementById('adjust-preview-img').src = pendingImageBase64;
+        document.getElementById('modal-adjust-image').classList.add('active');
+    };
+    reader.readAsDataURL(file);
+}
+
+// 4. INICIALIZAÇÃO GERAL
+document.addEventListener('DOMContentLoaded', async() => {
     initPasswordToggle();
     initAuthToggles();
     initLoginForm();
@@ -164,6 +164,95 @@ document.addEventListener('DOMContentLoaded', () => {
     initProfileForm();
 
     if (typeof window.AuthService !== 'undefined' && window.AuthService.getCurrentUser()) {
-        loadUserDataUI();
+        await loadUserDataUI();
+    }
+
+    // Eventos de Imagem
+    if (document.getElementById('avatar-upload')) document.getElementById('avatar-upload').addEventListener('change', (e) => processImageUpload(e.target.files[0], 'avatar'));
+    if (document.getElementById('banner-upload')) document.getElementById('banner-upload').addEventListener('change', (e) => processImageUpload(e.target.files[0], 'banner'));
+
+    document.addEventListener('click', (e) => {
+        const modalAdjust = document.getElementById('modal-adjust-image');
+        if (e.target.id === 'cancel-adjust-btn' || e.target.id === 'cancel-adjust-btn-2') modalAdjust.classList.remove('active');
+        if (e.target.id === 'confirm-adjust-btn') {
+            if (pendingImageType === 'avatar') {
+                document.getElementById('settings-avatar-preview').src = pendingImageBase64;
+                window.tempAvatarBase64 = pendingImageBase64;
+            } else {
+                document.getElementById('settings-banner-preview').style.background = `url(${pendingImageBase64}) center/cover`;
+                window.tempBannerBase64 = pendingImageBase64;
+            }
+            modalAdjust.classList.remove('active');
+        }
+    });
+
+    // Eventos de Hobbies
+    const saveHobbiesBtn = document.getElementById('save-hobbies-btn');
+    if (saveHobbiesBtn) {
+        const activeUser = window.AuthService.getCurrentUser();
+        const userData = await window.AuthService.getUserData(activeUser);
+        let savedHobbies = userData ? userData.hobbies || {} : {};
+
+        function renderFinalHobbiesList() {
+            const list = document.getElementById('hobbies-list-render');
+            if (!list) return;
+            list.innerHTML = Object.keys(savedHobbies).map(theme => `
+                <div class="hobby-card">
+                    <div class="hobby-card-info"><h4>${theme}</h4><p>${savedHobbies[theme].join(', ')}</p></div>
+                    <div class="hobby-card-actions"><span class="material-symbols-outlined" style="cursor:pointer;" onclick="deleteHobbyTheme('${theme}')">delete</span></div>
+                </div>`).join('');
+        }
+
+        window.deleteHobbyTheme = function(theme) { delete savedHobbies[theme];
+            renderFinalHobbiesList(); };
+
+        const hobbyInput = document.getElementById('hobby-input');
+        if (hobbyInput) {
+            hobbyInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    const theme = document.getElementById('hobby-theme').value;
+                    if (!theme) return showToast('Selecione um campo primeiro.', 'error');
+                    const val = hobbyInput.value.trim().replace(',', '');
+                    if (!val) return;
+                    if (!savedHobbies[theme]) savedHobbies[theme] = [];
+                    if (savedHobbies[theme].length >= 5) return showToast(`Limite de 5 itens.`, 'error');
+                    if (!savedHobbies[theme].includes(val)) { savedHobbies[theme].push(val);
+                        renderFinalHobbiesList(); }
+                    hobbyInput.value = '';
+                }
+            });
+        }
+
+        saveHobbiesBtn.addEventListener('click', async() => {
+            try {
+                await window.AuthService.saveUserData(activeUser, { hobbies: savedHobbies });
+                showToast('Interesses atualizados!');
+                saveHobbiesBtn.closest('.modal-overlay').classList.remove('active');
+            } catch (e) { showToast('Erro ao salvar.', 'error'); }
+        });
+        renderFinalHobbiesList();
     }
 });
+
+// Outros modais e logout
+document.querySelectorAll('.open-modal-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const modal = document.getElementById(btn.getAttribute('data-modal'));
+        if (modal) { modal.classList.add('active');
+            document.body.style.overflow = 'hidden'; }
+    });
+});
+
+document.querySelectorAll('.close-modal-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        const modal = e.target.closest('.modal-overlay');
+        if (modal && modal.id !== 'modal-adjust-image') { modal.classList.remove('active');
+            document.body.style.overflow = ''; }
+    });
+});
+
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) logoutBtn.addEventListener('click', async(e) => { e.preventDefault();
+    await window.AuthService.logout();
+    window.location.href = 'auth.html'; });

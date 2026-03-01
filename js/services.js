@@ -1,3 +1,6 @@
+// ==========================================
+// js/services.js - SERVIÇOS DO FIREBASE
+// ==========================================
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
@@ -13,7 +16,8 @@ import {
     doc,
     updateDoc,
     setDoc,
-    getDoc
+    getDoc,
+    deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const PostService = {
@@ -61,9 +65,7 @@ const PostService = {
                 newCount++;
             }
             await updateDoc(postRef, {
-                [listField]: newList,
-                [countField]: newCount
-            });
+                [listField]: newList, [countField]: newCount });
         }
     },
 
@@ -75,19 +77,42 @@ const PostService = {
             comments.push(comment);
             await updateDoc(postRef, { comments: comments });
         }
+    },
+
+    async votePoll(postId, username, optionId) {
+        const postRef = doc(window.db, "posts", postId);
+        const postSnap = await getDoc(postRef);
+        if (postSnap.exists()) {
+            let poll = postSnap.data().poll;
+            if (!poll) return;
+
+            if (!poll.voters) poll.voters = {};
+            const previousVoteId = poll.voters[username];
+
+            if (previousVoteId !== undefined) {
+                const oldOpt = poll.options.find(o => o.id === previousVoteId);
+                if (oldOpt) oldOpt.votes = Math.max(0, oldOpt.votes - 1);
+            }
+
+            if (previousVoteId === optionId) {
+                delete poll.voters[username];
+            } else {
+                poll.voters[username] = optionId;
+                const newOpt = poll.options.find(o => o.id === optionId);
+                if (newOpt) newOpt.votes++;
+            }
+            await updateDoc(postRef, { poll: poll });
+        }
     }
 };
 
 const AuthService = {
-    // Nova função de Login
     async login(identifier, password) {
         const users = await this.getUsers();
-        // Procura o utilizador pelo username ou email no Firestore
         const userData = users.find(u => u.email === identifier || u.username === identifier);
 
         if (!userData) throw new Error("Utilizador não encontrado.");
 
-        // Autentica no Firebase usando o email encontrado
         await signInWithEmailAndPassword(window.auth, userData.email, password);
         localStorage.setItem('pintada_active_user', userData.username);
         return userData;
@@ -110,10 +135,7 @@ const AuthService = {
     },
 
     async register(userData) {
-        // 1. Cria a conta no Firebase Authentication
         await createUserWithEmailAndPassword(window.auth, userData.email, userData.password);
-
-        // 2. Guarda os dados extras no Firestore
         await setDoc(doc(window.db, "users", userData.username), {
             name: userData.name,
             username: userData.username,
@@ -128,18 +150,40 @@ const AuthService = {
         localStorage.setItem('pintada_active_user', userData.username);
     },
 
-    // Dentro do AuthService no services.js
     async updateUser(oldUsername, updatedData) {
         const userRef = doc(window.db, "users", oldUsername);
-
-        // Se o usuário mudou o @username, precisamos criar um novo documento e deletar o antigo
         if (oldUsername !== updatedData.username) {
             await setDoc(doc(window.db, "users", updatedData.username), updatedData);
             await deleteDoc(userRef);
             localStorage.setItem('pintada_active_user', updatedData.username);
         } else {
-            // Se for apenas nome/bio, apenas atualizamos o existente
             await setDoc(userRef, updatedData, { merge: true });
+        }
+    },
+
+    async toggleFollow(targetUsername) {
+        const currentUser = this.getCurrentUser();
+        if (!currentUser || currentUser === targetUsername) return;
+
+        const userRef = doc(window.db, "users", currentUser);
+        const targetRef = doc(window.db, "users", targetUsername);
+        const userSnap = await getDoc(userRef);
+        const targetSnap = await getDoc(targetRef);
+
+        if (userSnap.exists() && targetSnap.exists()) {
+            let followingList = userSnap.data().followingList || [];
+            let targetFollowers = targetSnap.data().followers || 0;
+            const index = followingList.indexOf(targetUsername);
+
+            if (index === -1) {
+                followingList.push(targetUsername);
+                targetFollowers++;
+            } else {
+                followingList.splice(index, 1);
+                targetFollowers = Math.max(0, targetFollowers - 1);
+            }
+            await updateDoc(userRef, { followingList: followingList });
+            await updateDoc(targetRef, { followers: targetFollowers });
         }
     },
 
