@@ -1,4 +1,10 @@
 import {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+import {
     collection,
     addDoc,
     getDocs,
@@ -38,19 +44,15 @@ const PostService = {
         } catch (e) { console.error("Erro ao salvar post:", e); }
     },
 
-    // Dentro de PostService no services.js
     async toggleReaction(postId, username, type) {
         const postRef = doc(window.db, "posts", postId);
         const postSnap = await getDoc(postRef);
-
         if (postSnap.exists()) {
             const postData = postSnap.data();
             const listField = type === 'like' ? 'likedBy' : 'repostedBy';
             const countField = type === 'like' ? 'likes' : 'reposts';
-
             let newList = postData[listField] || [];
             let newCount = postData[countField] || 0;
-
             if (newList.includes(username)) {
                 newList = newList.filter(u => u !== username);
                 newCount = Math.max(0, newCount - 1);
@@ -58,18 +60,14 @@ const PostService = {
                 newList.push(username);
                 newCount++;
             }
-
             await updateDoc(postRef, {
-                [listField]: newList,
-                [countField]: newCount
-            });
+                [listField]: newList, [countField]: newCount });
         }
     },
 
     async addComment(postId, comment) {
         const postRef = doc(window.db, "posts", postId);
         const postSnap = await getDoc(postRef);
-
         if (postSnap.exists()) {
             const comments = postSnap.data().comments || [];
             comments.push(comment);
@@ -79,6 +77,20 @@ const PostService = {
 };
 
 const AuthService = {
+    // Nova função de Login
+    async login(identifier, password) {
+        const users = await this.getUsers();
+        // Procura o utilizador pelo username ou email no Firestore
+        const userData = users.find(u => u.email === identifier || u.username === identifier);
+
+        if (!userData) throw new Error("Utilizador não encontrado.");
+
+        // Autentica no Firebase usando o email encontrado
+        await signInWithEmailAndPassword(window.auth, userData.email, password);
+        localStorage.setItem('pintada_active_user', userData.username);
+        return userData;
+    },
+
     async getUsers() {
         const snapshot = await getDocs(collection(window.db, "users"));
         return snapshot.docs.map(doc => doc.data());
@@ -96,12 +108,20 @@ const AuthService = {
     },
 
     async register(userData) {
+        // 1. Cria a conta no Firebase Authentication
+        await createUserWithEmailAndPassword(window.auth, userData.email, userData.password);
+
+        // 2. Guarda os dados extras no Firestore
         await setDoc(doc(window.db, "users", userData.username), {
-            ...userData,
+            name: userData.name,
+            username: userData.username,
+            email: userData.email,
             followers: 0,
             followingList: [],
             hobbies: {},
-            banner: ""
+            banner: "",
+            avatar: "",
+            bio: userData.bio || "Novo membro da Pintada! 🐆"
         });
         localStorage.setItem('pintada_active_user', userData.username);
     },
@@ -112,7 +132,7 @@ const AuthService = {
 
     async logout() {
         localStorage.removeItem('pintada_active_user');
-        if (window.auth) await window.auth.signOut();
+        if (window.auth) await signOut(window.auth);
     }
 };
 
@@ -120,7 +140,6 @@ function escapeHTML(str) {
     return str.replace(/[&<>"']/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[tag] || tag));
 }
 
-// Exportação Global para outros scripts (UI, Feed, Explore)
 window.PostService = PostService;
 window.AuthService = AuthService;
 window.escapeHTML = escapeHTML;
