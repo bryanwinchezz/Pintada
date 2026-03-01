@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorar | Pintada</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="shortcut icon" href="pintada_ico.png" type="image/x-icon">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+            <a href="index.html" style="display: flex; text-decoration: none; outline: none; border: none; background: transparent;">
+                <img src="pintada.png" alt="Logo Pintada" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: -10px 0; flex-shrink: 0; border: none;">
+            </a>
+        </div>
+        <div class="nav-search"><span class="material-symbols-outlined search-icon">search</span><input type="text" placeholder="Pesquisar na rede..."></div>
+        <div class="nav-actions">
+            <button class="icon-btn" id="theme-toggle"><span class="material-symbols-outlined" id="theme-icon">dark_mode</span></button>
+            <a href="profile.html" class="profile-pic"><img src="" alt="Perfil" class="profile-page-avatar"></a>
+        </div>
+    </nav>
+
+    <div class="layout-grid">
+        <aside class="sidebar-left">
+            <div class="sidebar-menu">
+                <a href="index.html" class="menu-item">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="menu-text">Início</span>
+                </a>
+                <a href="explore.html" class="menu-item">
+                    <span class="material-symbols-outlined">explore</span>
+                    <span class="menu-text">Explorar</span>
+                </a>
+                <a href="notifications.html" class="menu-item">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="menu-text">Notificações</span>
+                </a>
+                <a href="messages.html" class="menu-item">
+                    <span class="material-symbols-outlined">mail</span>
+                    <span class="menu-text">Mensagens</span>
+                </a>
+                <a href="profile.html" class="menu-item">
+                    <span class="material-symbols-outlined">person</span>
+                    <span class="menu-text">Perfil</span>
+                </a>
+                <a href="settings.html" class="menu-item">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="menu-text">Configurações</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="feed-container">
+            <div style="margin-bottom: 1.5rem; border-bottom: 2px solid var(--brand-gradient); padding-bottom: 0.5rem;">
+                <h2>Explorar</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Descubra novas pessoas e os posts mais badalados.</p>
+            </div>
+
+            <h3 style="margin-bottom: 1rem; color: var(--text-main); font-size: 1.1rem;">Sugestões para você</h3>
+
+            <div id="suggested-users-area" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 2.5rem;">
+                <p style="color: var(--text-muted);">Carregando sugestões...</p>
+            </div>
+
+            <h3 style="margin-bottom: 1rem; color: var(--text-main); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="color: #D97A00;">trending_up</span> Em Alta na Pintada
+            </h3>
+
+            <div id="explore-posts-render-area"></div>
+        </main>
+
+        <aside class="sidebar-right">
+            <div class="widget">
+                <h3 class="widget-title">O que está acontecendo</h3>
+                <div class="trending-item">
+                    <span class="trending-meta">Comunidade • Assunto do Momento</span>
+                    <h4 class="trending-title" style="color: #D97A00;">#Pintada</h4>
+                    <span class="trending-stats">Recomendado para você</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <nav class="mobile-bottom-nav">
+        <a href="index.html" class="mobile-item"><span class="material-symbols-outlined">home</span></a>
+        <a href="explore.html" class="mobile-item"><span class="material-symbols-outlined">explore</span></a>
+        <a href="notifications.html" class="mobile-item"><span class="material-symbols-outlined">notifications</span></a>
+        <a href="messages.html" class="mobile-item"><span class="material-symbols-outlined">mail</span></a>
+        <a href="profile.html" class="mobile-item"><span class="material-symbols-outlined">person</span></a>
+    </nav>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script src="js/theme.js"></script>
+    <script type="module" src="js/services.js"></script>
+    <script type="module" src="js/ui.js"></script>
+    <script src="js/feed.js"></script>
+    <script src="js/explore.js"></script>
+</body>
+
+</html>

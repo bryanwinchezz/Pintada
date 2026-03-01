@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações | Pintada</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+            <a href="index.html" style="display: flex; text-decoration: none; outline: none; border: none; background: transparent;">
+                <img src="pintada.png" alt="Logo Pintada" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: -10px 0; flex-shrink: 0; border: none;">
+            </a>
+        </div>
+        <div class="nav-search"><span class="material-symbols-outlined search-icon">search</span><input type="text" placeholder="Pesquisar..."></div>
+        <div class="nav-actions">
+            <button class="icon-btn" id="theme-toggle"><span class="material-symbols-outlined" id="theme-icon">dark_mode</span></button>
+            <a href="profile.html" class="profile-pic"><img src="https://ui-avatars.com/api/?name=Admin&background=F4B41A&color=fff" alt="Perfil"></a>
+        </div>
+    </nav>
+
+    <div class="layout-grid">
+        <aside class="sidebar-left">
+            <div class="sidebar-menu">
+                <a href="index.html" class="menu-item">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="menu-text">Início</span>
+                </a>
+                <a href="explore.html" class="menu-item">
+                    <span class="material-symbols-outlined">explore</span>
+                    <span class="menu-text">Explorar</span>
+                </a>
+                <a href="notifications.html" class="menu-item">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="menu-text">Notificações</span>
+                </a>
+                <a href="messages.html" class="menu-item">
+                    <span class="material-symbols-outlined">mail</span>
+                    <span class="menu-text">Mensagens</span>
+                </a>
+                <a href="profile.html" class="menu-item">
+                    <span class="material-symbols-outlined">person</span>
+                    <span class="menu-text">Perfil</span>
+                </a>
+                <a href="settings.html" class="menu-item active">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="menu-text">Configurações</span>
+                </a>
+
+                <a href="#" class="menu-item" id="logout-btn" style="color: #EF4444; margin-top: 30px;">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span class="menu-text">Sair</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="feed-container">
+            <h2 style="margin-bottom: 1.5rem; border-bottom: 2px solid var(--brand-gradient); padding-bottom: 0.5rem; width: fit-content;">Configurações da Conta</h2>
+
+            <div class="settings-list">
+                <div class="settings-card open-modal-btn" data-modal="modal-profile">
+                    <div class="settings-icon"><span class="material-symbols-outlined">manage_accounts</span></div>
+                    <div class="settings-info">
+                        <h3>Informações do Perfil</h3>
+                        <p>Altere sua foto, nome, biografia, links e dados pessoais.</p>
+                    </div>
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </div>
+
+                <div class="settings-card open-modal-btn" data-modal="modal-email">
+                    <div class="settings-icon"><span class="material-symbols-outlined">mail</span></div>
+                    <div class="settings-info">
+                        <h3>Endereço de E-mail</h3>
+                        <p>Gerencie o e-mail vinculado à sua conta.</p>
+                    </div>
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </div>
+
+                <div class="settings-card open-modal-btn" data-modal="modal-password">
+                    <div class="settings-icon"><span class="material-symbols-outlined">lock</span></div>
+                    <div class="settings-info">
+                        <h3>Alterar Senha</h3>
+                        <p>Atualize sua senha para manter sua conta segura.</p>
+                    </div>
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </div>
+
+                <div class="settings-card open-modal-btn" data-modal="modal-hobbies">
+                    <div class="settings-icon"><span class="material-symbols-outlined">interests</span></div>
+                    <div class="settings-info">
+                        <h3>Interesses e Hobbies</h3>
+                        <p>Adicione seus filmes, jogos, séries e músicas favoritas.</p>
+                    </div>
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </div>
+            </div>
+        </main>
+
+        <aside class="sidebar-right"></aside>
+    </div>
+
+    <div class="modal-overlay" id="modal-profile">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Perfil</h2>
+                <button class="icon-btn close-modal-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-profile" class="settings-form">
+
+                    <div class="banner-upload-group" id="settings-banner-preview">
+                        <button class="banner-upload-btn" type="button" onclick="document.getElementById('banner-upload').click()">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">add_a_photo</span> Mudar Capa
+                        </button>
+                        <input type="file" id="banner-upload" name="banner" accept="image/*" style="display:none;">
+
+                        <div class="avatar-on-banner">
+                            <img src="https://ui-avatars.com/api/?name=Admin&background=F4B41A&color=fff" alt="Avatar" class="avatar-preview" id="settings-avatar-preview">
+                            <div class="upload-btn-wrapper">
+                                <button class="btn-outline" type="button" onclick="document.getElementById('avatar-upload').click()" style="background: var(--card-bg);">Mudar Foto</button>
+                                <input type="file" id="avatar-upload" name="avatar" accept="image/*" style="display:none;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nome Completo <span class="req">*</span></label>
+                            <input type="text" id="edit-name" required placeholder="Ex: João Silva">
+                        </div>
+                        <div class="form-group">
+                            <label>Nome de Usuário (Sem @) <span class="req">*</span></label>
+                            <input type="text" id="edit-username" required placeholder="Ex: joaosilva">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Biografia</label>
+                        <textarea id="edit-bio" rows="3" placeholder="Fale um pouco sobre você..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Telefone</label>
+                            <input type="tel" placeholder="(00) 00000-0000">
+                        </div>
+                        <div class="form-group">
+                            <label>Link / Site</label>
+                            <input type="url" placeholder="https://seusite.com">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Data de Nascimento</label>
+                            <input type="date">
+                        </div>
+                        <div class="form-group">
+                            <label>Gênero</label>
+                            <select>
+                                <option value="">Selecione...</option>
+                                <option value="masculino">Masculino</option>
+                                <option value="feminino">Feminino</option>
+                                <option value="nao-binario">Não-binário</option>
+                                <option value="outro">Outro / Prefiro não dizer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Pronomes</label>
+                            <select id="edit-pronouns">
+                                <option value="">Selecione...</option>
+                                <option value="Ele/Dele">Ele/Dele</option>
+                                <option value="Ela/Dela">Ela/Dela</option>
+                                <option value="Elu/Delu">Elu/Delu</option>
+                                <option value="Qualquer pronome">Qualquer pronome</option>
+                                <option value="Pergunte-me">Pergunte-me</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Relacionamento</label>
+                            <select>
+                                <option value="">Selecione...</option>
+                                <option value="solteiro">Solteiro(a)</option>
+                                <option value="casado">Casado(a)</option>
+                                <option value="namorando">Namorando</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn-primary">Salvar Alterações</button>
+                    </div>
+
+                    <div class="danger-zone">
+                        <h4>Zona de Perigo</h4>
+                        <p>Ao apagar sua conta, todos os seus dados e postagens serão perdidos permanentemente.</p>
+                        <button type="button" class="btn-danger">Apagar Conta</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-email">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Atualizar E-mail</h2>
+                <button class="icon-btn close-modal-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <form class="settings-form">
+                    <div class="form-group">
+                        <label>E-mail Atual</label>
+                        <input type="email" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Novo E-mail <span class="req">*</span></label>
+                        <input type="email" required placeholder="Digite o novo e-mail">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn-primary">Atualizar E-mail</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-password">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Alterar Senha</h2>
+                <button class="icon-btn close-modal-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <form class="settings-form">
+                    <div class="form-group">
+                        <label>Senha Atual <span class="req">*</span></label>
+                        <input type="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nova Senha <span class="req">*</span></label>
+                        <input type="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Nova Senha <span class="req">*</span></label>
+                        <input type="password" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn-primary">Salvar Nova Senha</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-hobbies">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Interesses e Hobbies</h2>
+                <button class="icon-btn close-modal-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>Nome do campo <span class="req">*</span></label>
+                    <select id="hobby-theme">
+                        <option value="">Selecione</option>
+                        <option value="Filmes">Filmes</option>
+                        <option value="Jogos">Jogos</option>
+                        <option value="Músicas">Músicas</option>
+                        <option value="Séries">Séries</option>
+                        <option value="Livros">Livros</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Conteúdo do campo <span class="req">*</span></label>
+                    <input type="text" id="hobby-input" placeholder="Digite e pressione Enter ou vírgula">
+                    <small style="color: var(--text-muted); margin-top: 4px; display: block;">Máximo de 5 itens por campo.</small>
+                </div>
+
+                <div class="hobbies-list-container">
+                    <p>Campos adicionados</p>
+                    <div id="hobbies-list-render">
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="margin-top: 24px;">
+                    <button type="button" id="save-hobbies-btn" class="btn-primary" style="width: 100%; background: #B05C2B;">Atualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-adjust-image">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header">
+                <h2>Confirmar Imagem</h2>
+                <button class="icon-btn close-modal-btn" id="cancel-adjust-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">Confira como sua imagem vai ficar antes de aplicar.</p>
+                <div id="adjust-preview-container">
+                    <img id="adjust-preview-img" src="" alt="Pré-visualização">
+                </div>
+                <div class="modal-footer" style="justify-content: space-between; gap: 10px;">
+                    <button class="btn-outline" style="flex: 1;" id="cancel-adjust-btn-2">Cancelar</button>
+                    <button class="btn-primary" style="flex: 1;" id="confirm-adjust-btn">Aplicar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-delete-account">
+        <div class="modal-content" style="max-width: 450px; text-align: center;">
+            <div class="modal-header">
+                <h2 style="color: #EF4444;">Apagar Conta</h2>
+                <button class="icon-btn close-modal-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <div style="background: rgba(239, 68, 68, 0.1); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                    <span class="material-symbols-outlined" style="color: #EF4444; font-size: 32px;">warning</span>
+                </div>
+
+                <p style="font-size: 1rem; color: var(--text-main); margin-bottom: 10px;">
+                    <strong>Você tem certeza absoluta?</strong>
+                </p>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
+                    Essa ação é irreversível. Todas as suas publicações, curtidas, comentários e seguidores serão permanentemente apagados da Pintada.
+                </p>
+
+                <div style="background: var(--hover-bg); padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: left; border: 1px solid var(--border-color);">
+                    <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: bold; display: block; margin-bottom: 6px;">
+                        Para confirmar, digite: <span id="delete-username-display" style="color: var(--text-main); user-select: all;"></span>
+                    </label>
+                    <input type="text" id="delete-username-input" autocomplete="off" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--card-bg); color: var(--text-main); font-size: 0.95rem; outline: none;">
+                </div>
+
+                <div class="modal-footer" style="justify-content: space-between; gap: 10px; margin-top: 0;">
+                    <button type="button" class="btn-outline close-modal-btn" style="flex: 1;">Cancelar</button>
+                    <button type="button" class="btn-primary" id="confirm-delete-account-btn" style="flex: 1; background: #EF4444;">Excluir Conta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="mobile-bottom-nav">
+        <a href="index.html" class="mobile-item"><span class="material-symbols-outlined">home</span></a>
+        <a href="explore.html" class="mobile-item"><span class="material-symbols-outlined">explore</span></a>
+        <a href="notifications.html" class="mobile-item"><span class="material-symbols-outlined">notifications</span></a>
+        <a href="messages.html" class="mobile-item"><span class="material-symbols-outlined">mail</span></a>
+        <a href="profile.html" class="mobile-item"><span class="material-symbols-outlined">person</span></a>
+        <a href="#" class="mobile-item" id="logout-btn" style="color: #EF4444; margin-top: 30px;"><span class="material-symbols-outlined">logout</span></a>
+    </nav>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script src="js/theme.js"></script>
+    <script type="module" src="js/services.js"></script>
+    <script type="module" src="js/ui.js"></script>
+</body>
+
+</html>

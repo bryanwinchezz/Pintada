@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pintada</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="shortcut icon" href="pintada_ico.png" type="image/x-icon">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+            <a href="index.html" style="display: flex; text-decoration: none; outline: none; border: none; background: transparent;">
+                <img src="pintada.png" alt="Logo Pintada" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: -10px 0; flex-shrink: 0; border: none;">
+            </a>
+        </div>
+
+        <div class="nav-search">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" placeholder="Pesquisar na rede...">
+        </div>
+
+        <div class="nav-actions">
+            <button class="icon-btn" id="theme-toggle" title="Alternar Tema">
+                <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+            </button>
+            <a href="profile.html" class="profile-pic" title="Meu Perfil">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=F4B41A&color=fff" alt="Perfil">
+            </a>
+        </div>
+    </nav>
+
+    <div class="layout-grid">
+
+        <aside class="sidebar-left">
+            <div class="sidebar-menu">
+                <a href="index.html" class="menu-item">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="menu-text">Início</span>
+                </a>
+                <a href="explore.html" class="menu-item">
+                    <span class="material-symbols-outlined">explore</span>
+                    <span class="menu-text">Explorar</span>
+                </a>
+                <a href="notifications.html" class="menu-item">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="menu-text">Notificações</span>
+                </a>
+                <a href="messages.html" class="menu-item">
+                    <span class="material-symbols-outlined">mail</span>
+                    <span class="menu-text">Mensagens</span>
+                </a>
+                <a href="profile.html" class="menu-item">
+                    <span class="material-symbols-outlined">person</span>
+                    <span class="menu-text">Perfil</span>
+                </a>
+                <a href="settings.html" class="menu-item">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="menu-text">Configurações</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="feed-container">
+
+            <section class="create-post">
+                <div class="create-post-header">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=F4B41A&color=fff" alt="Seu Perfil" class="post-avatar">
+                    <textarea id="post-input" placeholder="O que você quer compartilhar na Pintada?"></textarea>
+                </div>
+
+                <div id="emoji-panel" class="media-panel" style="display: none;">
+                    <div id="emoji-list" class="emoji-list">
+                        <p style="font-size: 14px; padding: 10px; color: var(--text-muted);">Carregando emojis...</p>
+                    </div>
+                </div>
+
+                <div id="gif-panel" class="media-panel" style="display: none;">
+                    <input type="text" id="gif-search-input" placeholder="Pesquisar no Giphy...">
+                    <div id="gif-results" class="media-results"></div>
+                </div>
+
+                <div id="poll-panel" class="media-panel" style="display: none; padding: 16px;">
+                    <input type="text" id="poll-question-input" placeholder="Faça uma pergunta... (Ex: Qual sua cor favorita?)" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-main); outline: none; font-size: 1rem; font-weight: bold; margin-bottom: 16px;">
+
+                    <div id="poll-options-container">
+                        <div class="poll-opt-row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <input type="text" class="poll-opt-input" placeholder="Opção 1" style="flex-grow: 1; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-main); outline: none; font-size: 0.95rem;">
+                            <button type="button" class="icon-btn remove-opt-btn" title="Excluir opção"><span class="material-symbols-outlined" style="color: var(--text-muted);">close</span></button>
+                        </div>
+                        <div class="poll-opt-row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <input type="text" class="poll-opt-input" placeholder="Opção 2" style="flex-grow: 1; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-main); outline: none; font-size: 0.95rem;">
+                            <button type="button" class="icon-btn remove-opt-btn" title="Excluir opção"><span class="material-symbols-outlined" style="color: var(--text-muted);">close</span></button>
+                        </div>
+                    </div>
+
+                    <button id="add-poll-opt-btn" class="btn-outline" style="font-size: 0.9rem; padding: 8px 16px; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">add</span> Adicionar opção
+                    </button>
+                </div>
+
+                <div id="selected-gif-preview" style="display: none; position: relative; margin-bottom: 10px; width: fit-content;">
+                    <img src="" style="max-height: 200px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <button id="remove-gif-btn" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center;">X</button>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 15px 0;">
+
+                <div class="create-post-footer" style="display: flex; justify-content: space-between; align-items: center;">
+
+                    <div class="create-post-tools" style="display: flex; gap: 10px; border: none; padding: 0;">
+                        <button class="tool-btn" id="add-emoji-btn" style="background: none; border: none; color: var(--brand-color, #F4B41A); cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 14px; padding: 5px; transition: 0.2s; border-radius: 50%;"
+                            onmouseover="this.style.background='rgba(244, 180, 26, 0.1)'" onmouseout="this.style.background='none'">
+                            <span class="material-symbols-outlined">sentiment_satisfied</span>
+                        </button>
+                        <button class="tool-btn" id="add-gif-btn" style="background: none; border: none; color: var(--brand-color, #F4B41A); cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 14px; padding: 5px; transition: 0.2s; border-radius: 50%;" onmouseover="this.style.background='rgba(244, 180, 26, 0.1)'"
+                            onmouseout="this.style.background='none'">
+                            <span class="material-symbols-outlined">gif_box</span>
+                        </button>
+                        <button class="tool-btn" id="add-poll-btn" style="background: none; border: none; color: var(--brand-color, #F4B41A); cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 14px; padding: 5px; transition: 0.2s; border-radius: 50%;"
+                            onmouseover="this.style.background='rgba(244, 180, 26, 0.1)'" onmouseout="this.style.background='none'">
+                            <span class="material-symbols-outlined">poll</span>
+                        </button>
+                    </div>
+
+                    <div class="create-post-actions" style="border: none;">
+                        <button class="btn-primary" id="publish-btn" style="border-radius: 20px; padding: 8px 20px; font-weight: bold;">Postar</button>
+                    </div>
+                </div>
+            </section>
+
+            <div id="posts-render-area"></div>
+
+        </main>
+
+        <aside class="sidebar-right">
+            <div class="widget">
+                <h3 class="widget-title">O que está acontecendo</h3>
+
+                <div class="trending-item">
+                    <span class="trending-meta">Tecnologia • Assunto do Momento</span>
+                    <h4 class="trending-title">#PintadaChegou!</h4>
+                    <span class="trending-stats">15.4K posts</span>
+                </div>
+
+                <div class="trending-item">
+                    <span class="trending-meta">Design • Assunto do Momento</span>
+                    <h4 class="trending-title">#DesignPintada</h4>
+                    <span class="trending-stats">8.1K posts</span>
+                </div>
+
+                <div class="trending-item">
+                    <span class="trending-meta">Programação • Assunto do Momento</span>
+                    <h4 class="trending-title">Programação do Pintada</h4>
+                    <span class="trending-stats">4.2K posts</span>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <nav class="mobile-bottom-nav">
+        <a href="index.html" class="mobile-item"><span class="material-symbols-outlined">home</span></a>
+        <a href="explore.html" class="mobile-item"><span class="material-symbols-outlined">explore</span></a>
+        <a href="notifications.html" class="mobile-item"><span class="material-symbols-outlined">notifications</span></a>
+        <a href="messages.html" class="mobile-item"><span class="material-symbols-outlined">mail</span></a>
+        <a href="profile.html" class="mobile-item"><span class="material-symbols-outlined">person</span></a>
+    </nav>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script src="js/theme.js"></script>
+    <script type="module" src="js/services.js"></script>
+    <script type="module" src="js/ui.js"></script>
+    <script src="js/feed.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Perfil | Pintada</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+            <a href="index.html" style="display: flex; text-decoration: none; outline: none; border: none; background: transparent;">
+                <img src="pintada.png" alt="Logo Pintada" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: -10px 0; flex-shrink: 0; border: none;">
+            </a>
+        </div>
+
+        <div class="nav-search">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" placeholder="Pesquisar na rede...">
+        </div>
+
+        <div class="nav-actions">
+            <button class="icon-btn" id="theme-toggle" title="Alternar Tema">
+                <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+            </button>
+            <a href="profile.html" class="profile-pic" title="Meu Perfil">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=F4B41A&color=fff" alt="Perfil">
+            </a>
+        </div>
+    </nav>
+
+    <div class="layout-grid">
+
+        <aside class="sidebar-left">
+            <div class="sidebar-menu">
+                <a href="index.html" class="menu-item">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="menu-text">Início</span>
+                </a>
+                <a href="explore.html" class="menu-item">
+                    <span class="material-symbols-outlined">explore</span>
+                    <span class="menu-text">Explorar</span>
+                </a>
+                <a href="notifications.html" class="menu-item">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="menu-text">Notificações</span>
+                </a>
+                <a href="messages.html" class="menu-item">
+                    <span class="material-symbols-outlined">mail</span>
+                    <span class="menu-text">Mensagens</span>
+                </a>
+                <a href="profile.html" class="menu-item">
+                    <span class="material-symbols-outlined">person</span>
+                    <span class="menu-text">Perfil</span>
+                </a>
+                <a href="settings.html" class="menu-item">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="menu-text">Configurações</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="feed-container">
+
+            <div class="profile-page-header">
+                <div class="profile-banner" id="profile-page-banner"></div>
+                <div class="profile-info-section">
+                    <div class="profile-avatar-row">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=F4B41A&color=fff" alt="Perfil" class="profile-page-avatar">
+                        <a href="settings.html?openModal=modal-profile" class="btn-outline" style="text-decoration: none; display: inline-block;">Editar perfil</a>
+                    </div>
+
+                    <div class="profile-text-info">
+                        <h2 class="profile-name">Você (Admin)</h2>
+                        <span class="profile-handle">@admin_pintada</span>
+
+                        <p class="profile-bio">Desenvolvedor e criador da Pintada. Apaixonado por código limpo, interfaces modernas e muito café. 🐆☕</p>
+
+                        <div class="profile-details-row">
+                            <span><span class="material-symbols-outlined">calendar_month</span> Ingressou em Fevereiro de 2026</span>
+                        </div>
+
+                        <div class="profile-stats">
+                            <span><strong id="profile-following-count">0</strong> Seguindo</span>
+                            <span><strong id="profile-followers-count">0</strong> Seguidores</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-tabs">
+                <button class="profile-tab active" data-tab="postagens">Postagens</button>
+                <button class="profile-tab" data-tab="republicados">Republicados</button>
+                <button class="profile-tab" data-tab="respostas">Respostas</button>
+                <button class="profile-tab" data-tab="curtidas">Curtidas</button>
+            </div>
+
+            <div id="profile-posts-render-area">
+                <p style="text-align: center; color: var(--text-muted); padding: 20px;">Carregando...</p>
+            </div>
+
+        </main>
+
+        <aside class="sidebar-right">
+            <div class="widget">
+                <h3 class="widget-title">O que está acontecendo</h3>
+                <div class="trending-item">
+                    <span class="trending-meta">Tecnologia • Assunto do Momento</span>
+                    <h4 class="trending-title">#PintadaChegou!</h4>
+                    <span class="trending-stats">15.4K posts</span>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <nav class="mobile-bottom-nav">
+        <a href="index.html" class="mobile-item"><span class="material-symbols-outlined">home</span></a>
+        <a href="explore.html" class="mobile-item"><span class="material-symbols-outlined">explore</span></a>
+        <a href="notifications.html" class="mobile-item"><span class="material-symbols-outlined">notifications</span></a>
+        <a href="messages.html" class="mobile-item"><span class="material-symbols-outlined">mail</span></a>
+        <a href="profile.html" class="mobile-item"><span class="material-symbols-outlined">person</span></a>
+    </nav>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script src="js/theme.js"></script>
+    <script type="module" src="js/services.js"></script>
+    <script type="module" src="js/ui.js"></script>
+    <script src="js/feed.js"></script>
+</body>
+
+</html>
