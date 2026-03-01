@@ -3,6 +3,38 @@
 // ==========================================
 import { doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+// 1. Função para alternar visibilidade da senha
+function initPasswordToggle() {
+    const toggles = document.querySelectorAll('.toggle-password');
+
+    toggles.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // O input de senha está logo antes do ícone (span) no seu HTML
+            const input = btn.previousElementSibling;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = 'visibility'; // Muda o ícone para "olho aberto"
+            } else {
+                input.type = 'password';
+                btn.textContent = 'visibility_off'; // Volta para "olho cortado"
+            }
+        });
+    });
+}
+
+// 2. Adicione a chamada dentro do seu DOMContentLoaded já existente:
+document.addEventListener('DOMContentLoaded', () => {
+    initPasswordToggle(); // <--- Adicione esta linha aqui!
+    initAuthToggles();
+    initLoginForm();
+    initRegisterForm();
+
+    if (typeof AuthService !== 'undefined' && AuthService.getCurrentUser()) {
+        if (typeof loadUserDataUI === 'function') loadUserDataUI();
+    }
+});
+
 // 1. FUNÇÃO GLOBAL DE NOTIFICAÇÃO (TOAST)
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
