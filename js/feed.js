@@ -277,14 +277,14 @@ async function renderTrendingTopics() {
     const trendingContainer = document.querySelector('.sidebar-right .widget');
     if (!trendingContainer) return;
 
-    // Aqui simulamos assuntos baseados nos posts reais ou definimos fixos
+    // Assuntos estáticos para o widget
     const topics = [
-        { category: 'Tecnologia', title: '#PintadaChegou', stats: '15.4K posts' },
-        { category: 'Desenvolvimento', title: 'JavaScript', stats: '8.1K posts' },
-        { category: 'Esportes', title: 'Corinthians', stats: 'Trending em SP' }
+        { category: 'Tecnologia', title: '#PintadaNoAr', stats: '1.2K posts' },
+        { category: 'Futebol', title: 'Corinthians', stats: '25.4K posts' },
+        { category: 'Design', title: '#UIUX', stats: '4.2K posts' }
     ];
 
-    const html = `
+    trendingContainer.innerHTML = `
         <h3 class="widget-title">O que está acontecendo</h3>
         ${topics.map(t => `
             <div class="trending-item">
@@ -294,10 +294,9 @@ async function renderTrendingTopics() {
             </div>
         `).join('')}
     `;
-    trendingContainer.innerHTML = html;
 }
 
-// Torna a função global para o feed.js conseguir chamar
+// Garante que a função fique disponível globalmente para ser chamada pelo renderAllFeeds
 window.renderTrendingTopics = renderTrendingTopics;
 
 document.querySelectorAll('.profile-tab').forEach(btn => {

@@ -113,42 +113,73 @@ function initRegisterForm() {
     }
 }
 
-// No final do ui.js, dentro do DOMContentLoaded
-const formProfile = document.getElementById('form-profile');
-if (formProfile) {
-    formProfile.onsubmit = async(e) => {
-        e.preventDefault();
-        const activeUsername = AuthService.getCurrentUser();
-        const user = await AuthService.getUserData(activeUsername);
+// 5. CARREGAR DADOS DO USUÁRIO NO PERFIL E CONFIGURAÇÕES
+async function loadUserDataUI() {
+    const activeUsername = AuthService.getCurrentUser();
+    if (!activeUsername) return;
 
-        if (user) {
-            const oldUsername = user.username;
-            user.name = document.getElementById('edit-name').value;
-            user.username = document.getElementById('edit-username').value;
-            user.bio = document.getElementById('edit-bio').value;
+    // Busca os dados atualizados direto do Firebase
+    const user = await AuthService.getUserData(activeUsername);
+    if (!user) return;
 
-            try {
-                await AuthService.updateUser(oldUsername, user);
-                showToast('Perfil atualizado com sucesso! 🐆');
-                location.reload(); // Recarrega para aplicar as mudanças
-            } catch (error) {
-                showToast('Erro ao atualizar: ' + error.message, 'error');
-            }
-        }
-    };
+    // Preenche nomes e bios nas páginas (Index, Profile, Settings)
+    document.querySelectorAll('.profile-name').forEach(el => el.textContent = user.name || "Utilizador");
+    document.querySelectorAll('.profile-handle').forEach(el => el.textContent = `@${user.username}`);
+    document.querySelectorAll('.profile-bio').forEach(el => el.textContent = user.bio || "Membro da Pintada 🐆");
+
+    // Preenche os campos de edição nas Configurações
+    if (document.getElementById('edit-name')) document.getElementById('edit-name').value = user.name || "";
+    if (document.getElementById('edit-username')) document.getElementById('edit-username').value = user.username || "";
+    if (document.getElementById('edit-bio')) document.getElementById('edit-bio').value = user.bio || "";
+
+    // Atualiza as fotos de perfil em toda a rede
+    const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=F4B41A&color=fff`;
+    document.querySelectorAll('.profile-pic img, .profile-page-avatar, #settings-avatar-preview, .post-avatar').forEach(img => img.src = avatarUrl);
 }
 
-// 5. INICIALIZAÇÃO GERAL
+// 6. SALVAR ALTERAÇÕES DO PERFIL
+function initProfileForm() {
+    const formProfile = document.getElementById('form-profile');
+    if (formProfile) {
+        formProfile.onsubmit = async(e) => {
+            e.preventDefault();
+            const activeUsername = AuthService.getCurrentUser();
+
+            const updatedData = {
+                name: document.getElementById('edit-name').value.trim(),
+                username: document.getElementById('edit-username').value.trim(),
+                bio: document.getElementById('edit-bio').value.trim()
+            };
+
+            try {
+                // Usa a função saveUserData que já existe no seu services.js
+                await AuthService.saveUserData(activeUsername, updatedData);
+                showToast('Perfil atualizado com sucesso! 🐆');
+
+                // Se o nome de usuário mudou, precisamos atualizar a sessão
+                if (updatedData.username !== activeUsername) {
+                    localStorage.setItem('pintada_active_user', updatedData.username);
+                }
+
+                setTimeout(() => location.reload(), 1000); // Recarrega para aplicar as mudanças
+            } catch (error) {
+                showToast('Erro ao salvar: ' + error.message, 'error');
+            }
+        };
+    }
+}
+
+// 7. INICIALIZAÇÃO GERAL (Atualizada)
 document.addEventListener('DOMContentLoaded', () => {
     initAuthToggles();
     initLoginForm();
     initRegisterForm();
+    initPasswordToggle();
+    initProfileForm(); // Ativa o formulário de edição
 
-    // Se estiver em outra página, carrega a UI do usuário
     if (typeof AuthService !== 'undefined' && AuthService.getCurrentUser()) {
-        if (typeof loadUserDataUI === 'function') loadUserDataUI();
+        loadUserDataUI();
     }
 });
 
-// Exporta para o window para outros scripts usarem
 window.showToast = showToast;
