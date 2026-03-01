@@ -30,9 +30,7 @@ function generatePostHTML(post, currentUser) {
     let displayTime = post.timestamp ? timeAgo(post.timestamp) : post.time;
     let parsedContent = window.escapeHTML(post.content).replace(/\n/g, '<br>');
 
-    // TAG DE EDITADO
     let editedTag = post.isEdited ? `<span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 5px;">(Editado)</span>` : '';
-
     let mediaHTML = post.gif ? `<div class="post-media-container" style="margin-top: 12px;"><img src="${post.gif}" style="border-radius: 12px; max-width: 100%; border: 1px solid var(--border-color);"></div>` : '';
 
     let pollHTML = '';
@@ -92,7 +90,7 @@ function generatePostHTML(post, currentUser) {
                 <button class="action-btn share-btn" style="display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: 0.2s;"><span class="material-symbols-outlined">share</span></button>
             </footer>
             
-            <div class="share-section"><div class="share-box"><span class="material-symbols-outlined">link</span><input type="text" readonly value="https://pintada.app/p/${post.id}"><button class="copy-btn">Copiar</button></div></div>
+            <div class="share-section"><div class="share-box"><span class="material-symbols-outlined">link</span><input type="text" readonly value="https://pintada.netlify.app/p/${post.id}"><button class="copy-btn">Copiar</button></div></div>
             <div class="comments-section ${commentSectionClass}">
                 <div class="comments-list">${commentsHTML}</div>
                 <div class="comment-input-area">
@@ -114,10 +112,10 @@ async function renderAllFeeds() {
 
     const homeArea = document.getElementById('posts-render-area');
     const profileArea = document.getElementById('profile-posts-render-area');
+    const isProfilePage = window.location.pathname.includes('profile.html');
     
-    // SISTEMA DE CARREGAMENTO SKELETON DE 3 SEGUNDOS
-    if (homeArea && !window.hasClearedFakePosts) {
-        // Apaga o HTML antigo IMEDIATAMENTE e coloca o esqueleto
+    // SISTEMA DE CARREGAMENTO SKELETON APENAS NO PERFIL
+    if (isProfilePage && profileArea && !window.hasClearedFakePosts) {
         const skeletonHTML = `
             <div class="post-card" style="padding: 16px; margin-bottom: 20px; border-radius: 16px; background: var(--card-bg);">
                 <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
@@ -127,17 +125,16 @@ async function renderAllFeeds() {
                 <div class="skeleton" style="width: 100%; height: 60px; border-radius: 8px;"></div>
             </div>`.repeat(3);
         
-        homeArea.innerHTML = skeletonHTML;
-        if (profileArea) profileArea.innerHTML = skeletonHTML;
-        
+        profileArea.innerHTML = skeletonHTML;
         window.hasClearedFakePosts = true;
-        await new Promise(r => setTimeout(r, 3000)); // Aguarda 3 segundos exatos
+        await new Promise(r => setTimeout(r, 2000)); // Carrega por 2 segundos no perfil
     }
 
     const allPosts = await window.PostService.getPosts();
     const createAvatar = document.querySelector('.create-post-header .post-avatar');
     if (createAvatar) createAvatar.src = currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=F4B41A&color=fff`;
 
+    // Carrega a Home imediatamente
     if (homeArea) homeArea.innerHTML = allPosts.map(p => generatePostHTML(p, currentUser)).join('');
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -195,7 +192,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (btnEmoji) { btnEmoji.addEventListener('click', () => { const isHidden = panelEmoji.style.display === 'none' || panelEmoji.style.display === ''; hideAllPanels(); if (isHidden) panelEmoji.style.display = 'grid'; }); }
-    document.querySelectorAll('.emoji-btn').forEach(btn => { btn.addEventListener('click', (e) => { if (postInput) postInput.value += e.target.textContent; }); });
+    
+    // CORREÇÃO DOS EMOJIS (Captura de forma dinâmica qualquer emoji clicado no painel)
+    if (panelEmoji) {
+        panelEmoji.addEventListener('click', (e) => {
+            const btn = e.target.closest('.emoji-btn');
+            if (btn && postInput) {
+                e.preventDefault();
+                postInput.value += btn.textContent.trim();
+            }
+        });
+    }
+
     if (btnGif) { btnGif.addEventListener('click', () => { const isHidden = panelGif.style.display === 'none' || panelGif.style.display === ''; hideAllPanels(); if (isHidden) panelGif.style.display = 'block'; }); }
     if (btnPoll) { btnPoll.addEventListener('click', () => { const isHidden = panelPoll.style.display === 'none' || panelPoll.style.display === ''; hideAllPanels(); if (isHidden) panelPoll.style.display = 'block'; }); }
 
@@ -328,9 +336,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.target.closest('.delete-post-btn') && confirm("Apagar permanentemente?")) { await window.PostService.deletePost(postId); renderAllFeeds(); }
         
-        // LÓGICA DE COMPARTILHAR REAL NO CELULAR / PC
+        // CORREÇÃO: URL OFICIAL NETLIFY PARA COMPARTILHAMENTO
         if (e.target.closest('.share-btn')) {
-            const postUrl = `https://pintada.app/p/${postId}`;
+            const postUrl = `https://pintada.netlify.app/p/${postId}`;
             if (navigator.share) {
                 navigator.share({ title: 'Pintada', text: 'Veja esta publicação na Pintada!', url: postUrl }).catch(err => console.log('Erro ao compartilhar', err));
             } else {
