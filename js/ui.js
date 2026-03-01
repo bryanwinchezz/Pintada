@@ -2,7 +2,6 @@
 // js/ui.js - INTERFACE, TOASTS, AUTH E PERFIL
 // ==========================================
 
-// 1. TOASTS E PASSWORD TOGGLE
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast-notification toast-${type}`;
@@ -34,7 +33,6 @@ function initPasswordToggle() {
     });
 }
 
-// 2. AUTH E LOGIN/REGISTO
 function initAuthToggles() {
     const showRegisterBtn = document.getElementById('show-register');
     const showLoginBtn = document.getElementById('show-login');
@@ -72,7 +70,7 @@ function initRegisterForm() {
         registerForm.onsubmit = async(e) => {
             e.preventDefault();
             const pass = document.getElementById('reg-password').value;
-            if (pass.length < 6) return showToast("A senha precisa ter pelo menos 6 caracteres.", "error");
+            if (pass.length < 6) return showToast("A palavra-passe precisa ter pelo menos 6 caracteres.", "error");
 
             try {
                 await window.AuthService.register({
@@ -90,7 +88,6 @@ function initRegisterForm() {
     }
 }
 
-// 3. PERFIL, IMAGENS E HOBBIES
 async function loadUserDataUI() {
     const activeUsername = window.AuthService.getCurrentUser();
     if (!activeUsername) return;
@@ -133,29 +130,36 @@ function initProfileForm() {
                 showToast('Perfil atualizado com sucesso! 🐆');
                 setTimeout(() => location.reload(), 1000);
             } catch (error) {
-                showToast('Erro ao salvar: ' + error.message, 'error');
+                showToast('Erro ao guardar: ' + error.message, 'error');
             }
         };
     }
 }
 
-// Lógica de Upload de Imagem
+// Lógica de Upload de Imagem e Cropper.js
 let pendingImageType = '';
-let pendingImageBase64 = '';
+let cropper = null;
 
 function processImageUpload(file, type) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
-        pendingImageBase64 = e.target.result;
         pendingImageType = type;
-        document.getElementById('adjust-preview-img').src = pendingImageBase64;
+        const imagePreview = document.getElementById('adjust-preview-img');
+        imagePreview.src = e.target.result;
+
         document.getElementById('modal-adjust-image').classList.add('active');
+
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(imagePreview, {
+            aspectRatio: type === 'avatar' ? 1 / 1 : 3 / 1,
+            viewMode: 1,
+            background: false
+        });
     };
     reader.readAsDataURL(file);
 }
 
-// 4. INICIALIZAÇÃO GERAL
 document.addEventListener('DOMContentLoaded', async() => {
     initPasswordToggle();
     initAuthToggles();
@@ -167,26 +171,31 @@ document.addEventListener('DOMContentLoaded', async() => {
         await loadUserDataUI();
     }
 
-    // Eventos de Imagem
     if (document.getElementById('avatar-upload')) document.getElementById('avatar-upload').addEventListener('change', (e) => processImageUpload(e.target.files[0], 'avatar'));
     if (document.getElementById('banner-upload')) document.getElementById('banner-upload').addEventListener('change', (e) => processImageUpload(e.target.files[0], 'banner'));
 
     document.addEventListener('click', (e) => {
         const modalAdjust = document.getElementById('modal-adjust-image');
-        if (e.target.id === 'cancel-adjust-btn' || e.target.id === 'cancel-adjust-btn-2') modalAdjust.classList.remove('active');
+        if (e.target.id === 'cancel-adjust-btn' || e.target.id === 'cancel-adjust-btn-2') {
+            modalAdjust.classList.remove('active');
+        }
         if (e.target.id === 'confirm-adjust-btn') {
-            if (pendingImageType === 'avatar') {
-                document.getElementById('settings-avatar-preview').src = pendingImageBase64;
-                window.tempAvatarBase64 = pendingImageBase64;
-            } else {
-                document.getElementById('settings-banner-preview').style.background = `url(${pendingImageBase64}) center/cover`;
-                window.tempBannerBase64 = pendingImageBase64;
+            if (cropper) {
+                const canvas = cropper.getCroppedCanvas({ width: 500 });
+                const base64Cropped = canvas.toDataURL('image/jpeg', 0.8);
+
+                if (pendingImageType === 'avatar') {
+                    document.getElementById('settings-avatar-preview').src = base64Cropped;
+                    window.tempAvatarBase64 = base64Cropped;
+                } else {
+                    document.getElementById('settings-banner-preview').style.background = `url(${base64Cropped}) center/cover`;
+                    window.tempBannerBase64 = base64Cropped;
+                }
             }
             modalAdjust.classList.remove('active');
         }
     });
 
-    // Eventos de Hobbies
     const saveHobbiesBtn = document.getElementById('save-hobbies-btn');
     if (saveHobbiesBtn) {
         const activeUser = window.AuthService.getCurrentUser();
@@ -229,13 +238,12 @@ document.addEventListener('DOMContentLoaded', async() => {
                 await window.AuthService.saveUserData(activeUser, { hobbies: savedHobbies });
                 showToast('Interesses atualizados!');
                 saveHobbiesBtn.closest('.modal-overlay').classList.remove('active');
-            } catch (e) { showToast('Erro ao salvar.', 'error'); }
+            } catch (e) { showToast('Erro ao guardar.', 'error'); }
         });
         renderFinalHobbiesList();
     }
 });
 
-// Outros modais e logout
 document.querySelectorAll('.open-modal-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const modal = document.getElementById(btn.getAttribute('data-modal'));

@@ -45,7 +45,11 @@ const PostService = {
                 timestamp: Date.now(),
                 time: "Agora mesmo"
             });
-        } catch (e) { console.error("Erro ao salvar post:", e); }
+        } catch (e) { console.error("Erro ao salvar publicação:", e); }
+    },
+
+    async deletePost(postId) {
+        await deleteDoc(doc(window.db, "posts", postId));
     },
 
     async toggleReaction(postId, username, type) {
