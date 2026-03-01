@@ -9,8 +9,10 @@ function showToast(message, type = 'success') {
     toast.innerHTML = `<span class="material-symbols-outlined toast-icon">${iconName}</span><span>${message}</span>`;
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => { toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 400); }, 3000);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+    }, 3000);
 }
 window.showToast = showToast;
 
@@ -37,9 +39,13 @@ function initPasswordToggle() {
         btn.parentNode.replaceChild(newBtn, btn);
         newBtn.addEventListener('click', () => {
             const input = newBtn.previousElementSibling;
-            if (input.type === 'password') { input.type = 'text';
-                newBtn.textContent = 'visibility'; } else { input.type = 'password';
-                newBtn.textContent = 'visibility_off'; }
+            if (input.type === 'password') {
+                input.type = 'text';
+                newBtn.textContent = 'visibility';
+            } else {
+                input.type = 'password';
+                newBtn.textContent = 'visibility_off';
+            }
         });
     });
 }
@@ -50,12 +56,16 @@ function initAuthToggles() {
     const loginSection = document.getElementById('login-section');
     const registerSection = document.getElementById('register-section');
     if (showRegisterBtn && showLoginBtn && loginSection && registerSection) {
-        showRegisterBtn.onclick = (e) => { e.preventDefault();
+        showRegisterBtn.onclick = (e) => {
+            e.preventDefault();
             loginSection.style.display = 'none';
-            registerSection.style.display = 'block'; };
-        showLoginBtn.onclick = (e) => { e.preventDefault();
+            registerSection.style.display = 'block';
+        };
+        showLoginBtn.onclick = (e) => {
+            e.preventDefault();
             registerSection.style.display = 'none';
-            loginSection.style.display = 'block'; };
+            loginSection.style.display = 'block';
+        };
     }
 }
 
@@ -97,7 +107,6 @@ async function loadUserDataUI() {
     const activeUsername = window.AuthService.getCurrentUser();
     if (!activeUsername) return;
 
-    // CORREÇÃO: Lê o usuário da URL se estiver na tela de perfil, para ver o perfil dos outros!
     let targetUsername = activeUsername;
     const urlParams = new URLSearchParams(window.location.search);
     const isProfilePage = window.location.pathname.includes('profile.html');
@@ -112,10 +121,26 @@ async function loadUserDataUI() {
         return;
     }
 
-    document.querySelectorAll('.profile-name').forEach(el => el.textContent = user.name || "Utilizador");
-    document.querySelectorAll('.profile-handle').forEach(el => el.textContent = `@${user.username}`);
-    document.querySelectorAll('.profile-bio').forEach(el => el.textContent = user.bio || "");
+    // Preenche os dados
+    document.querySelectorAll('.profile-name').forEach(el => { el.textContent = user.name || "Utilizador";
+        el.classList.remove('skeleton');
+        el.style.width = 'auto'; });
+    document.querySelectorAll('.profile-handle').forEach(el => { el.textContent = `@${user.username}`;
+        el.classList.remove('skeleton');
+        el.style.width = 'auto'; });
+    document.querySelectorAll('.profile-bio').forEach(el => { el.textContent = user.bio || "";
+        el.classList.remove('skeleton');
+        el.style.height = 'auto'; });
 
+    // Atualiza Seguidores e Remove Skeleton
+    const followingEl = document.getElementById('profile-following-count');
+    const followersEl = document.getElementById('profile-followers-count');
+    if (followingEl) { followingEl.textContent = user.followingList ? user.followingList.length : 0;
+        followingEl.classList.remove('skeleton'); }
+    if (followersEl) { followersEl.textContent = user.followers || 0;
+        followersEl.classList.remove('skeleton'); }
+
+    // Preenche Configurações
     if (document.getElementById('edit-name')) document.getElementById('edit-name').value = user.name || "";
     if (document.getElementById('edit-username')) document.getElementById('edit-username').value = user.username || "";
     if (document.getElementById('edit-bio')) document.getElementById('edit-bio').value = user.bio || "";
@@ -127,22 +152,31 @@ async function loadUserDataUI() {
     if (document.getElementById('profile-page-banner')) document.getElementById('profile-page-banner').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
     if (document.getElementById('settings-banner-preview')) document.getElementById('settings-banner-preview').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
 
-    // Se estiver no perfil de OUTRA pessoa, troca o botão de Editar por Seguir e Mensagem
-    if (isProfilePage && targetUsername !== activeUsername) {
-        const editBtn = document.querySelector('[data-modal="modal-edit-profile"]') || document.querySelector('.edit-profile-btn');
-        if (editBtn) {
+    // LÓGICA DO BOTÃO SEGUIR E MENSAGEM NO PERFIL
+    if (isProfilePage) {
+        const actionContainer = document.querySelector('.profile-avatar-row');
+        const existingBtn = actionContainer.querySelector('.btn-outline, .btn-primary');
+
+        if (targetUsername !== activeUsername) {
             const activeUserFull = await window.AuthService.getUserData(activeUsername);
             const isFollowing = activeUserFull.followingList && activeUserFull.followingList.includes(targetUsername);
 
-            const container = editBtn.parentNode;
-            container.innerHTML = `
-                <button class="btn-primary follow-btn ${isFollowing ? 'following' : ''}" data-target-user="${targetUsername}" style="padding: 8px 20px; font-weight: bold;">
-                    ${isFollowing ? 'Seguindo' : 'Seguir'}
-                </button>
-                <button class="btn-outline msg-btn" onclick="window.location.href='messages.html?chat=${targetUsername}'" style="padding: 8px 20px;">
-                    Mensagem
-                </button>
-            `;
+            if (existingBtn) existingBtn.remove(); // Remove o "Editar Perfil"
+
+            if (!document.getElementById('btn-group-others')) {
+                const btnGroup = document.createElement('div');
+                btnGroup.id = 'btn-group-others';
+                btnGroup.style.cssText = 'display: flex; gap: 10px; align-items: center; margin-bottom: 20px;';
+                btnGroup.innerHTML = `
+                    <button class="btn-primary follow-btn ${isFollowing ? 'following' : ''}" data-target-user="${targetUsername}" style="padding: 8px 20px; font-weight: bold; border-radius: 9999px; ${isFollowing ? 'background: transparent; color: var(--text-main); border: 1px solid var(--border-color);' : 'background: var(--brand-gradient); color: white; border: none;'}">
+                        ${isFollowing ? 'Seguindo' : 'Seguir'}
+                    </button>
+                    <button class="btn-outline msg-btn" onclick="window.location.href='messages.html?chat=${targetUsername}'" style="padding: 8px 20px; border-radius: 9999px;">
+                        Mensagem
+                    </button>
+                `;
+                actionContainer.appendChild(btnGroup);
+            }
         }
     }
 }
@@ -223,9 +257,13 @@ document.addEventListener('DOMContentLoaded', async() => {
             if (cropper) {
                 const canvas = cropper.getCroppedCanvas({ width: 500 });
                 const base64Cropped = canvas.toDataURL('image/jpeg', 0.8);
-                if (pendingImageType === 'avatar') { document.getElementById('settings-avatar-preview').src = base64Cropped;
-                    window.tempAvatarBase64 = base64Cropped; } else { document.getElementById('settings-banner-preview').style.background = `url(${base64Cropped}) center/cover`;
-                    window.tempBannerBase64 = base64Cropped; }
+                if (pendingImageType === 'avatar') {
+                    document.getElementById('settings-avatar-preview').src = base64Cropped;
+                    window.tempAvatarBase64 = base64Cropped;
+                } else {
+                    document.getElementById('settings-banner-preview').style.background = `url(${base64Cropped}) center/cover`;
+                    window.tempBannerBase64 = base64Cropped;
+                }
             }
             modalAdjust.classList.remove('active');
         }
@@ -243,8 +281,10 @@ document.addEventListener('DOMContentLoaded', async() => {
             list.innerHTML = Object.keys(savedHobbies).map(theme => `
                 <div class="hobby-card"><div class="hobby-card-info"><h4>${theme}</h4><p>${savedHobbies[theme].join(', ')}</p></div><div class="hobby-card-actions"><span class="material-symbols-outlined" style="cursor:pointer;" onclick="deleteHobbyTheme('${theme}')">delete</span></div></div>`).join('');
         }
-        window.deleteHobbyTheme = function(theme) { delete savedHobbies[theme];
-            renderFinalHobbiesList(); };
+        window.deleteHobbyTheme = function(theme) {
+            delete savedHobbies[theme];
+            renderFinalHobbiesList();
+        };
 
         const hobbyInput = document.getElementById('hobby-input');
         if (hobbyInput) {
@@ -257,8 +297,10 @@ document.addEventListener('DOMContentLoaded', async() => {
                     if (!val) return;
                     if (!savedHobbies[theme]) savedHobbies[theme] = [];
                     if (savedHobbies[theme].length >= 5) return showToast(`Limite de 5 itens.`, 'error');
-                    if (!savedHobbies[theme].includes(val)) { savedHobbies[theme].push(val);
-                        renderFinalHobbiesList(); }
+                    if (!savedHobbies[theme].includes(val)) {
+                        savedHobbies[theme].push(val);
+                        renderFinalHobbiesList();
+                    }
                     hobbyInput.value = '';
                 }
             });
@@ -275,16 +317,28 @@ document.addEventListener('DOMContentLoaded', async() => {
 });
 
 document.querySelectorAll('.open-modal-btn').forEach(btn => {
-    btn.addEventListener('click', () => { const modal = document.getElementById(btn.getAttribute('data-modal')); if (modal) { modal.classList.add('active');
-            document.body.style.overflow = 'hidden'; } });
+    btn.addEventListener('click', () => {
+        const modal = document.getElementById(btn.getAttribute('data-modal'));
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    });
 });
 
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => { const modal = e.target.closest('.modal-overlay'); if (modal && modal.id !== 'modal-adjust-image') { modal.classList.remove('active');
-            document.body.style.overflow = ''; } });
+    btn.addEventListener('click', (e) => {
+        const modal = e.target.closest('.modal-overlay');
+        if (modal && modal.id !== 'modal-adjust-image') {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
 });
 
 const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) logoutBtn.addEventListener('click', async(e) => { e.preventDefault();
+if (logoutBtn) logoutBtn.addEventListener('click', async(e) => {
+    e.preventDefault();
     await window.AuthService.logout();
-    window.location.href = 'auth.html'; });
+    window.location.href = 'auth.html';
+});

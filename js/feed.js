@@ -46,7 +46,8 @@ function generatePostHTML(post, currentUser) {
             pollHTML += `
                 <div class="poll-option-result ${isVoted}" data-option-id="${opt.id}" style="position: relative; margin-bottom: 10px; border-radius: 10px; overflow: hidden; background: var(--card-bg); cursor: pointer; border: 1px solid ${isVoted ? '#F4B41A' : 'var(--border-color)'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;">
                     <div class="poll-bar" style="position: absolute; left: 0; top: 0; height: 100%; width: ${userVote !== undefined ? percent : 0}%; background: ${isVoted ? 'rgba(244, 180, 26, 0.25)' : 'rgba(0,0,0,0.05)'}; transition: width 0.6s ease;"></div>
-                    <div style="position: relative; padding: 12px 16px; display: flex; justify-content: space-between; font-weight: ${isVoted ? 'bold' : '500'}; color: var(--text-main); align-items: center;">
+                    
+                    <div style="position: relative; padding: 12px 16px; display: flex; justify-content: space-between; font-weight: ${isVoted ? 'bold' : '500'}; color: var(--text-main); align-items: center; width: 100%; box-sizing: border-box;">
                         <span class="poll-text" style="z-index: 1;">${window.escapeHTML(opt.text)}</span>
                         <span class="poll-percent" style="z-index: 1; font-size: 0.9rem; color: var(--text-muted);">${userVote !== undefined ? percent + '%' : ''}</span>
                     </div>
@@ -313,12 +314,41 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (e.target.closest('.follow-btn')) { 
+if (e.target.closest('.follow-btn')) { 
             const btn = e.target.closest('.follow-btn');
             const targetUser = btn.getAttribute('data-target-user');
             const isFollowing = btn.classList.toggle('following');
+            
+            // Altera visual
             btn.textContent = isFollowing ? 'Seguindo' : 'Seguir';
+            if(isFollowing) {
+                btn.style.background = 'transparent';
+                btn.style.color = 'var(--text-main)';
+                btn.style.border = '1px solid var(--border-color)';
+            } else {
+                btn.style.background = 'var(--brand-gradient)';
+                btn.style.color = 'white';
+                btn.style.border = 'none';
+            }
+
+            // Atualiza o banco de dados
             await window.AuthService.toggleFollow(targetUser); 
+
+            // Atualiza o contador na tela se estiver no perfil da pessoa
+            const followersCountEl = document.getElementById('profile-followers-count');
+            const urlParams = new URLSearchParams(window.location.search);
+            if (followersCountEl && urlParams.get('user') === targetUser) {
+                let currentCount = parseInt(followersCountEl.textContent) || 0;
+                followersCountEl.textContent = isFollowing ? currentCount + 1 : currentCount - 1;
+            }
+
+            // Atualiza botões no feed silenciosamente sem recarregar a tela inteira
+            document.querySelectorAll(`.follow-btn[data-target-user="${targetUser}"]`).forEach(b => {
+                if (b !== btn) {
+                    b.classList.toggle('following', isFollowing);
+                    b.textContent = isFollowing ? 'Seguindo' : 'Seguir';
+                }
+            });
             return; 
         }
 
