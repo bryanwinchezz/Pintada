@@ -52,6 +52,12 @@ const PostService = {
         await deleteDoc(doc(window.db, "posts", postId));
     },
 
+    // NOVO: Função para editar a publicação
+    async editPost(postId, newContent) {
+        const postRef = doc(window.db, "posts", postId);
+        await updateDoc(postRef, { content: newContent });
+    },
+
     async toggleReaction(postId, username, type) {
         const postRef = doc(window.db, "posts", postId);
         const postSnap = await getDoc(postRef);
@@ -69,9 +75,7 @@ const PostService = {
                 newCount++;
             }
             await updateDoc(postRef, {
-                [listField]: newList,
-                [countField]: newCount
-            });
+                [listField]: newList, [countField]: newCount });
         }
     },
 
@@ -116,30 +120,24 @@ const AuthService = {
     async login(identifier, password) {
         const users = await this.getUsers();
         const userData = users.find(u => u.email === identifier || u.username === identifier);
-
         if (!userData) throw new Error("Utilizador não encontrado.");
-
         await signInWithEmailAndPassword(window.auth, userData.email, password);
         localStorage.setItem('pintada_active_user', userData.username);
         return userData;
     },
-
     async getUsers() {
         const snapshot = await getDocs(collection(window.db, "users"));
         return snapshot.docs.map(doc => doc.data());
     },
-
     async getUserData(username) {
         if (!username) return null;
         const docRef = doc(window.db, "users", username);
         const docSnap = await getDoc(docRef);
         return docSnap.exists() ? docSnap.data() : null;
     },
-
     async saveUserData(username, data) {
         await setDoc(doc(window.db, "users", username), data, { merge: true });
     },
-
     async register(userData) {
         await createUserWithEmailAndPassword(window.auth, userData.email, userData.password);
         await setDoc(doc(window.db, "users", userData.username), {
@@ -155,7 +153,6 @@ const AuthService = {
         });
         localStorage.setItem('pintada_active_user', userData.username);
     },
-
     async updateUser(oldUsername, updatedData) {
         const userRef = doc(window.db, "users", oldUsername);
         if (oldUsername !== updatedData.username) {
@@ -166,44 +163,31 @@ const AuthService = {
             await setDoc(userRef, updatedData, { merge: true });
         }
     },
-
     async toggleFollow(targetUsername) {
         const currentUser = this.getCurrentUser();
         if (!currentUser || currentUser === targetUsername) return;
-
         const userRef = doc(window.db, "users", currentUser);
         const targetRef = doc(window.db, "users", targetUsername);
         const userSnap = await getDoc(userRef);
         const targetSnap = await getDoc(targetRef);
-
         if (userSnap.exists() && targetSnap.exists()) {
             let followingList = userSnap.data().followingList || [];
             let targetFollowers = targetSnap.data().followers || 0;
             const index = followingList.indexOf(targetUsername);
-
-            if (index === -1) {
-                followingList.push(targetUsername);
-                targetFollowers++;
-            } else {
-                followingList.splice(index, 1);
-                targetFollowers = Math.max(0, targetFollowers - 1);
-            }
+            if (index === -1) { followingList.push(targetUsername);
+                targetFollowers++; } else { followingList.splice(index, 1);
+                targetFollowers = Math.max(0, targetFollowers - 1); }
             await updateDoc(userRef, { followingList: followingList });
             await updateDoc(targetRef, { followers: targetFollowers });
         }
     },
-
-    getCurrentUser() {
-        return localStorage.getItem('pintada_active_user');
-    },
-
+    getCurrentUser() { return localStorage.getItem('pintada_active_user'); },
     async logout() {
         localStorage.removeItem('pintada_active_user');
         if (window.auth) await signOut(window.auth);
     }
 };
 
-// NOVO: Motor de Mensagens
 const MessageService = {
     async sendMessage(sender, receiver, text) {
         try {
@@ -213,9 +197,7 @@ const MessageService = {
                 text: text,
                 timestamp: Date.now()
             });
-        } catch (e) {
-            console.error("Erro ao enviar msg para Firebase", e);
-        }
+        } catch (e) { console.error("Erro ao enviar msg para Firebase", e); }
     }
 };
 

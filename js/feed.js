@@ -32,26 +32,27 @@ function generatePostHTML(post, currentUser) {
 
     let mediaHTML = post.gif ? `<div class="post-media-container" style="margin-top: 12px;"><img src="${post.gif}" style="border-radius: 12px; max-width: 100%; border: 1px solid var(--border-color);"></div>` : '';
 
+    // NOVO: DESIGN MELHORADO DA ENQUETE
     let pollHTML = '';
     if (post.poll) {
         const totalVotes = Object.keys(post.poll.voters || {}).length;
         const userVote = post.poll.voters ? post.poll.voters[currentUser.username] : undefined;
-        pollHTML = `<div class="poll-container" data-post-id="${post.id}" style="margin-top: 15px; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px;">`;
-        if (post.poll.question) pollHTML += `<h4 style="margin-bottom: 15px; font-size: 1.1rem; color: var(--text-main);">${window.escapeHTML(post.poll.question)}</h4>`;
+        pollHTML = `<div class="poll-container" data-post-id="${post.id}" style="margin-top: 15px; border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; background: rgba(0,0,0,0.02);">`;
+        if (post.poll.question) pollHTML += `<h4 style="margin-bottom: 16px; font-size: 1.15rem; color: var(--text-main); font-weight: 600;">${window.escapeHTML(post.poll.question)}</h4>`;
 
         post.poll.options.forEach(opt => {
             const percent = totalVotes === 0 ? 0 : Math.round((opt.votes / totalVotes) * 100);
             const isVoted = userVote === opt.id ? 'voted' : '';
             pollHTML += `
-                <div class="poll-option-result ${isVoted}" data-option-id="${opt.id}" style="position: relative; margin-bottom: 8px; border-radius: 8px; overflow: hidden; background: var(--hover-bg); cursor: pointer; border: 1px solid var(--border-color);">
-                    <div class="poll-bar" style="position: absolute; left: 0; top: 0; height: 100%; width: ${userVote !== undefined ? percent : 0}%; background: rgba(244, 180, 26, 0.2); transition: width 0.5s ease;"></div>
-                    <div style="position: relative; padding: 10px 15px; display: flex; justify-content: space-between; font-weight: ${isVoted ? 'bold' : 'normal'};">
-                        <span class="poll-text">${window.escapeHTML(opt.text)}</span>
-                        <span class="poll-percent">${userVote !== undefined ? percent + '%' : ''}</span>
+                <div class="poll-option-result ${isVoted}" data-option-id="${opt.id}" style="position: relative; margin-bottom: 10px; border-radius: 10px; overflow: hidden; background: var(--card-bg); cursor: pointer; border: 1px solid ${isVoted ? '#F4B41A' : 'var(--border-color)'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;">
+                    <div class="poll-bar" style="position: absolute; left: 0; top: 0; height: 100%; width: ${userVote !== undefined ? percent : 0}%; background: ${isVoted ? 'rgba(244, 180, 26, 0.25)' : 'rgba(0,0,0,0.05)'}; transition: width 0.6s ease;"></div>
+                    <div style="position: relative; padding: 12px 16px; display: flex; justify-content: space-between; font-weight: ${isVoted ? 'bold' : '500'}; color: var(--text-main); align-items: center;">
+                        <span class="poll-text" style="z-index: 1;">${window.escapeHTML(opt.text)}</span>
+                        <span class="poll-percent" style="z-index: 1; font-size: 0.9rem; color: var(--text-muted);">${userVote !== undefined ? percent + '%' : ''}</span>
                     </div>
                 </div>`;
         });
-        pollHTML += `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">${totalVotes} votos</div></div>`;
+        pollHTML += `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; text-align: right;">${totalVotes} votos registrados</div></div>`;
     }
 
     let followBtnHTML = '';
@@ -73,7 +74,7 @@ function generatePostHTML(post, currentUser) {
                     <span class="post-meta" style="color: var(--text-muted); font-size: 0.9rem;">@${post.authorUsername} • ${displayTime}</span>
                 </div>
                 ${followBtnHTML}
-                ${isAuthor ? `<div class="post-options-wrapper" style="position: relative; margin-left: 8px;"><button class="icon-btn more-options" style="background: none; border: none; cursor: pointer; color: var(--text-muted);"><span class="material-symbols-outlined">more_horiz</span></button><div class="post-dropdown"><button class="dropdown-item text-danger delete-post-btn">Apagar</button></div></div>` : ''}
+                ${isAuthor ? `<div class="post-options-wrapper" style="position: relative; margin-left: 8px;"><button class="icon-btn more-options" style="background: none; border: none; cursor: pointer; color: var(--text-muted);"><span class="material-symbols-outlined">more_horiz</span></button><div class="post-dropdown"><button class="dropdown-item edit-post-btn">Editar</button><button class="dropdown-item text-danger delete-post-btn">Apagar</button></div></div>` : ''}
             </header>
             
             <div class="post-content" style="color: var(--text-main); font-size: 1rem; line-height: 1.5; margin-bottom: 16px;">
@@ -83,9 +84,9 @@ function generatePostHTML(post, currentUser) {
             </div>
             
             <footer class="post-actions" style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 12px;">
-                <button class="action-btn comment-toggle-btn" style="display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: 0.2s;"><span class="material-symbols-outlined">chat_bubble</span> <span>${post.comments ? post.comments.length : 0}</span></button>
-                <button class="action-btn repost-btn ${isReposted ? 'reposted' : ''}" style="display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: ${isReposted ? '#10B981' : 'var(--text-muted)'}; transition: 0.2s;"><span class="material-symbols-outlined">repeat</span> <span>${post.reposts || 0}</span></button>
                 <button class="action-btn like-btn ${isLiked ? 'liked' : ''}" style="display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: ${isLiked ? '#EF4444' : 'var(--text-muted)'}; transition: 0.2s;"><span class="material-symbols-outlined">${isLiked ? 'favorite' : 'favorite_border'}</span> <span>${post.likes || 0}</span></button>
+                <button class="action-btn comment-toggle-btn" style="display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: 0.2s;"><span class="material-symbols-outlined">chat_bubble_outline</span> <span>${post.comments ? post.comments.length : 0}</span></button>
+                <button class="action-btn repost-btn ${isReposted ? 'reposted' : ''}" style="display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: ${isReposted ? '#10B981' : 'var(--text-muted)'}; transition: 0.2s;"><span class="material-symbols-outlined">repeat</span> <span>${post.reposts || 0}</span></button>
                 <button class="action-btn share-btn" style="display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: 0.2s;"><span class="material-symbols-outlined">share</span></button>
             </footer>
             
@@ -142,7 +143,6 @@ async function renderAllFeeds() {
     if (typeof window.renderTrendingTopics === 'function') await window.renderTrendingTopics();
 }
 
-// SISTEMA REAL DE TRENDING TOPICS (Lê as Hashtags do Banco de Dados)
 window.renderTrendingTopics = async function() {
     const trendingContainer = document.querySelector('.sidebar-right .widget');
     if (!trendingContainer) return;
@@ -150,28 +150,18 @@ window.renderTrendingTopics = async function() {
     const allPosts = await window.PostService.getPosts();
     let hashtagCounts = {};
 
-    // Extrai as hashtags de todos os posts
     allPosts.forEach(post => {
         const words = post.content.match(/#[a-zA-Z0-9_À-ÿ]+/gi) || [];
-        words.forEach(w => {
-            hashtagCounts[w] = (hashtagCounts[w] || 0) + 1;
-        });
+        words.forEach(w => { hashtagCounts[w] = (hashtagCounts[w] || 0) + 1; });
     });
 
-    // Pega as 3 mais usadas
     const sortedHashtags = Object.entries(hashtagCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
     let topics = [];
 
     if (sortedHashtags.length > 0) {
-        topics = sortedHashtags.map(h => ({
-            category: 'Em Alta na Pintada',
-            title: h[0],
-            stats: `${h[1]} publicações`
-        }));
+        topics = sortedHashtags.map(h => ({ category: 'Em Alta na Pintada', title: h[0], stats: `${h[1]} publicações` }));
     } else {
-        topics = [
-            { category: 'Bem-vindo', title: '#NovaPintada', stats: 'Recomendado' }
-        ];
+        topics = [{ category: 'Bem-vindo', title: '#NovaPintada', stats: 'Recomendado' }];
     }
 
     trendingContainer.innerHTML = `<h3 class="widget-title">O que está acontecendo</h3>` + topics.map(t => `<div class="trending-item"><span class="trending-meta">${t.category}</span><h4 class="trending-title" style="color: #D97A00;">${t.title}</h4><span class="trending-stats">${t.stats}</span></div>`).join('');
@@ -323,14 +313,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // CORREÇÃO DO BOTÃO SEGUIR (Feedback Instantâneo)
         if (e.target.closest('.follow-btn')) { 
             const btn = e.target.closest('.follow-btn');
             const targetUser = btn.getAttribute('data-target-user');
-            
             const isFollowing = btn.classList.toggle('following');
             btn.textContent = isFollowing ? 'Seguindo' : 'Seguir';
-            
             await window.AuthService.toggleFollow(targetUser); 
             return; 
         }
@@ -357,6 +344,20 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.post-dropdown').forEach(d => { if (d !== dropdown) d.classList.remove('active'); });
             dropdown.classList.toggle('active');
         }
+
+        // NOVO: Função para Editar publicação
+        if (e.target.closest('.edit-post-btn')) {
+            const pTag = postCard.querySelector('.post-content p');
+            const currentContent = pTag.innerHTML.replace(/<br>/g, '\n').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+            const newContent = prompt("Edite a sua publicação:", currentContent);
+            
+            if (newContent !== null && newContent.trim() !== "") {
+                await window.PostService.editPost(postId, newContent.trim());
+                renderAllFeeds();
+                showToast("Publicação editada com sucesso!");
+            }
+        }
+
         if (e.target.closest('.delete-post-btn') && confirm("Apagar permanentemente?")) { await window.PostService.deletePost(postId); renderAllFeeds(); }
         if (e.target.closest('.share-btn')) postCard.querySelector('.share-section').classList.toggle('active');
         if (e.target.closest('.copy-btn')) {
