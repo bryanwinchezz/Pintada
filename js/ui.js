@@ -192,6 +192,28 @@ document.querySelectorAll('#logout-btn').forEach(btn => {
     });
 });
 
+// Lógica para alternar entre as telas de Login e Cadastro
+document.addEventListener('DOMContentLoaded', () => {
+    const showRegisterBtn = document.getElementById('show-register');
+    const showLoginBtn = document.getElementById('show-login');
+    const loginSection = document.getElementById('login-section');
+    const registerSection = document.getElementById('register-section');
+
+    if (showRegisterBtn && showLoginBtn && loginSection && registerSection) {
+        showRegisterBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginSection.style.display = 'none';
+            registerSection.style.display = 'block';
+        });
+
+        showLoginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerSection.style.display = 'none';
+            loginSection.style.display = 'block';
+        });
+    }
+});
+
 // Exporta funções para uso global
 window.showToast = showToast;
 window.loadUserDataUI = loadUserDataUI;
