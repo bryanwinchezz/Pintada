@@ -90,7 +90,6 @@ function generatePostHTML(post, currentUser) {
                 <button class="action-btn share-btn" style="display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: 0.2s;"><span class="material-symbols-outlined">share</span></button>
             </footer>
             
-            <div class="share-section"><div class="share-box"><span class="material-symbols-outlined">link</span><input type="text" readonly value="https://pintada.netlify.app/p/${post.id}"><button class="copy-btn">Copiar</button></div></div>
             <div class="comments-section ${commentSectionClass}">
                 <div class="comments-list">${commentsHTML}</div>
                 <div class="comment-input-area">
@@ -106,7 +105,6 @@ function generatePostHTML(post, currentUser) {
 async function renderAllFeeds() {
     const activeUsername = window.AuthService.getCurrentUser();
     if (!activeUsername) return;
-
     const currentUser = await window.AuthService.getUserData(activeUsername);
     if (!currentUser) return;
 
@@ -114,7 +112,7 @@ async function renderAllFeeds() {
     const profileArea = document.getElementById('profile-posts-render-area');
     const isProfilePage = window.location.pathname.includes('profile.html');
     
-    // SISTEMA DE CARREGAMENTO SKELETON APENAS NO PERFIL
+    // ANIMAÇÃO DE CARREGAMENTO (SKELETON) EXCLUSIVA PARA O PERFIL
     if (isProfilePage && profileArea && !window.hasClearedFakePosts) {
         const skeletonHTML = `
             <div class="post-card" style="padding: 16px; margin-bottom: 20px; border-radius: 16px; background: var(--card-bg);">
@@ -127,14 +125,14 @@ async function renderAllFeeds() {
         
         profileArea.innerHTML = skeletonHTML;
         window.hasClearedFakePosts = true;
-        await new Promise(r => setTimeout(r, 2000)); // Carrega por 2 segundos no perfil
+        await new Promise(r => setTimeout(r, 1500)); 
     }
 
     const allPosts = await window.PostService.getPosts();
     const createAvatar = document.querySelector('.create-post-header .post-avatar');
     if (createAvatar) createAvatar.src = currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=F4B41A&color=fff`;
 
-    // Carrega a Home imediatamente
+    // Renderiza a Home Instantaneamente
     if (homeArea) homeArea.innerHTML = allPosts.map(p => generatePostHTML(p, currentUser)).join('');
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -191,15 +189,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if(panelPoll) panelPoll.style.display = 'none';
     }
 
-    if (btnEmoji) { btnEmoji.addEventListener('click', () => { const isHidden = panelEmoji.style.display === 'none' || panelEmoji.style.display === ''; hideAllPanels(); if (isHidden) panelEmoji.style.display = 'grid'; }); }
+    // CORREÇÃO DOS EMOJIS (Nativo no HTML, nunca falha)
+    const nativeEmojis = ["😀","😂","🤣","😊","😍","🥰","😎","🤩","🥳","😏","😒","😔","😕","🥺","😢","😭","😤","😠","😡","🤯","😳","😱","😨","🤔","🤭","🤫","😶","😐","🙄","😲","😴","🤤","🤠","😈","💩","👻","💀","👽","👾","🤖","😺","😻","❤️","🧡","💛","💚","💙","💜","🖤","💔","💕","💖","👍","👎","👏","🙌","🤲","🤝","🙏","💪","👀","🔥","✨","🐆","⚽","☕"];
+    if (panelEmoji) {
+        panelEmoji.innerHTML = '<div style="display:flex; flex-wrap:wrap; gap:10px; padding:10px; max-height:200px; overflow-y:auto;">' + 
+            nativeEmojis.map(e => `<span class="emoji-btn" style="cursor:pointer; font-size:1.6rem; transition:0.2s;" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'">${e}</span>`).join('') + 
+            '</div>';
+    }
+
+    if (btnEmoji) { btnEmoji.addEventListener('click', () => { const isHidden = panelEmoji.style.display === 'none' || panelEmoji.style.display === ''; hideAllPanels(); if (isHidden) panelEmoji.style.display = 'block'; }); }
     
-    // CORREÇÃO DOS EMOJIS (Captura de forma dinâmica qualquer emoji clicado no painel)
+    // Captura o clique no emoji e adiciona no input
     if (panelEmoji) {
         panelEmoji.addEventListener('click', (e) => {
-            const btn = e.target.closest('.emoji-btn');
-            if (btn && postInput) {
-                e.preventDefault();
-                postInput.value += btn.textContent.trim();
+            if (e.target.classList.contains('emoji-btn') && postInput) {
+                postInput.value += e.target.textContent;
             }
         });
     }
@@ -336,18 +340,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.target.closest('.delete-post-btn') && confirm("Apagar permanentemente?")) { await window.PostService.deletePost(postId); renderAllFeeds(); }
         
-        // CORREÇÃO: URL OFICIAL NETLIFY PARA COMPARTILHAMENTO
+        // CORREÇÃO DO COMPARTILHAMENTO (Copia direto para a área de transferência)
         if (e.target.closest('.share-btn')) {
             const postUrl = `https://pintada.netlify.app/p/${postId}`;
-            if (navigator.share) {
-                navigator.share({ title: 'Pintada', text: 'Veja esta publicação na Pintada!', url: postUrl }).catch(err => console.log('Erro ao compartilhar', err));
-            } else {
-                postCard.querySelector('.share-section').classList.toggle('active');
-            }
-        }
-        if (e.target.closest('.copy-btn')) {
-            const btn = e.target.closest('.copy-btn');
-            navigator.clipboard.writeText(btn.previousElementSibling.value).then(() => { btn.textContent = 'Copiado!'; setTimeout(() => btn.textContent = 'Copiar', 2000); });
+            navigator.clipboard.writeText(postUrl).then(() => {
+                showToast("Link copiado! 🔗", "success");
+            }).catch(() => {
+                showToast("Erro ao copiar o link.", "error");
+            });
         }
     });
 

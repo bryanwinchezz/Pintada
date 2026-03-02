@@ -16,6 +16,34 @@ function showToast(message, type = 'success') {
 }
 window.showToast = showToast;
 
+// SISTEMA DE NOTIFICAÇÃO GLOBAL (Bolinha Vermelha no Menu)
+document.addEventListener('DOMContentLoaded', () => {
+    const activeUsername = window.AuthService ? window.AuthService.getCurrentUser() : null;
+    if (activeUsername && window.MessageService) {
+        window.MessageService.listenToAllMyMessages(activeUsername, (count) => {
+            const menuMsgs = Array.from(document.querySelectorAll('.menu-item')).find(el => el.href && el.href.includes('messages.html'));
+            const mobileMsgs = Array.from(document.querySelectorAll('.mobile-item')).find(el => el.href && el.href.includes('messages.html'));
+
+            const addDot = (el) => {
+                if (!el) return;
+                let dot = el.querySelector('.msg-dot');
+                if (!dot) {
+                    dot = document.createElement('span');
+                    dot.className = 'msg-dot';
+                    dot.style.cssText = 'background: #EF4444; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 5px;';
+                    el.appendChild(dot);
+                }
+            };
+
+            // Se o usuário não estiver na página de mensagens e tiver mensagens recebidas, mostra a bolinha
+            if (!window.location.pathname.includes('messages.html') && count > 0) {
+                addDot(menuMsgs);
+                addDot(mobileMsgs);
+            }
+        });
+    }
+});
+
 function initSearch() {
     document.querySelectorAll('.nav-search input').forEach(input => {
         input.addEventListener('keypress', async(e) => {
@@ -122,23 +150,33 @@ async function loadUserDataUI() {
     }
 
     // Preenche os dados
-    document.querySelectorAll('.profile-name').forEach(el => { el.textContent = user.name || "Utilizador";
+    document.querySelectorAll('.profile-name').forEach(el => {
+        el.textContent = user.name || "Utilizador";
         el.classList.remove('skeleton');
-        el.style.width = 'auto'; });
-    document.querySelectorAll('.profile-handle').forEach(el => { el.textContent = `@${user.username}`;
+        el.style.width = 'auto';
+    });
+    document.querySelectorAll('.profile-handle').forEach(el => {
+        el.textContent = `@${user.username}`;
         el.classList.remove('skeleton');
-        el.style.width = 'auto'; });
-    document.querySelectorAll('.profile-bio').forEach(el => { el.textContent = user.bio || "";
+        el.style.width = 'auto';
+    });
+    document.querySelectorAll('.profile-bio').forEach(el => {
+        el.textContent = user.bio || "";
         el.classList.remove('skeleton');
-        el.style.height = 'auto'; });
+        el.style.height = 'auto';
+    });
 
     // Atualiza Seguidores e Remove Skeleton
     const followingEl = document.getElementById('profile-following-count');
     const followersEl = document.getElementById('profile-followers-count');
-    if (followingEl) { followingEl.textContent = user.followingList ? user.followingList.length : 0;
-        followingEl.classList.remove('skeleton'); }
-    if (followersEl) { followersEl.textContent = user.followers || 0;
-        followersEl.classList.remove('skeleton'); }
+    if (followingEl) {
+        followingEl.textContent = user.followingList ? user.followingList.length : 0;
+        followingEl.classList.remove('skeleton');
+    }
+    if (followersEl) {
+        followersEl.textContent = user.followers || 0;
+        followersEl.classList.remove('skeleton');
+    }
 
     // Preenche Configurações
     if (document.getElementById('edit-name')) document.getElementById('edit-name').value = user.name || "";

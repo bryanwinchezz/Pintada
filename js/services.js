@@ -2,41 +2,20 @@
 // js/services.js - SERVIÇOS DO FIREBASE
 // ==========================================
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, addDoc, getDocs, query, orderBy, doc, updateDoc, setDoc, getDoc, deleteDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, addDoc, getDocs, query, orderBy, doc, updateDoc, setDoc, getDoc, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const PostService = {
     async getPosts() {
-        const postsCol = collection(window.db, "posts");
-        const q = query(postsCol, orderBy("timestamp", "desc"));
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocs(query(collection(window.db, "posts"), orderBy("timestamp", "desc")));
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     },
     async addPost(content, user, gifUrl = null, pollData = null) {
         try {
-            await addDoc(collection(window.db, "posts"), {
-                authorName: user.name || "Utilizador",
-                authorUsername: user.username || "anonimo",
-                authorAvatar: user.avatar || "",
-                content: content || "",
-                gif: gifUrl || null,
-                poll: pollData || null,
-                likes: 0,
-                likedBy: [],
-                reposts: 0,
-                repostedBy: [],
-                comments: [],
-                timestamp: Date.now(),
-                time: "Agora"
-            });
-        } catch (e) { console.error("Erro ao salvar publicação:", e); }
+            await addDoc(collection(window.db, "posts"), { authorName: user.name || "Utilizador", authorUsername: user.username || "anonimo", authorAvatar: user.avatar || "", content: content || "", gif: gifUrl || null, poll: pollData || null, likes: 0, likedBy: [], reposts: 0, repostedBy: [], comments: [], timestamp: Date.now(), time: "Agora", isEdited: false });
+        } catch (e) { console.error("Erro ao salvar:", e); }
     },
     async deletePost(postId) { await deleteDoc(doc(window.db, "posts", postId)); },
-
-    // NOVO: Adiciona a flag isEdited para mostrar a tag de (Editado)
-    async editPost(postId, newContent) {
-        await updateDoc(doc(window.db, "posts", postId), { content: newContent, isEdited: true });
-    },
-
+    async editPost(postId, newContent) { await updateDoc(doc(window.db, "posts", postId), { content: newContent, isEdited: true }); },
     async toggleReaction(postId, username, type) {
         const postRef = doc(window.db, "posts", postId);
         const postSnap = await getDoc(postRef);
@@ -92,28 +71,15 @@ const AuthService = {
     },
     async getUserData(username) {
         if (!username) return null;
-        const docRef = doc(window.db, "users", username);
-        const docSnap = await getDoc(docRef);
+        const docSnap = await getDoc(doc(window.db, "users", username));
         return docSnap.exists() ? docSnap.data() : null;
     },
     async saveUserData(username, data) { await setDoc(doc(window.db, "users", username), data, { merge: true }); },
     async register(userData) {
         await createUserWithEmailAndPassword(window.auth, userData.email, userData.password);
-        await setDoc(doc(window.db, "users", userData.username), {
-            name: userData.name,
-            username: userData.username,
-            email: userData.email,
-            followers: 0,
-            followingList: [],
-            hobbies: {},
-            banner: "",
-            avatar: "",
-            bio: userData.bio || "Novo membro da Pintada! 🐆"
-        });
+        await setDoc(doc(window.db, "users", userData.username), { name: userData.name, username: userData.username, email: userData.email, followers: 0, followingList: [], hobbies: {}, banner: "", avatar: "", bio: userData.bio || "Novo membro da Pintada! 🐆" });
         localStorage.setItem('pintada_active_user', userData.username);
     },
-
-    // NOVO: Atualiza as fotos e nomes dos posts antigos!
     async updateUser(oldUsername, updatedData) {
         const userRef = doc(window.db, "users", oldUsername);
         const oldSnap = await getDoc(userRef);
@@ -127,16 +93,8 @@ const AuthService = {
         } else {
             await setDoc(userRef, updatedData, { merge: true });
         }
-
-        // Busca todas as publicações antigas e atualiza a foto e nome
-        const postsQ = query(collection(window.db, "posts"), where("authorUsername", "==", oldUsername));
-        const postsSnap = await getDocs(postsQ);
-        postsSnap.forEach(async(postDoc) => {
-            await updateDoc(doc(window.db, "posts", postDoc.id), {
-                authorName: updatedData.name,
-                authorAvatar: finalAvatar
-            });
-        });
+        const postsSnap = await getDocs(query(collection(window.db, "posts"), where("authorUsername", "==", oldUsername)));
+        postsSnap.forEach(async(postDoc) => { await updateDoc(doc(window.db, "posts", postDoc.id), { authorName: updatedData.name, authorAvatar: finalAvatar }); });
     },
     async toggleFollow(targetUsername) {
         const currentUser = this.getCurrentUser();
@@ -164,10 +122,29 @@ const MessageService = {
     async sendMessage(sender, receiver, text) {
         await addDoc(collection(window.db, "messages"), { sender, receiver, text, timestamp: Date.now() });
     },
-    // NOVO: Função para buscar histórico real do Firebase
-    async getMessages(user1, user2) {
-        const snapshot = await getDocs(query(collection(window.db, "messages"), orderBy("timestamp", "asc")));
-        return snapshot.docs.map(d => d.data()).filter(m => (m.sender === user1 && m.receiver === user2) || (m.sender === user2 && m.receiver === user1));
+    // Ouve mensagens em tempo real
+    listenToMessages(user1, user2, callback) {
+        const q = query(collection(window.db, "messages"), orderBy("timestamp", "asc"));
+        return onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+                .filter(m => (m.sender === user1 && m.receiver === user2) || (m.sender === user2 && m.receiver === user1));
+            callback(msgs);
+        });
+    },
+    // Ouve TODAS as mensagens que você recebe (Para a bolinha vermelha)
+    listenToAllMyMessages(username, callback) {
+        const q = query(collection(window.db, "messages"), where("receiver", "==", username));
+        return onSnapshot(q, (snapshot) => { callback(snapshot.docs.length); });
+    },
+    // Exclui chats selecionados
+    async deleteChat(user1, user2) {
+        const snapshot = await getDocs(collection(window.db, "messages"));
+        snapshot.docs.forEach(async(d) => {
+            const m = d.data();
+            if ((m.sender === user1 && m.receiver === user2) || (m.sender === user2 && m.receiver === user1)) {
+                await deleteDoc(doc(window.db, "messages", d.id));
+            }
+        });
     }
 };
 
