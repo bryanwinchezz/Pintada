@@ -171,19 +171,6 @@ function initAuthToggles() {
     }
 }
 
-function initLoginForm() {
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.onsubmit = async(e) => {
-            e.preventDefault();
-            try {
-                await window.AuthService.login(document.getElementById('login-identifier').value.trim(), document.getElementById('login-password').value);
-                window.location.href = 'index.html';
-            } catch (error) { showToast("Erro ao entrar: " + error.message, "error"); }
-        };
-    }
-}
-
 function initRegisterForm() {
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
@@ -441,7 +428,6 @@ document.addEventListener('DOMContentLoaded', async() => {
     initSearch();
     initPasswordToggle();
     initAuthToggles();
-    initLoginForm();
     initRegisterForm();
     initProfileForm();
 
