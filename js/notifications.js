@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     if (!notifArea) return;
 
     try {
-        // 1. Busca os dados necessários no Firebase (Aguardando a resposta)
+        // 1. Busca os dados necessários no Firebase
         const currentUser = await AuthService.getUserData(activeUsername);
         const allPosts = await PostService.getPosts();
         const allNetworkUsers = await AuthService.getUsers();
@@ -94,4 +94,18 @@ document.addEventListener('DOMContentLoaded', async() => {
         console.error("Erro ao carregar notificações:", error);
         notifArea.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Erro ao carregar notificações.</p>';
     }
+
+    // ==========================================
+    // AGORA SIM! ESTÁ FORA DO CATCH E VAI RODAR SEMPRE!
+    // ==========================================
+
+    // Pede para o sistema desenhar os Assuntos do Momento na lateral
+    if (typeof window.renderTrendingTopics === 'function') {
+        await window.renderTrendingTopics();
+    }
+
+    // Tira todos os esqueletos cinzas da tela de notificações
+    document.querySelectorAll('.skeleton').forEach(el => {
+        el.classList.remove('skeleton');
+    });
 });

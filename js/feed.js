@@ -28,7 +28,8 @@ function generatePostHTML(post, currentUser) {
     const isReposted = post.repostedBy && post.repostedBy.includes(currentUser.username);
 
     let displayTime = post.timestamp ? timeAgo(post.timestamp) : post.time;
-    let parsedContent = window.escapeHTML(post.content).replace(/\n/g, '<br>');
+    let contentWithHashtags = window.escapeHTML(post.content).replace(/#[a-zA-Z0-9_À-ÿ]+/gi, '<span style="color: #1d9bf0; font-weight: 500; cursor: pointer;">$&</span>');
+    let parsedContent = contentWithHashtags.replace(/\n/g, '<br>');
 
     let editedTag = post.isEdited ? `<span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 5px;">(Editado)</span>` : '';
     let mediaHTML = post.gif ? `<div class="post-media-container" style="margin-top: 12px;"><img src="${post.gif}" style="border-radius: 12px; max-width: 100%; border: 1px solid var(--border-color);"></div>` : '';

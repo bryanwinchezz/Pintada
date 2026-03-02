@@ -22,8 +22,13 @@
         </div>
         <div class="nav-search"><span class="material-symbols-outlined search-icon">search</span><input type="text" placeholder="Pesquisar..."></div>
         <div class="nav-actions">
-            <button class="icon-btn" id="theme-toggle"><span class="material-symbols-outlined" id="theme-icon">dark_mode</span></button>
-            <a href="profile.html" class="profile-pic"><img src="https://ui-avatars.com/api/?name=Admin&background=F4B41A&color=fff" alt="Perfil"></a>
+            <button class="icon-btn" id="theme-toggle" title="Alternar Tema">
+                <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+            </button>
+
+            <a href="profile.html" class="profile-pic" title="Meu Perfil">
+                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Perfil" class="skeleton" style="background: var(--hover-bg);">
+            </a>
         </div>
     </nav>
 
@@ -150,27 +155,27 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Telefone</label>
-                            <input type="tel" placeholder="(00) 00000-0000">
+                            <input type="tel" id="edit-phone" placeholder="(00) 00000-0000">
                         </div>
                         <div class="form-group">
                             <label>Link / Site</label>
-                            <input type="url" placeholder="https://seusite.com">
+                            <input type="url" id="edit-website" placeholder="https://seusite.com">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label>Data de Nascimento</label>
-                            <input type="date">
+                            <input type="date" id="edit-birthdate">
                         </div>
                         <div class="form-group">
                             <label>Gênero</label>
-                            <select>
+                            <select id="edit-gender">
                                 <option value="">Selecione...</option>
-                                <option value="masculino">Masculino</option>
-                                <option value="feminino">Feminino</option>
-                                <option value="nao-binario">Não-binário</option>
-                                <option value="outro">Outro / Prefiro não dizer</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Feminino">Feminino</option>
+                                <option value="Não-binário">Não-binário</option>
+                                <option value="Outro">Outro / Prefiro não dizer</option>
                             </select>
                         </div>
                     </div>
@@ -189,11 +194,11 @@
                         </div>
                         <div class="form-group">
                             <label>Relacionamento</label>
-                            <select>
+                            <select id="edit-relationship">
                                 <option value="">Selecione...</option>
-                                <option value="solteiro">Solteiro(a)</option>
-                                <option value="casado">Casado(a)</option>
-                                <option value="namorando">Namorando</option>
+                                <option value="Solteiro(a)">Solteiro(a)</option>
+                                <option value="Casado(a)">Casado(a)</option>
+                                <option value="Namorando">Namorando</option>
                             </select>
                         </div>
                     </div>
@@ -205,7 +210,7 @@
                     <div class="danger-zone">
                         <h4>Zona de Perigo</h4>
                         <p>Ao apagar sua conta, todos os seus dados e postagens serão perdidos permanentemente.</p>
-                        <button type="button" class="btn-danger">Apagar Conta</button>
+                        <button type="button" class="btn-danger open-modal-btn" data-modal="modal-delete-account">Apagar Conta</button>
                     </div>
                 </form>
             </div>
@@ -291,8 +296,7 @@
 
                 <div class="hobbies-list-container">
                     <p>Campos adicionados</p>
-                    <div id="hobbies-list-render">
-                    </div>
+                    <div id="hobbies-list-render"></div>
                 </div>
 
                 <div class="modal-footer" style="margin-top: 24px;">
@@ -341,7 +345,7 @@
 
                 <div style="background: var(--hover-bg); padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: left; border: 1px solid var(--border-color);">
                     <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: bold; display: block; margin-bottom: 6px;">
-                        Para confirmar, digite: <span id="delete-username-display" style="color: var(--text-main); user-select: all;"></span>
+                        Para confirmar, digite seu usuário: <span id="delete-username-display" style="color: var(--text-main); user-select: all;"></span>
                     </label>
                     <input type="text" id="delete-username-input" autocomplete="off" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--card-bg); color: var(--text-main); font-size: 0.95rem; outline: none;">
                 </div>
@@ -360,7 +364,7 @@
         <a href="notifications.html" class="mobile-item"><span class="material-symbols-outlined">notifications</span></a>
         <a href="messages.html" class="mobile-item"><span class="material-symbols-outlined">mail</span></a>
         <a href="profile.html" class="mobile-item"><span class="material-symbols-outlined">person</span></a>
-        <a href="#" class="mobile-item" id="logout-btn" style="color: #EF4444; margin-top: 30px;"><span class="material-symbols-outlined">logout</span></a>
+        <a href="#" class="mobile-item" id="logout-btn" style="color: #EF4444;"><span class="material-symbols-outlined">logout</span></a>
     </nav>
 
     <script type="module" src="js/firebase-config.js"></script>

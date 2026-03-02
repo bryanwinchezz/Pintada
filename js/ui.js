@@ -2,6 +2,30 @@
 // js/ui.js - INTERFACE, TOASTS, AUTH E PERFIL
 // ==========================================
 
+// ==========================================
+// 0. ESCUDO DE AUTENTICAÇÃO (PROTEÇÃO DE PÁGINAS)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Descobre em que página o utilizador está no momento
+    let currentPage = window.location.pathname.split('/').pop();
+
+    // Se aceder apenas ao domínio (sem o nome do ficheiro), assume que é o index
+    if (currentPage === '') currentPage = 'index.html';
+
+    // Puxa o utilizador ativo do sistema
+    const activeUser = window.AuthService ? window.AuthService.getCurrentUser() : null;
+
+    // REGRA 1: Não tem conta/login e tenta aceder ao site -> Vai para o Auth (Login)
+    if (!activeUser && currentPage !== 'auth.html') {
+        window.location.replace('auth.html');
+    }
+
+    // REGRA 2: Já tem login feito e tenta abrir a página de Login -> Vai para o Feed (Index)
+    if (activeUser && currentPage === 'auth.html') {
+        window.location.replace('index.html');
+    }
+});
+
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast-notification toast-${type}`;
@@ -45,17 +69,67 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initSearch() {
-    document.querySelectorAll('.nav-search input').forEach(input => {
-        input.addEventListener('keypress', async(e) => {
+    document.querySelectorAll('.nav-search').forEach(searchContainer => {
+                const input = searchContainer.querySelector('input');
+
+                // Cria a caixinha do dropdown dinamicamente se ela não existir
+                let dropdown = searchContainer.querySelector('.search-dropdown');
+                if (!dropdown) {
+                    dropdown = document.createElement('div');
+                    dropdown.className = 'search-dropdown';
+                    searchContainer.appendChild(dropdown);
+                }
+
+                // Evento que dispara a cada letra digitada
+                input.addEventListener('input', async(e) => {
+                            const query = e.target.value.replace('@', '').trim().toLowerCase();
+
+                            if (query.length < 1) {
+                                dropdown.style.display = 'none';
+                                return;
+                            }
+
+                            const users = await window.AuthService.getUsers();
+
+                            // Filtra os usuários (máximo de 5 resultados para não poluir a tela)
+                            const foundUsers = users.filter(u =>
+                                u.username.toLowerCase().includes(query) ||
+                                u.name.toLowerCase().includes(query)
+                            ).slice(0, 5);
+
+                            if (foundUsers.length > 0) {
+                                dropdown.innerHTML = foundUsers.map(u => `
+                    <a href="profile.html?user=${u.username}" class="search-result-item">
+                        <img src="${u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=F4B41A&color=fff`}" class="search-result-avatar">
+                        <div>
+                            <strong style="display:block; font-size:0.9rem;">${window.escapeHTML(u.name)}</strong>
+                            <span style="color:var(--text-muted); font-size:0.8rem;">@${u.username}</span>
+                        </div>
+                    </a>
+                `).join('');
+                dropdown.style.display = 'flex';
+            } else {
+                dropdown.innerHTML = '<div style="padding:10px; text-align:center; color:var(--text-muted); font-size:0.9rem;">Nenhum usuário encontrado</div>';
+                dropdown.style.display = 'flex';
+            }
+        });
+
+        // Esconde o dropdown se o usuário clicar fora da barra de pesquisa
+        document.addEventListener('click', (e) => {
+            if (!searchContainer.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Mantém a função do Enter (caso ele queira ir direto pro perfil exato)
+        input.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const query = e.target.value.trim().toLowerCase();
+                const query = input.value.replace('@', '').trim().toLowerCase();
                 if (!query) return;
-                showToast('A pesquisar...', 'success');
                 const users = await window.AuthService.getUsers();
-                const found = users.find(u => u.username.toLowerCase().includes(query) || u.name.toLowerCase().includes(query));
-                if (found) window.location.href = `profile.html?user=${found.username}`;
-                else showToast('Utilizador não encontrado!', 'error');
+                const exactMatch = users.find(u => u.username.toLowerCase() === query || u.name.toLowerCase() === query);
+                if (exactMatch) window.location.href = `profile.html?user=${exactMatch.username}`;
             }
         });
     });
@@ -131,6 +205,9 @@ function initRegisterForm() {
     }
 }
 
+// -----------------------------------------------------
+// 2. SUBSTITUA A FUNÇÃO loadUserDataUI
+// -----------------------------------------------------
 async function loadUserDataUI() {
     const activeUsername = window.AuthService.getCurrentUser();
     if (!activeUsername) return;
@@ -144,44 +221,39 @@ async function loadUserDataUI() {
     }
 
     const user = await window.AuthService.getUserData(targetUsername);
-    if (!user) {
-        showToast("Perfil não encontrado.", "error");
-        return;
-    }
+    if (!user) { showToast("Perfil não encontrado.", "error"); return; }
 
-    // Preenche os dados
-    document.querySelectorAll('.profile-name').forEach(el => {
-        el.textContent = user.name || "Utilizador";
-        el.classList.remove('skeleton');
-        el.style.width = 'auto';
-    });
-    document.querySelectorAll('.profile-handle').forEach(el => {
-        el.textContent = `@${user.username}`;
-        el.classList.remove('skeleton');
-        el.style.width = 'auto';
-    });
-    document.querySelectorAll('.profile-bio').forEach(el => {
-        el.textContent = user.bio || "";
-        el.classList.remove('skeleton');
-        el.style.height = 'auto';
-    });
+    // Preenche textos principais
+    document.querySelectorAll('.profile-name').forEach(el => { el.textContent = user.name || "Utilizador"; });
+    document.querySelectorAll('.profile-handle').forEach(el => { el.textContent = `@${user.username}`; });
+    document.querySelectorAll('.profile-bio').forEach(el => { el.textContent = user.bio || ""; });
 
-    // Atualiza Seguidores e Remove Skeleton
+    // Preenche Seguidores
+    // Preenche Seguidores e Torna-os Clicáveis
     const followingEl = document.getElementById('profile-following-count');
     const followersEl = document.getElementById('profile-followers-count');
+
     if (followingEl) {
         followingEl.textContent = user.followingList ? user.followingList.length : 0;
-        followingEl.classList.remove('skeleton');
+        followingEl.parentElement.style.cursor = 'pointer';
+        followingEl.parentElement.onclick = () => openConnectionsModal('following', targetUsername, user);
     }
     if (followersEl) {
         followersEl.textContent = user.followers || 0;
-        followersEl.classList.remove('skeleton');
+        followersEl.parentElement.style.cursor = 'pointer';
+        followersEl.parentElement.onclick = () => openConnectionsModal('followers', targetUsername, user);
     }
 
-    // Preenche Configurações
+    // Preenche os campos do modal (Se for você mesmo editando)
     if (document.getElementById('edit-name')) document.getElementById('edit-name').value = user.name || "";
     if (document.getElementById('edit-username')) document.getElementById('edit-username').value = user.username || "";
     if (document.getElementById('edit-bio')) document.getElementById('edit-bio').value = user.bio || "";
+    if (document.getElementById('edit-phone')) document.getElementById('edit-phone').value = user.phone || "";
+    if (document.getElementById('edit-website')) document.getElementById('edit-website').value = user.website || "";
+    if (document.getElementById('edit-birthdate')) document.getElementById('edit-birthdate').value = user.birthdate || "";
+    if (document.getElementById('edit-gender')) document.getElementById('edit-gender').value = user.gender || "";
+    if (document.getElementById('edit-pronouns')) document.getElementById('edit-pronouns').value = user.pronouns || "";
+    if (document.getElementById('edit-relationship')) document.getElementById('edit-relationship').value = user.relationship || "";
 
     const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=F4B41A&color=fff`;
     document.querySelectorAll('.profile-pic img, .profile-page-avatar, #settings-avatar-preview, .post-avatar').forEach(img => img.src = avatarUrl);
@@ -190,17 +262,80 @@ async function loadUserDataUI() {
     if (document.getElementById('profile-page-banner')) document.getElementById('profile-page-banner').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
     if (document.getElementById('settings-banner-preview')) document.getElementById('settings-banner-preview').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
 
-    // LÓGICA DO BOTÃO SEGUIR E MENSAGEM NO PERFIL
+    // ========================================================
+    // RENDERIZAÇÃO DAS TAGS DE INFORMAÇÕES
+    // ========================================================
+    const detailsRow = document.getElementById('profile-details-render');
+    if (detailsRow) {
+        detailsRow.innerHTML = '';
+
+        const addTag = (icon, text, isLink = false, linkUrl = "") => {
+            if (!text || text === 'Selecione...') return;
+
+            if (isLink) {
+                detailsRow.innerHTML += `<span style="background: var(--card-bg); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 14px;">${icon}</span> <a href="${linkUrl}" target="_blank" style="color: #D97A00; text-decoration: none;">${window.escapeHTML(text)}</a></span>`;
+            } else {
+                let displayText = window.escapeHTML(text);
+                if (icon === 'cake' && text.includes('-')) {
+                    const [y, m, d] = text.split('-');
+                    displayText = `${d}/${m}/${y}`;
+                }
+                detailsRow.innerHTML += `<span style="background: var(--card-bg); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 14px;">${icon}</span> ${displayText}</span>`;
+            }
+        };
+
+        addTag('account_circle', user.pronouns);
+        addTag('wc', user.gender);
+        addTag('favorite', user.relationship);
+        addTag('cake', user.birthdate);
+
+        if (user.website) {
+            const link = user.website.startsWith('http') ? user.website : 'https://' + user.website;
+            addTag('link', user.website.replace(/^https?:\/\//, ''), true, link);
+        }
+    }
+
+    // ========================================================
+    // NOVO DESIGN DOS HOBBIES (Estilo Pílula Marrom)
+    // ========================================================
+    const hobbiesRow = document.getElementById('profile-hobbies-render');
+    if (hobbiesRow) {
+        hobbiesRow.innerHTML = '';
+        if (user.hobbies && Object.keys(user.hobbies).length > 0) {
+            let hobbiesContent = '';
+            Object.keys(user.hobbies).forEach(theme => {
+                        if (user.hobbies[theme].length > 0) {
+                            hobbiesContent += `
+                    <div style="margin-top: 18px;">
+                        <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 10px; font-weight: bold;">${window.escapeHTML(theme)}</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            ${user.hobbies[theme].map(item => `
+                                <span style="background: var(--brand-gradient); color: #FFF; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; display: inline-block;">
+                                    ${window.escapeHTML(item)}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        hobbiesRow.innerHTML = hobbiesContent;
+    }
+}
+
+    // ========================================================
+    // BOTÕES DE SEGUIR E MENSAGEM (Para perfis de terceiros)
+    // ========================================================
     if (isProfilePage) {
         const actionContainer = document.querySelector('.profile-avatar-row');
         const existingBtn = actionContainer.querySelector('.btn-outline, .btn-primary');
-
+        
         if (targetUsername !== activeUsername) {
             const activeUserFull = await window.AuthService.getUserData(activeUsername);
             const isFollowing = activeUserFull.followingList && activeUserFull.followingList.includes(targetUsername);
-
-            if (existingBtn) existingBtn.remove(); // Remove o "Editar Perfil"
-
+            
+            if (existingBtn) existingBtn.remove();
+            
             if (!document.getElementById('btn-group-others')) {
                 const btnGroup = document.createElement('div');
                 btnGroup.id = 'btn-group-others';
@@ -217,19 +352,44 @@ async function loadUserDataUI() {
             }
         }
     }
+
+    // ========================================================
+    // DESLIGA O CARREGAMENTO (Remove os esqueletos)
+    // ========================================================
+document.querySelectorAll('.skeleton').forEach(el => {
+    // Se o elemento já tiver texto ou src real, remove o skeleton
+    if (el.innerText.trim() !== "" || el.src?.includes('http')) {
+        el.classList.remove('skeleton');
+    }
+});
 }
 
+// -----------------------------------------------------
+// 1. SUBSTITUA A FUNÇÃO initProfileForm
+// -----------------------------------------------------
 function initProfileForm() {
     const formProfile = document.getElementById('form-profile');
     if (formProfile) {
         formProfile.onsubmit = async(e) => {
             e.preventDefault();
             const activeUsername = window.AuthService.getCurrentUser();
+
+            // Dados básicos
             const updatedData = {
-                name: document.getElementById('edit-name').value.trim(),
-                username: document.getElementById('edit-username').value.trim(),
-                bio: document.getElementById('edit-bio').value.trim()
+                name: document.getElementById('edit-name') ? document.getElementById('edit-name').value.trim() : "",
+                username: document.getElementById('edit-username') ? document.getElementById('edit-username').value.trim() : "",
+                bio: document.getElementById('edit-bio') ? document.getElementById('edit-bio').value.trim() : ""
             };
+
+            // Dados Avançados do seu print (verifica se os campos existem antes de salvar)
+            if (document.getElementById('edit-phone')) updatedData.phone = document.getElementById('edit-phone').value.trim();
+            if (document.getElementById('edit-website')) updatedData.website = document.getElementById('edit-website').value.trim();
+            if (document.getElementById('edit-birthdate')) updatedData.birthdate = document.getElementById('edit-birthdate').value.trim();
+            if (document.getElementById('edit-gender')) updatedData.gender = document.getElementById('edit-gender').value;
+            if (document.getElementById('edit-pronouns')) updatedData.pronouns = document.getElementById('edit-pronouns').value;
+            if (document.getElementById('edit-relationship')) updatedData.relationship = document.getElementById('edit-relationship').value;
+
+            // Imagens
             if (window.tempAvatarBase64) updatedData.avatar = window.tempAvatarBase64;
             if (window.tempBannerBase64) updatedData.banner = window.tempBannerBase64;
 
@@ -237,7 +397,9 @@ function initProfileForm() {
                 await window.AuthService.updateUser(activeUsername, updatedData);
                 showToast('Perfil atualizado com sucesso! 🐆');
                 setTimeout(() => location.reload(), 1000);
-            } catch (error) { showToast('Erro ao guardar: ' + error.message, 'error'); }
+            } catch (error) {
+                showToast('Erro ao guardar: ' + error.message, 'error');
+            }
         };
     }
 }
@@ -364,6 +526,7 @@ document.querySelectorAll('.open-modal-btn').forEach(btn => {
     });
 });
 
+// 1. FECHAR MODAIS
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         const modal = e.target.closest('.modal-overlay');
@@ -374,9 +537,213 @@ document.querySelectorAll('.close-modal-btn').forEach(btn => {
     });
 });
 
-const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) logoutBtn.addEventListener('click', async(e) => {
-    e.preventDefault();
-    await window.AuthService.logout();
-    window.location.href = 'auth.html';
+// 2. LOGOUT
+document.querySelectorAll('#logout-btn').forEach(btn => {
+    btn.addEventListener('click', async(e) => {
+        e.preventDefault();
+        await window.AuthService.logout();
+        window.location.href = 'auth.html';
+    });
+});
+
+// 3. APAGAR CONTA (ZONA DE PERIGO)
+const confirmDeleteBtn = document.getElementById('confirm-delete-account-btn');
+if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener('click', async() => {
+        const activeUsername = window.AuthService.getCurrentUser();
+        const typed = document.getElementById('delete-username-input').value.trim();
+
+        if (typed !== activeUsername) return showToast('Nome de usuário incorreto!', 'error');
+
+        try {
+            confirmDeleteBtn.textContent = "Apagando...";
+            await window.AuthService.deleteAccount(activeUsername);
+            showToast('Conta apagada permanentemente. Até mais! 🐆');
+            setTimeout(() => window.location.href = 'auth.html', 1500);
+        } catch (e) {
+            showToast('Erro: Faça login novamente para excluir a conta.', 'error');
+            confirmDeleteBtn.textContent = "Excluir Conta";
+        }
+    });
+}
+
+// 4. INICIALIZAÇÃO AO CARREGAR A PÁGINA (DOMContentLoaded)
+document.addEventListener('DOMContentLoaded', async () => {
+    const activeUsername = window.AuthService.getCurrentUser();
+
+    // ABRIR MODAL AUTOMATICAMENTE SE VIER DA TELA DE PERFIL (?openModal=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const modalToOpen = urlParams.get('openModal');
+    if (modalToOpen) {
+        const modal = document.getElementById(modalToOpen);
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    // EXIBE O NOME DO USUÁRIO NO MODAL DE APAGAR CONTA PARA ELE SABER O QUE DIGITAR
+    const delDisplay = document.getElementById('delete-username-display');
+    if (delDisplay && activeUsername) {
+        delDisplay.textContent = activeUsername;
+    }
+});
+
+// ==========================================
+// FUNÇÃO PARA ABRIR LISTA DE SEGUIDORES/SEGUINDO
+// ==========================================
+window.openConnectionsModal = async function(type, targetUsername, userData) {
+    const modal = document.getElementById('modal-connections');
+    const title = document.getElementById('connections-modal-title');
+    const body = document.getElementById('connections-modal-body');
+    if (!modal || !body) return;
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    body.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding: 20px;">Carregando...</p>';
+    title.textContent = type === 'following' ? 'Seguindo' : 'Seguidores';
+
+    const allUsers = await window.AuthService.getUsers();
+    let list = [];
+
+    if (type === 'following') {
+        // Pessoas que o usuário segue
+        const followingUsernames = userData.followingList || [];
+        list = allUsers.filter(u => followingUsernames.includes(u.username));
+    } else {
+        // Pessoas que seguem o usuário (procura na lista dos outros se o nome dele está lá)
+        list = allUsers.filter(u => u.followingList && u.followingList.includes(targetUsername));
+    }
+
+    if (list.length === 0) {
+        body.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding: 20px;">Nenhum usuário encontrado.</p>';
+        return;
+    }
+
+    // Desenha a lista
+    body.innerHTML = list.map(u => `
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='transparent'" onclick="window.location.href='profile.html?user=${u.username}'">
+            <img src="${u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=F4B41A&color=fff`}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+            <div>
+                <strong style="color: var(--text-main); display: block; font-size: 0.95rem;">${window.escapeHTML(u.name)}</strong>
+                <span style="color: var(--text-muted); font-size: 0.85rem;">@${u.username}</span>
+            </div>
+        </div>
+    `).join('');
+};
+
+// ==========================================
+// 5. SISTEMA DE PRESENÇA (ONLINE / OFFLINE)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const activeUser = window.AuthService ? window.AuthService.getCurrentUser() : null;
+    
+    if (activeUser && window.AuthService.setOnlineStatus) {
+        // 1. Fica ONLINE assim que entra no site
+        window.AuthService.setOnlineStatus(activeUser, true);
+
+        // 2. Atualiza de 3 em 3 minutos (se a tela estiver aberta)
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                window.AuthService.setOnlineStatus(activeUser, true);
+            }
+        }, 3 * 60 * 1000);
+
+        // 3. O SEGREDO DOS TELEMÓVEIS: Fica offline na hora se minimizar o browser ou trocar de aba!
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                window.AuthService.setOnlineStatus(activeUser, true); // Voltou pro site
+            } else {
+                window.AuthService.setOnlineStatus(activeUser, false); // Minimizou
+            }
+        });
+
+        // 4. Se fechar a aba de vez (Computador)
+        window.addEventListener('pagehide', () => {
+            window.AuthService.setOnlineStatus(activeUser, false);
+        });
+    }
+});
+
+// ==========================================
+// FORMATAÇÃO E VALIDAÇÃO DE CADASTRO (AUTH)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Força o usuário a digitar minúsculo e sem espaços em tempo real!
+    const regUsernameInput = document.getElementById('reg-username');
+    if (regUsernameInput) {
+        regUsernameInput.addEventListener('input', (e) => {
+            // Pega o que foi digitado, joga para minúsculo e remove tudo que não for letra ou número
+            e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+        });
+    }
+
+    // 2. Envio do formulário de cadastro
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', async(e) => {
+            e.preventDefault();
+            
+            const password = document.getElementById('reg-password').value;
+            const username = document.getElementById('reg-username').value;
+            const submitBtn = registerForm.querySelector('button[type="submit"]');
+
+            if (password.length < 6) {
+                return window.showToast("A senha deve conter no mínimo 6 caracteres.", "error");
+            }
+            if (username.length < 3) {
+                return window.showToast("O usuário deve ter pelo menos 3 letras.", "error");
+            }
+
+            try {
+                submitBtn.textContent = "Criando conta...";
+                submitBtn.disabled = true;
+
+                await window.AuthService.register({
+                    name: document.getElementById('reg-name').value,
+                    username: username,
+                    email: document.getElementById('reg-email').value,
+                    password: password,
+                    bio: "Novo membro da Pintada! 🐆",
+                    hobbies: {}
+                });
+                
+                window.showToast("Conta criada com sucesso!");
+                setTimeout(() => window.location.href = 'index.html', 1000);
+                
+            } catch (error) {
+                // Mostra o erro exato na tela (ex: "Nome de usuário já em uso")
+                window.showToast(error.message, "error");
+                submitBtn.textContent = "Criar Conta";
+                submitBtn.disabled = false;
+            }
+        });
+    }
+
+    // 3. Envio do formulário de Login (Já que você não usa mais o script.js)
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async(e) => {
+            e.preventDefault();
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+            try {
+                submitBtn.textContent = "Entrando...";
+                submitBtn.disabled = true;
+                
+                // Força o identificador a ficar minúsculo caso ele tente logar com o nome de usuário
+                const identifier = document.getElementById('login-identifier').value.toLowerCase();
+                
+                await window.AuthService.login(
+                    identifier,
+                    document.getElementById('login-password').value
+                );
+                window.location.href = 'index.html';
+            } catch (error) {
+                window.showToast("Erro ao fazer login. Verifique os dados.", "error");
+                submitBtn.textContent = "Entrar";
+                submitBtn.disabled = false;
+            }
+        });
+    }
 });

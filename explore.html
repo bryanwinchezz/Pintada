@@ -20,8 +20,13 @@
         </div>
         <div class="nav-search"><span class="material-symbols-outlined search-icon">search</span><input type="text" placeholder="Pesquisar na rede..."></div>
         <div class="nav-actions">
-            <button class="icon-btn" id="theme-toggle"><span class="material-symbols-outlined" id="theme-icon">dark_mode</span></button>
-            <a href="profile.html" class="profile-pic"><img src="" alt="Perfil" class="profile-page-avatar"></a>
+            <button class="icon-btn" id="theme-toggle" title="Alternar Tema">
+                <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+            </button>
+
+            <a href="profile.html" class="profile-pic" title="Meu Perfil">
+                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Perfil" class="skeleton" style="background: var(--hover-bg);">
+            </a>
         </div>
     </nav>
 
@@ -77,10 +82,23 @@
         <aside class="sidebar-right">
             <div class="widget">
                 <h3 class="widget-title">O que está acontecendo</h3>
+
                 <div class="trending-item">
-                    <span class="trending-meta">Comunidade • Assunto do Momento</span>
-                    <h4 class="trending-title" style="color: #D97A00;">#Pintada</h4>
-                    <span class="trending-stats">Recomendado para você</span>
+                    <span class="trending-meta skeleton" style="width: 120px; height: 12px; display: block; margin-bottom: 8px; border-radius: 4px;"></span>
+                    <h4 class="trending-title skeleton" style="width: 180px; height: 18px; display: block; margin-bottom: 6px; border-radius: 4px;"></h4>
+                    <span class="trending-stats skeleton" style="width: 70px; height: 12px; display: block; border-radius: 4px;"></span>
+                </div>
+
+                <div class="trending-item">
+                    <span class="trending-meta skeleton" style="width: 100px; height: 12px; display: block; margin-bottom: 8px; border-radius: 4px;"></span>
+                    <h4 class="trending-title skeleton" style="width: 150px; height: 18px; display: block; margin-bottom: 6px; border-radius: 4px;"></h4>
+                    <span class="trending-stats skeleton" style="width: 60px; height: 12px; display: block; border-radius: 4px;"></span>
+                </div>
+
+                <div class="trending-item">
+                    <span class="trending-meta skeleton" style="width: 130px; height: 12px; display: block; margin-bottom: 8px; border-radius: 4px;"></span>
+                    <h4 class="trending-title skeleton" style="width: 160px; height: 18px; display: block; margin-bottom: 6px; border-radius: 4px;"></h4>
+                    <span class="trending-stats skeleton" style="width: 80px; height: 12px; display: block; border-radius: 4px;"></span>
                 </div>
             </div>
         </aside>
@@ -92,6 +110,7 @@
         <a href="notifications.html" class="mobile-item"><span class="material-symbols-outlined">notifications</span></a>
         <a href="messages.html" class="mobile-item"><span class="material-symbols-outlined">mail</span></a>
         <a href="profile.html" class="mobile-item"><span class="material-symbols-outlined">person</span></a>
+        <a href="settings.html" class="mobile-item"><span class="material-symbols-outlined">settings</span></a>
     </nav>
 
     <script type="module" src="js/firebase-config.js"></script>

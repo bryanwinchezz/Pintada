@@ -20,8 +20,13 @@
         </div>
         <div class="nav-search"><span class="material-symbols-outlined search-icon">search</span><input type="text" placeholder="Pesquisar nas mensagens..."></div>
         <div class="nav-actions">
-            <button class="icon-btn" id="theme-toggle"><span class="material-symbols-outlined" id="theme-icon">dark_mode</span></button>
-            <a href="profile.html" class="profile-pic"><img src="" alt="Perfil" class="profile-page-avatar"></a>
+            <button class="icon-btn" id="theme-toggle" title="Alternar Tema">
+                <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+            </button>
+
+            <a href="profile.html" class="profile-pic" title="Meu Perfil">
+                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Perfil" class="skeleton" style="background: var(--hover-bg);">
+            </a>
         </div>
     </nav>
 
@@ -59,18 +64,20 @@
             <div class="contacts-panel">
                 <div class="contacts-header">
                     <h3>Mensagens</h3>
-                    <button class="icon-btn"><span class="material-symbols-outlined">edit_square</span></button>
+                    <button class="icon-btn" id="edit-chats-btn" title="Excluir conversas"><span class="material-symbols-outlined">edit_square</span></button>
                 </div>
+                <button id="confirm-delete-chats-btn" style="display: none; background: #EF4444; color: white; border: none; padding: 10px; font-weight: bold; cursor: pointer; width: 100%;">Apagar Selecionados</button>
                 <div class="contacts-list" id="contacts-list-render">
                 </div>
             </div>
 
             <div class="chat-panel">
                 <div class="chat-header" id="chat-header">
-                    <img src="https://ui-avatars.com/api/?name=Ana&background=8B5CF6&color=fff" alt="Avatar" class="chat-header-avatar">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Avatar" class="chat-header-avatar skeleton" style="background: var(--hover-bg); border-radius: 50%;">
+
                     <div class="chat-header-info">
-                        <h4 id="chat-contact-name">Ana Costa</h4>
-                        <span id="chat-contact-status">Online agora</span>
+                        <h4 id="chat-contact-name" class="skeleton" style="width: 120px; height: 18px; border-radius: 4px; margin-bottom: 6px;"></h4>
+                        <span id="chat-contact-status" class="skeleton" style="width: 80px; height: 12px; border-radius: 4px; display: block;"></span>
                     </div>
                 </div>
 
@@ -78,7 +85,11 @@
                 </div>
 
                 <div class="chat-input-area">
-                    <button class="icon-btn"><span class="material-symbols-outlined">add_photo_alternate</span></button>
+                    <input type="file" id="chat-file-input" accept="image/*" style="display: none;">
+                    <button class="icon-btn" id="photo-btn"><span class="material-symbols-outlined">image</span></button>
+
+                    <button class="icon-btn" id="audio-btn"><span class="material-symbols-outlined">mic</span></button>
+
                     <input type="text" id="chat-input-box" placeholder="Escreva uma mensagem...">
                     <button class="icon-btn send-msg-btn" id="send-msg-btn"><span class="material-symbols-outlined">send</span></button>
                 </div>
@@ -92,6 +103,7 @@
         <a href="notifications.html" class="mobile-item"><span class="material-symbols-outlined">notifications</span></a>
         <a href="messages.html" class="mobile-item"><span class="material-symbols-outlined">mail</span></a>
         <a href="profile.html" class="mobile-item"><span class="material-symbols-outlined">person</span></a>
+        <a href="settings.html" class="mobile-item"><span class="material-symbols-outlined">settings</span></a>
     </nav>
 
     <script type="module" src="js/firebase-config.js"></script>

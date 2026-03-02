@@ -1,5 +1,5 @@
 /* =========================================
-   1. Variáveis Globais
+   1. VARIÁVEIS GLOBAIS
    ========================================= */
 
 :root {
@@ -33,8 +33,24 @@
 }
 
 
+/* Força formulários a respeitarem o Dark Mode nativo do navegador */
+
+[data-theme="dark"] select,
+[data-theme="dark"] input,
+[data-theme="dark"] textarea {
+    background-color: transparent;
+    color: var(--text-main);
+    color-scheme: dark;
+}
+
+[data-theme="dark"] select option {
+    background-color: var(--card-bg);
+    color: var(--text-main);
+}
+
+
 /* =========================================
-   2. Reset e Base
+   2. RESET, BASE E SCROLLBAR
    ========================================= */
 
 * {
@@ -49,6 +65,8 @@ body {
     color: var(--text-main);
     -webkit-font-smoothing: antialiased;
     transition: background-color 0.3s ease, color 0.3s ease;
+    overflow-x: hidden;
+    /* Trava scroll horizontal */
 }
 
 ::-webkit-scrollbar {
@@ -71,8 +89,23 @@ body {
 }
 
 
+/* Formato unificado de fotos de perfil (Quadrado com borda arredondada) */
+
+.profile-pic img,
+.post-avatar,
+.comment-avatar,
+.profile-page-avatar,
+.avatar-preview,
+.contact-avatar,
+.chat-header-avatar,
+.search-result-avatar,
+.nav-brand img {
+    border-radius: 12px !important;
+}
+
+
 /* =========================================
-   3. Navbar Superior
+   3. NAVBAR SUPERIOR E PESQUISA
    ========================================= */
 
 .navbar {
@@ -161,7 +194,6 @@ body {
 .profile-pic img {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--nav-content-color);
     cursor: pointer;
@@ -169,8 +201,54 @@ body {
 }
 
 
+/* Pesquisa ao vivo (Dropdown) */
+
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    margin-top: 5px;
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+    transition: 0.2s;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background: var(--hover-bg);
+}
+
+.search-result-avatar {
+    width: 35px;
+    height: 35px;
+    object-fit: cover;
+}
+
+
 /* =========================================
-   4. Estrutura do Layout Grid (Desktop)
+   4. LAYOUT GRID E MENUS LATERAIS
    ========================================= */
 
 .layout-grid {
@@ -193,9 +271,6 @@ body {
     position: sticky;
     top: calc(var(--nav-height) + 2rem);
 }
-
-
-/* Menus e Widgets (Laterais) */
 
 .sidebar-menu {
     display: flex;
@@ -273,7 +348,7 @@ body {
 
 
 /* =========================================
-   5. Feed: Criar Post e Cards
+   5. FEED: POSTS E FERRAMENTAS
    ========================================= */
 
 .create-post {
@@ -338,7 +413,6 @@ body {
 
 .tool-btn .material-symbols-outlined {
     color: #D97A00;
-    /* Dá um destaque da cor da marca aos ícones */
 }
 
 .create-post-actions {
@@ -381,7 +455,6 @@ body {
 .post-avatar {
     width: 45px;
     height: 45px;
-    border-radius: 50%;
     margin-right: 12px;
     object-fit: cover;
 }
@@ -403,30 +476,11 @@ body {
     color: var(--text-muted);
 }
 
-.more-options {
-    color: var(--text-muted);
-}
-
-.more-options:hover {
-    color: var(--text-main);
-}
-
 .post-content p {
     font-size: 0.95rem;
     line-height: 1.5;
     margin-bottom: 1rem;
     color: var(--text-main);
-}
-
-.post-image-container {
-    margin: 0 -1rem 1rem;
-}
-
-.post-image {
-    width: 100%;
-    max-height: 400px;
-    object-fit: cover;
-    display: block;
 }
 
 .post-actions {
@@ -458,11 +512,6 @@ body {
     color: var(--text-main);
 }
 
-
-/* =========================================
-   6. Animações e Comentários
-   ========================================= */
-
 .action-btn.liked {
     color: #E0245E;
 }
@@ -472,6 +521,19 @@ body {
     color: #E0245E;
     animation: heartBeat 0.3s ease-in-out;
 }
+
+.action-btn.reposted {
+    color: #10B981;
+}
+
+.action-btn.reposted .material-symbols-outlined {
+    font-variation-settings: 'wght' 600;
+    color: #10B981;
+    animation: spinTwice 0.4s ease-in-out;
+}
+
+
+/* Animações e UI Extras do Feed */
 
 @keyframes heartBeat {
     0% {
@@ -485,16 +547,16 @@ body {
     }
 }
 
-.comments-section {
-    display: none;
-    border-top: 1px solid var(--border-color);
-    padding-top: 1rem;
-    margin-top: 0.5rem;
-}
-
-.comments-section.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
+@keyframes spinTwice {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    50% {
+        transform: rotate(180deg) scale(1.2);
+    }
+    100% {
+        transform: rotate(360deg) scale(1);
+    }
 }
 
 @keyframes fadeIn {
@@ -506,6 +568,136 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.follow-btn {
+    margin-left: auto;
+    padding: 4px 14px;
+    font-size: 0.85rem;
+    border-color: #D97A00;
+    color: #D97A00;
+}
+
+.follow-btn.following {
+    background-color: var(--hover-bg);
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+.follow-btn.following:hover {
+    color: #EF4444;
+    border-color: #EF4444;
+}
+
+.edited-tag {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+
+/* Menus de Opções e Share */
+
+.post-options-wrapper {
+    position: relative;
+}
+
+.post-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: none;
+    flex-direction: column;
+    min-width: 140px;
+    z-index: 10;
+    overflow: hidden;
+}
+
+.post-dropdown.active {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+}
+
+.dropdown-item {
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: 0.2s;
+}
+
+.dropdown-item:hover {
+    background: var(--hover-bg);
+}
+
+.dropdown-item.text-danger {
+    color: #EF4444;
+}
+
+.share-section {
+    display: none;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+.share-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.share-box {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background-color: var(--hover-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.share-box input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.copy-btn {
+    background: var(--brand-gradient);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+
+/* Comentários */
+
+.comments-section {
+    display: none;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+.comments-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
 }
 
 .comments-list {
@@ -523,7 +715,6 @@ body {
 .comment-avatar {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
     object-fit: cover;
 }
 
@@ -579,835 +770,7 @@ body {
 }
 
 
-/* =========================================
-   7. Página de Perfil
-   ========================================= */
-
-.profile-page-header {
-    background-color: var(--card-bg);
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    overflow: hidden;
-    margin-bottom: 1rem;
-}
-
-.profile-banner {
-    height: 180px;
-    background: var(--brand-gradient);
-}
-
-.profile-info-section {
-    padding: 0 20px 20px;
-}
-
-.profile-avatar-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-top: -70px;
-    margin-bottom: 16px;
-}
-
-.profile-page-avatar {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    border: 4px solid var(--card-bg);
-    object-fit: cover;
-    background-color: var(--card-bg);
-}
-
-.btn-outline {
-    background: transparent;
-    color: var(--text-main);
-    border: 1px solid var(--border-color);
-    padding: 8px 16px;
-    border-radius: 9999px;
-    font-weight: bold;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-.btn-outline:hover {
-    background-color: var(--hover-bg);
-}
-
-.profile-text-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.profile-name {
-    font-size: 1.4rem;
-    font-weight: 900;
-    color: var(--text-main);
-}
-
-.profile-handle {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-}
-
-.profile-bio {
-    margin: 12px 0;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--text-main);
-}
-
-.profile-details-row {
-    display: flex;
-    gap: 16px;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    align-items: center;
-}
-
-.profile-details-row span {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.profile-stats {
-    display: flex;
-    gap: 20px;
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    margin-top: 12px;
-}
-
-.profile-stats strong {
-    color: var(--text-main);
-}
-
-
-/* =========================================
-   9. Página de Configurações e Modais
-   ========================================= */
-
-
-/* Lista de Cartões de Configuração */
-
-.settings-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.settings-card {
-    display: flex;
-    align-items: center;
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    padding: 16px 20px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.settings-card:hover {
-    border-color: #D97A00;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.settings-icon {
-    width: 48px;
-    height: 48px;
-    background: var(--hover-bg);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 16px;
-    color: var(--text-main);
-}
-
-.settings-info {
-    flex-grow: 1;
-}
-
-.settings-info h3 {
-    font-size: 1.1rem;
-    color: var(--text-main);
-    margin-bottom: 4px;
-}
-
-.settings-info p {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-
-/* Modais de Sobreposição */
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(3px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-.modal-content {
-    background-color: var(--card-bg);
-    width: 100%;
-    max-width: 600px;
-    max-height: 90vh;
-    /* Evita que o modal passe da tela */
-    overflow-y: auto;
-    /* Adiciona rolagem interna se o form for muito grande */
-    border-radius: 16px;
-    transform: translateY(30px);
-    transition: transform 0.3s ease;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-}
-
-.modal-overlay.active .modal-content {
-    transform: translateY(0);
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
-    background-color: var(--card-bg);
-    z-index: 10;
-}
-
-.modal-header h2 {
-    font-size: 1.2rem;
-    color: var(--text-main);
-}
-
-.modal-body {
-    padding: 24px;
-}
-
-.modal-footer {
-    margin-top: 24px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-
-/* Força o botão X a ficar laranja o tempo todo */
-
-.modal-header .close-modal-btn {
-    color: #D97A00;
-    /* O tom de laranja da sua marca */
-}
-
-
-/* Opcional: Deixar ele um pouquinho mais escuro ao passar o mouse */
-
-.modal-header .close-modal-btn:hover {
-    color: #E85C0D;
-}
-
-
-/* Formulários Internos */
-
-.settings-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
-@media(max-width: 500px) {
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.form-group label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-main);
-}
-
-.form-group .req {
-    color: #E0245E;
-}
-
-
-/* Asterisco obrigatório vermelho */
-
-.form-group input,
-.form-group textarea,
-.form-group select {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background-color: transparent;
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: 0.95rem;
-    transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-    outline: none;
-    border-color: #F4B41A;
-}
-
-.form-group input:disabled {
-    background-color: var(--hover-bg);
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-
-/* Botão de Upload de Arquivo */
-
-.avatar-upload-group {
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 8px;
-}
-
-.avatar-preview {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--border-color);
-}
-
-.upload-btn-wrapper {
-    position: relative;
-    overflow: hidden;
-    display: inline-block;
-}
-
-.upload-btn-wrapper input[type=file] {
-    font-size: 100px;
-    position: absolute;
-    left: 0;
-    top: 0;
-    opacity: 0;
-    cursor: pointer;
-    height: 100%;
-}
-
-
-/* Zona de Perigo (Apagar Conta) */
-
-.danger-zone {
-    margin-top: 32px;
-    padding: 20px;
-    border: 1px solid #FCA5A5;
-    background-color: rgba(239, 68, 68, 0.05);
-    border-radius: 12px;
-}
-
-.danger-zone h4 {
-    color: #EF4444;
-    margin-bottom: 4px;
-}
-
-.danger-zone p {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    margin-bottom: 16px;
-}
-
-.btn-danger {
-    background-color: #EF4444;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.btn-danger:hover {
-    background-color: #DC2626;
-}
-
-
-/* =========================================
-   10. Página de Autenticação (Login/Cadastro)
-   ========================================= */
-
-.auth-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: var(--bg-color);
-    padding: 20px;
-}
-
-.auth-container {
-    width: 100%;
-    max-width: 450px;
-}
-
-.auth-card {
-    background-color: var(--card-bg);
-    padding: 40px 30px;
-    border-radius: 16px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-    animation: fadeIn 0.4s ease;
-}
-
-.auth-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.auth-header h2 {
-    font-size: 1.8rem;
-    color: var(--text-main);
-    margin: 10px 0 5px;
-}
-
-.auth-header p {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-}
-
-.auth-footer {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-.auth-footer a {
-    color: #D97A00;
-    font-weight: bold;
-    text-decoration: none;
-    transition: 0.2s;
-}
-
-.auth-footer a:hover {
-    text-decoration: underline;
-}
-
-
-/* =========================================
-   11. Correções do Dark Mode para Formulários
-   ========================================= */
-
-[data-theme="dark"] select,
-[data-theme="dark"] input,
-[data-theme="dark"] textarea {
-    background-color: transparent;
-    color: var(--text-main);
-    color-scheme: dark;
-    /* Força o dropdown e scrollbar a ficarem escuros nativamente */
-}
-
-[data-theme="dark"] select option {
-    background-color: var(--card-bg);
-    color: var(--text-main);
-}
-
-
-/* =========================================
-   12. Visual dos Interesses e Hobbies
-   ========================================= */
-
-.hobbies-list-container {
-    margin-top: 24px;
-}
-
-.hobbies-list-container p {
-    font-size: 0.95rem;
-    color: var(--text-main);
-    margin-bottom: 12px;
-}
-
-.hobby-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    background-color: transparent;
-}
-
-.hobby-card-info h4 {
-    margin: 0 0 4px 0;
-    font-size: 1rem;
-    color: var(--text-main);
-}
-
-.hobby-card-info p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-.hobby-card-actions {
-    display: flex;
-    gap: 12px;
-    color: var(--text-muted);
-}
-
-.hobby-card-actions span {
-    cursor: pointer;
-    font-size: 1.2rem;
-    transition: 0.2s;
-}
-
-.hobby-card-actions span:hover {
-    color: #EF4444;
-    /* Fica vermelho ao passar o mouse na lixeira */
-}
-
-
-/* =========================================
-   13. Ações de Republicar e Compartilhar
-   ========================================= */
-
-
-/* Republicar (Verde) */
-
-.action-btn.reposted {
-    color: #10B981;
-}
-
-.action-btn.reposted .material-symbols-outlined {
-    font-variation-settings: 'wght' 600;
-    color: #10B981;
-    animation: spinTwice 0.4s ease-in-out;
-}
-
-@keyframes spinTwice {
-    0% {
-        transform: rotate(0deg) scale(1);
-    }
-    50% {
-        transform: rotate(180deg) scale(1.2);
-    }
-    100% {
-        transform: rotate(360deg) scale(1);
-    }
-}
-
-
-/* Área de Compartilhar (Link) */
-
-.share-section {
-    display: none;
-    border-top: 1px solid var(--border-color);
-    padding-top: 1rem;
-    margin-top: 0.5rem;
-}
-
-.share-section.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
-}
-
-.share-box {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    background-color: var(--hover-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 8px 12px;
-}
-
-.share-box input {
-    flex-grow: 1;
-    background: transparent;
-    border: none;
-    color: var(--text-main);
-    font-size: 0.9rem;
-    outline: none;
-}
-
-.copy-btn {
-    background: var(--brand-gradient);
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.copy-btn:hover {
-    opacity: 0.9;
-}
-
-
-/* =========================================
-   14. Dropdown de Opções (Editar/Apagar)
-   ========================================= */
-
-.post-options-wrapper {
-    position: relative;
-}
-
-.post-dropdown {
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    display: none;
-    /* Escondido por padrão */
-    flex-direction: column;
-    min-width: 140px;
-    z-index: 10;
-    overflow: hidden;
-}
-
-.post-dropdown.active {
-    display: flex;
-    animation: fadeIn 0.2s ease;
-}
-
-.dropdown-item {
-    padding: 10px 16px;
-    background: none;
-    border: none;
-    text-align: left;
-    color: var(--text-main);
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: 0.2s;
-}
-
-.dropdown-item:hover {
-    background: var(--hover-bg);
-}
-
-.dropdown-item.text-danger {
-    color: #EF4444;
-}
-
-
-/* =========================================
-   15. Abas do Perfil e Banner
-   ========================================= */
-
-.profile-tabs {
-    display: flex;
-    border-bottom: 1px solid var(--border-color);
-    margin: 2rem 0 1.5rem 0;
-    overflow-x: auto;
-}
-
-.profile-tabs::-webkit-scrollbar {
-    height: 0px;
-}
-
-.profile-tab {
-    padding: 12px 20px;
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    position: relative;
-    white-space: nowrap;
-}
-
-.profile-tab.active {
-    color: var(--text-main);
-}
-
-.profile-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: var(--brand-gradient);
-    border-radius: 3px 3px 0 0;
-}
-
-
-/* Upload de Banner nas Configurações */
-
-.banner-upload-group {
-    position: relative;
-    height: 140px;
-    background: var(--brand-gradient);
-    border-radius: 8px 8px 0 0;
-    margin-bottom: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-size: cover;
-    background-position: center;
-    border: 1px solid var(--border-color);
-}
-
-.banner-upload-btn {
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: 0.2s;
-}
-
-.banner-upload-btn:hover {
-    background: rgba(0, 0, 0, 0.8);
-}
-
-
-/* Ajuste da foto sobre o banner nas configs */
-
-.avatar-on-banner {
-    position: absolute;
-    bottom: -40px;
-    left: 20px;
-    display: flex;
-    align-items: flex-end;
-    gap: 12px;
-}
-
-.avatar-on-banner img {
-    border: 4px solid var(--card-bg);
-}
-
-
-/* =========================================
-   16. Botões de Seguir e Tag Editado
-   ========================================= */
-
-.follow-btn {
-    margin-left: auto;
-    /* Empurra pro canto direito no header do post */
-    padding: 4px 14px;
-    font-size: 0.85rem;
-    border-color: #D97A00;
-    color: #D97A00;
-}
-
-.follow-btn.following {
-    background-color: var(--hover-bg);
-    border-color: var(--border-color);
-    color: var(--text-main);
-}
-
-.follow-btn.following:hover {
-    color: #EF4444;
-    border-color: #EF4444;
-}
-
-.edited-tag {
-    font-size: 0.8rem;
-    font-style: italic;
-    color: var(--text-muted);
-    margin-left: 4px;
-}
-
-
-/* =========================================
-   17. Ajuste de Imagem (Modal Preview)
-   ========================================= */
-
-#adjust-preview-container {
-    width: 100%;
-    height: 250px;
-    background: var(--hover-bg);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    margin-bottom: 15px;
-    border: 1px dashed var(--border-color);
-}
-
-#adjust-preview-img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: cover;
-}
-
-
-/* Container de Emojis */
-
-.emoji-picker {
-    background-color: var(--hover-bg);
-    padding: 10px 14px;
-    border-radius: 8px;
-    display: flex;
-    gap: 14px;
-    margin-bottom: 12px;
-    border: 1px solid var(--border-color);
-    flex-wrap: wrap;
-    animation: fadeIn 0.2s ease;
-}
-
-.emoji-option {
-    cursor: pointer;
-    font-size: 1.4rem;
-    transition: transform 0.2s;
-    user-select: none;
-}
-
-.emoji-option:hover {
-    transform: scale(1.3);
-}
-
-
-/* PAINÉIS DE CRIAÇÃO (Emoji, GIF, Enquete) */
+/* Emojis, Gifs e Enquetes (Painéis) */
 
 .media-panel {
     background-color: var(--hover-bg);
@@ -1488,9 +851,6 @@ body {
     border-color: #F4B41A;
 }
 
-
-/* Enquete renderizada no Feed */
-
 .poll-container {
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -1541,8 +901,556 @@ body {
 
 
 /* =========================================
-   18. Toast Notifications (Notificações)
+   6. PERFIL E CONFIGURAÇÕES
    ========================================= */
+
+.profile-page-header {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.profile-banner,
+#profile-page-banner,
+.banner-upload-group,
+#settings-banner-preview {
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: cover !important;
+    background-attachment: scroll !important;
+}
+
+.profile-banner {
+    height: 180px;
+    background: var(--brand-gradient);
+}
+
+.profile-info-section {
+    padding: 0 20px 20px;
+}
+
+.profile-avatar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: -70px;
+    margin-bottom: 16px;
+}
+
+.profile-page-avatar {
+    width: 140px;
+    height: 140px;
+    border: 4px solid var(--card-bg);
+    object-fit: cover;
+    background-color: var(--card-bg);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.btn-outline:hover {
+    background-color: var(--hover-bg);
+}
+
+.profile-text-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-name {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--text-main);
+}
+
+.profile-handle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.profile-bio {
+    margin: 12px 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-main);
+}
+
+.profile-details-row {
+    display: flex;
+    gap: 16px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    align-items: center;
+}
+
+.profile-details-row span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-top: 12px;
+}
+
+.profile-stats strong {
+    color: var(--text-main);
+}
+
+.profile-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin: 2rem 0 1.5rem 0;
+    overflow-x: auto;
+}
+
+.profile-tabs::-webkit-scrollbar {
+    height: 0px;
+}
+
+.profile-tab {
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+}
+
+.profile-tab.active {
+    color: var(--text-main);
+}
+
+.profile-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--brand-gradient);
+    border-radius: 3px 3px 0 0;
+}
+
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 16px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.settings-card:hover {
+    border-color: #D97A00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.settings-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--hover-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    color: var(--text-main);
+}
+
+.settings-info {
+    flex-grow: 1;
+}
+
+.settings-info h3 {
+    font-size: 1.1rem;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.settings-info p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+
+/* Hobbies */
+
+.hobbies-list-container {
+    margin-top: 24px;
+}
+
+.hobby-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background-color: transparent;
+}
+
+.hobby-card-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    color: var(--text-main);
+}
+
+.hobby-card-info p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.hobby-card-actions {
+    display: flex;
+    gap: 12px;
+    color: var(--text-muted);
+}
+
+.hobby-card-actions span {
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: 0.2s;
+}
+
+.hobby-card-actions span:hover {
+    color: #EF4444;
+}
+
+
+/* =========================================
+   7. MODAIS
+   ========================================= */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 16px;
+    transform: translateY(30px);
+    transition: 0.3s ease;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background-color: var(--card-bg);
+    z-index: 10;
+}
+
+.modal-header h2 {
+    font-size: 1.2rem;
+    color: var(--text-main);
+}
+
+.modal-header .close-modal-btn {
+    color: #D97A00;
+}
+
+.modal-header .close-modal-btn:hover {
+    color: #E85C0D;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-footer {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+
+/* Ajuste de Imagem Preview */
+
+#adjust-preview-container {
+    width: 100%;
+    height: 250px;
+    background: var(--hover-bg);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 15px;
+    border: 1px dashed var(--border-color);
+}
+
+#adjust-preview-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+}
+
+.banner-upload-group {
+    position: relative;
+    height: 140px;
+    background: var(--brand-gradient);
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+}
+
+.banner-upload-btn {
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.2s;
+}
+
+.banner-upload-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.avatar-on-banner {
+    position: absolute;
+    bottom: -40px;
+    left: 20px;
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.avatar-on-banner img {
+    border: 4px solid var(--card-bg);
+}
+
+.avatar-preview {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+
+/* Formulários */
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.form-group .req {
+    color: #E0245E;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: transparent;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #F4B41A;
+}
+
+.form-group input:disabled {
+    background-color: var(--hover-bg);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.danger-zone {
+    margin-top: 32px;
+    padding: 20px;
+    border: 1px solid #FCA5A5;
+    background-color: rgba(239, 68, 68, 0.05);
+    border-radius: 12px;
+}
+
+.danger-zone h4 {
+    color: #EF4444;
+    margin-bottom: 4px;
+}
+
+.danger-zone p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+.btn-danger {
+    background-color: #EF4444;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-danger:hover {
+    background-color: #DC2626;
+}
+
+
+/* =========================================
+   8. AUTENTICAÇÃO E TOAST NOTIFICATIONS
+   ========================================= */
+
+.auth-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--bg-color);
+    padding: 20px;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 450px;
+}
+
+.auth-card {
+    background-color: var(--card-bg);
+    padding: 40px 30px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    animation: fadeIn 0.4s ease;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-header h2 {
+    font-size: 1.8rem;
+    color: var(--text-main);
+    margin: 10px 0 5px;
+}
+
+.auth-header p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.auth-footer a {
+    color: #D97A00;
+    font-weight: bold;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
 
 .toast-notification {
     position: fixed;
@@ -1552,7 +1460,6 @@ body {
     align-items: center;
     gap: 12px;
     background-color: var(--card-bg);
-    /* Respeita o dark/light mode */
     color: var(--text-main);
     padding: 16px 24px;
     border-radius: 12px;
@@ -1560,22 +1467,16 @@ body {
     font-size: 0.95rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     border-left: 6px solid #F4B41A;
-    /* Cor padrão */
     z-index: 9999;
     opacity: 0;
-    /* Faz ele deslizar da direita para a esquerda, em vez de baixo pra cima */
     transform: translateX(100px);
-    /* Efeito de transição suave e com um "saltinho" */
-    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 .toast-notification.show {
     opacity: 1;
     transform: translateX(0);
 }
-
-
-/* Variação de Sucesso (Verde) */
 
 .toast-notification.toast-success {
     border-left-color: #10B981;
@@ -1584,9 +1485,6 @@ body {
 .toast-notification.toast-success .toast-icon {
     color: #10B981;
 }
-
-
-/* Variação de Erro (Vermelho) */
 
 .toast-notification.toast-error {
     border-left-color: #EF4444;
@@ -1599,16 +1497,34 @@ body {
 .toast-icon {
     font-size: 24px;
     font-variation-settings: 'FILL' 1;
-    /* Deixa o ícone preenchido */
+}
+
+.skeleton {
+    background: linear-gradient(90deg, var(--hover-bg) 25%, var(--border-color) 50%, var(--hover-bg) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 6px;
+    color: transparent !important;
+    user-select: none;
+}
+
+.skeleton * {
+    visibility: hidden;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 
 /* =========================================
-   19. Página de Mensagens (Chat)
+   9. PÁGINA DE MENSAGENS (CHAT) - DESKTOP
    ========================================= */
-
-
-/* Expande a área principal e remove a coluna da direita */
 
 .messages-layout {
     grid-template-columns: 250px minmax(auto, 900px);
@@ -1622,9 +1538,6 @@ body {
     height: calc(100vh - var(--nav-height) - 4rem);
     overflow: hidden;
 }
-
-
-/* Painel da Esquerda (Contatos) */
 
 .contacts-panel {
     width: 320px;
@@ -1646,234 +1559,10 @@ body {
     font-size: 1.2rem;
     color: var(--text-main);
 }
-
-.contacts-list {
-    flex-grow: 1;
-    overflow-y: auto;
-}
-
-.contact-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 20px;
-    gap: 12px;
-    cursor: pointer;
-    transition: 0.2s;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.contact-item:hover,
-.contact-item.active {
-    background-color: var(--hover-bg);
-}
-
-.contact-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.contact-info {
-    flex-grow: 1;
-    overflow: hidden;
-}
-
-.contact-name {
-    font-weight: 600;
-    color: var(--text-main);
-    display: block;
-    margin-bottom: 2px;
-}
-
-.contact-preview {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-
-/* Painel da Direita (Chat) */
-
-.chat-panel {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--bg-color);
-    /* Fundo um pouco diferente para destacar os balões */
-}
-
-.chat-header {
-    padding: 12px 20px;
-    background-color: var(--card-bg);
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.chat-header-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-}
-
-.chat-header-info h4 {
-    margin: 0;
-    color: var(--text-main);
-}
-
-.chat-header-info span {
-    font-size: 0.8rem;
-    color: #10B981;
-    /* Verde indicando online */
-}
-
-.chat-history {
-    flex-grow: 1;
-    padding: 20px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-
-/* Balões de Mensagem */
-
-.chat-bubble {
-    max-width: 70%;
-    padding: 10px 14px;
-    border-radius: 16px;
-    font-size: 0.95rem;
-    line-height: 1.4;
-    position: relative;
-    clear: both;
-}
-
-.chat-bubble.received {
-    align-self: flex-start;
-    background-color: var(--card-bg);
-    color: var(--text-main);
-    border: 1px solid var(--border-color);
-    border-bottom-left-radius: 4px;
-}
-
-.chat-bubble.sent {
-    align-self: flex-end;
-    background: var(--brand-gradient);
-    color: white;
-    border-bottom-right-radius: 4px;
-}
-
-.chat-time {
-    display: block;
-    font-size: 0.7rem;
-    margin-top: 4px;
-    opacity: 0.7;
-    text-align: right;
-}
-
-.chat-input-area {
-    padding: 16px 20px;
-    background-color: var(--card-bg);
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-#chat-input-box {
-    flex-grow: 1;
-    padding: 10px 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    background-color: var(--hover-bg);
-    color: var(--text-main);
-    outline: none;
-    font-family: inherit;
-}
-
-#chat-input-box:focus {
-    border-color: #F4B41A;
-}
-
-.send-msg-btn {
-    color: #F4B41A;
-}
-
-
-/* Responsividade Mínima pro Chat */
-
-@media (max-width: 768px) {
-    .messages-layout {
-        display: flex;
-        flex-direction: column;
-    }
-    .contacts-panel {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-        max-height: 200px;
-    }
-    .chat-panel {
-        height: 500px;
-    }
-}
-
-
-/* =========================================
-   19. Página de Mensagens (Chat)
-   ========================================= */
-
-
-/* Expande a área principal e remove a coluna da direita */
-
-.messages-layout {
-    grid-template-columns: 250px minmax(auto, 900px);
-}
-
-.messages-container {
-    display: flex;
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    height: calc(100vh - var(--nav-height) - 4rem);
-    overflow: hidden;
-}
-
-
-/* Painel da Esquerda (Contatos) */
-
-.contacts-panel {
-    width: 320px;
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    background-color: var(--card-bg);
-}
-
-.contacts-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.contacts-header h3 {
-    font-size: 1.2rem;
-    color: var(--text-main);
-}
-
-
-/* Botões do header de contatos */
 
 .contacts-header .icon-btn {
     color: #D97A00;
-    transition: color 0.2s ease, transform 0.2s ease;
+    transition: 0.2s ease;
 }
 
 .contacts-header .icon-btn:hover {
@@ -1903,7 +1592,6 @@ body {
 .contact-avatar {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
     object-fit: cover;
 }
 
@@ -1927,15 +1615,11 @@ body {
     text-overflow: ellipsis;
 }
 
-
-/* Painel da Direita (Chat) */
-
 .chat-panel {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     background-color: var(--bg-color);
-    /* Fundo um pouco diferente para destacar os balões */
 }
 
 .chat-header {
@@ -1950,7 +1634,6 @@ body {
 .chat-header-avatar {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
 }
 
 .chat-header-info h4 {
@@ -1961,7 +1644,6 @@ body {
 .chat-header-info span {
     font-size: 0.8rem;
     color: #10B981;
-    /* Verde indicando online */
 }
 
 .chat-history {
@@ -1972,9 +1654,6 @@ body {
     flex-direction: column;
     gap: 12px;
 }
-
-
-/* Balões de Mensagem */
 
 .chat-bubble {
     max-width: 70%;
@@ -2001,14 +1680,6 @@ body {
     border-bottom-right-radius: 4px;
 }
 
-.chat-time {
-    display: block;
-    font-size: 0.7rem;
-    margin-top: 4px;
-    opacity: 0.7;
-    text-align: right;
-}
-
 .chat-input-area {
     padding: 16px 20px;
     background-color: var(--card-bg);
@@ -2018,12 +1689,9 @@ body {
     gap: 12px;
 }
 
-
-/* Botões gerais da área de input (ex: adicionar foto) */
-
 .chat-input-area .icon-btn {
     color: #D97A00;
-    transition: color 0.2s ease, transform 0.2s ease;
+    transition: 0.2s ease;
 }
 
 .chat-input-area .icon-btn:hover {
@@ -2038,21 +1706,15 @@ body {
     background-color: var(--hover-bg);
     color: var(--text-main);
     outline: none;
-    font-family: inherit;
-    transition: border-color 0.2s ease;
+    transition: 0.2s;
 }
 
 #chat-input-box:focus {
     border-color: #D97A00;
-    /* Atualizado para borda laranja ao invés de amarelo */
 }
-
-
-/* Botão específico de envio */
 
 .send-msg-btn {
     color: #E85C0D !important;
-    /* Laranja vibrante */
 }
 
 .send-msg-btn:hover {
@@ -2060,27 +1722,63 @@ body {
 }
 
 
-/* Responsividade Mínima pro Chat */
+/* =========================================
+   10. MENU INFERIOR MOBILE (Oculto no PC)
+   ========================================= */
 
-@media (max-width: 768px) {
-    .messages-layout {
-        display: flex;
-        flex-direction: column;
+.mobile-bottom-nav {
+    display: none;
+}
+
+.mobile-item {
+    color: var(--text-muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 40px;
+    transition: color 0.2s ease;
+}
+
+.mobile-item:hover,
+.mobile-item:active {
+    color: #D97A00;
+}
+
+.chat-bubble img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 5px;
+}
+
+.audio-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 160px;
+}
+
+.recording-active {
+    color: #EF4444 !important;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
     }
-    .contacts-panel {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-        max-height: 200px;
+    50% {
+        opacity: 0.5;
     }
-    .chat-panel {
-        height: 500px;
+    100% {
+        opacity: 1;
     }
 }
 
 
 /* =========================================
-   8. Responsividade (SEMPRE NO FINAL!)
+   11. RESPONSIVIDADE E MOBILE-FIRST
    ========================================= */
 
 @media (max-width: 1100px) {
@@ -2102,6 +1800,12 @@ body {
 }
 
 @media (max-width: 768px) {
+    /* TRAVA A TELA NAS MENSAGENS PARA SUMIR O FUNDO PRETO */
+    body:has(.messages-layout) {
+        padding-bottom: 0 !important;
+        overflow: hidden !important;
+        background-color: var(--bg-color) !important;
+    }
     .layout-grid {
         display: block;
         margin-top: calc(var(--nav-height) + 1rem);
@@ -2112,61 +1816,208 @@ body {
     .navbar {
         padding: 0 1rem;
     }
+    /* Configurações da Pesquisa Navbar */
     .nav-search {
-        display: none;
+        display: block !important;
+        flex-grow: 1;
+        margin: 0 10px;
+    }
+    .nav-search input {
+        padding: 0.6rem 1rem 0.6rem 2.2rem !important;
+        font-size: 0.9rem !important;
+    }
+    .search-icon {
+        left: 10px !important;
+        font-size: 1.1rem !important;
+    }
+    .nav-brand img {
+        width: 45px !important;
+        height: 45px !important;
+        margin: 0 !important;
+    }
+    .profile-pic img {
+        width: 35px;
+        height: 35px;
+    }
+    .nav-actions {
+        gap: 10px;
+    }
+    /* Barra Mobile Inferior */
+    .mobile-bottom-nav {
+        display: flex !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--card-bg);
+        border-top: 1px solid var(--border-color);
+        padding: 10px 0;
+        justify-content: space-around;
+        z-index: 1000;
+    }
+    body {
+        padding-bottom: 70px;
+    }
+    /* DESIGN DO CHAT TIPO "STORIES" DO INSTAGRAM */
+    .layout-grid.messages-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 0 !important;
+        /* A MÁGICA 1: Zera as margens laterais e a margem inferior (2rem) fantasma */
+        margin: var(--nav-height) 0 0 0 !important;
+        /* A MÁGICA 2: Força a ocupar 100% da tela na horizontal */
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .messages-container {
+        display: flex !important;
+        flex-direction: column !important;
+        height: calc(100vh - var(--nav-height) - 60px) !important;
+        width: 100% !important;
+        border: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        /* Remove qualquer espaço extra */
+    }
+    /* Garante que os contatos lá em cima fiquem no topo certinho */
+    .contacts-panel {
+        width: 100% !important;
+        max-height: max-content !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        background: var(--card-bg) !important;
+    }
+    .contacts-header {
+        display: none !important;
+    }
+    .contacts-list {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        padding: 10px 5px !important;
+        gap: 12px;
+    }
+    .contacts-list::-webkit-scrollbar {
+        height: 0px;
+    }
+    .contact-item {
+        flex-direction: column !important;
+        padding: 0 !important;
+        border: none !important;
+        min-width: 65px;
+        text-align: center;
+        background: transparent !important;
+    }
+    .contact-avatar {
+        width: 54px !important;
+        height: 54px !important;
+        border: 2px solid transparent;
+        padding: 2px;
+        transition: 0.3s;
+    }
+    .contact-item.active .contact-avatar {
+        border-color: #D97A00;
+    }
+    .contact-info {
+        display: flex !important;
+        width: 100%;
+        justify-content: center;
+    }
+    .contact-info span:not(.contact-name) {
+        display: none !important;
+    }
+    .contact-name {
+        font-size: 0.7rem !important;
+        margin-top: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 65px;
+        font-weight: 500 !important;
+    }
+    .contact-item.active .contact-name {
+        color: #D97A00;
+        font-weight: bold !important;
+    }
+    .chat-panel {
+        width: 100% !important;
+        flex-grow: 1 !important;
+        height: auto !important;
+    }
+    /* A MÁGICA 3: Força o Cabeçalho e a barra de digitar a encostarem perfeitamente nas laterais direita/esquerda */
+    .chat-header,
+    .chat-input-area {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
+
+@media (max-width: 500px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    /* Formulário em 1 coluna */
+    .profile-avatar-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px;
+    }
+    .profile-avatar-row>.btn-outline.skeleton,
+    .profile-avatar-row>a.btn-outline {
+        width: 100%;
+        text-align: center;
+    }
+    #btn-group-others {
+        width: 100%;
+        display: flex;
+        gap: 10px;
+    }
+    #btn-group-others button {
+        flex: 1;
+        padding: 10px 0 !important;
+        font-size: 0.95rem !important;
+        display: flex;
+        justify-content: center;
     }
 }
 
 
 /* =========================================
-   20. MENU INFERIOR MOBILE
+   CORREÇÃO 1: ÍCONES DE CONFIGURAÇÃO
    ========================================= */
 
-.mobile-bottom-nav {
-    display: none;
-    /* Fica escondido no PC */
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background-color: var(--card-bg);
-    border-top: 1px solid var(--border-color);
-    z-index: 2000;
-    justify-content: space-around;
-    align-items: center;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+.settings-icon {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    /* Impede que a tela amasse o círculo */
+    flex-shrink: 0 !important;
+    /* Mantém o círculo perfeito */
 }
 
-.mobile-item {
-    color: var(--text-muted);
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    transition: color 0.2s ease;
-}
-
-.mobile-item:hover,
-.mobile-item:active {
-    color: #D97A00;
+.settings-icon .material-symbols-outlined {
+    font-size: 26px !important;
+    /* Aumenta o ícone dentro do círculo */
 }
 
 
-/* Quando a tela for menor que 768px, mostra o menu */
+/* =========================================
+   CORREÇÃO 2: TELA PRETA NO CHAT MOBILE
+   ========================================= */
 
 @media (max-width: 768px) {
-    .mobile-bottom-nav {
-        display: flex;
+    .chat-panel {
+        width: 100% !important;
+        flex-grow: 1 !important;
+        height: 100% !important;
+        /* Troca o 'auto' por '100%' para preencher a tela preta */
+        display: flex !important;
+        flex-direction: column !important;
     }
-    /* Adiciona um espaço extra no fim da página para o menu não cobrir os posts */
-    body {
-        padding-bottom: 70px;
-    }
-    /* Ajusta a janela de chat no mobile para não ficar escondida atrás do menu */
-    .messages-container {
-        height: calc(100vh - var(--nav-height) - 60px);
+    .chat-history {
+        flex-grow: 1 !important;
+        /* Empurra a barra de digitar lá para baixo */
+        height: 0 !important;
+        /* Garante que a barra de rolagem funcione perfeitamente */
     }
 }
