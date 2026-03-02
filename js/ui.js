@@ -171,27 +171,6 @@ function initAuthToggles() {
     }
 }
 
-function initRegisterForm() {
-    const registerForm = document.getElementById('register-form');
-    if (registerForm) {
-        registerForm.onsubmit = async(e) => {
-            e.preventDefault();
-            const pass = document.getElementById('reg-password').value;
-            if (pass.length < 6) return showToast("A senha precisa ter pelo menos 6 caracteres.", "error");
-            try {
-                await window.AuthService.register({
-                    name: document.getElementById('reg-name').value.trim(),
-                    username: document.getElementById('reg-username').value.trim(),
-                    email: document.getElementById('reg-email').value.trim(),
-                    password: pass
-                });
-                showToast("Conta criada com sucesso! 🐆");
-                window.location.href = 'index.html';
-            } catch (error) { showToast("Erro no registo: O email pode já estar em uso.", "error"); }
-        };
-    }
-}
-
 // -----------------------------------------------------
 // 2. SUBSTITUA A FUNÇÃO loadUserDataUI
 // -----------------------------------------------------
@@ -428,7 +407,6 @@ document.addEventListener('DOMContentLoaded', async() => {
     initSearch();
     initPasswordToggle();
     initAuthToggles();
-    initRegisterForm();
     initProfileForm();
 
     if (activeUsername) await loadUserDataUI();
@@ -665,6 +643,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ADICIONE ESTE BLOCO NOVO AQUI: Força minúsculas na edição de perfil
+    const editUsernameInput = document.getElementById('edit-username');
+    if (editUsernameInput) {
+        editUsernameInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+        });
+    }
+
     // 2. Envio do formulário de cadastro
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
@@ -732,4 +718,64 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
+    
+}); // LÓGICA DE TROCA DE E-MAIL E SENHA
+    // ==========================================
+
+    // 1. Lidar com a troca de E-mail
+    const formChangeEmail = document.getElementById('form-change-email');
+    if (formChangeEmail) {
+        formChangeEmail.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newEmail = document.getElementById('new-email-input').value.trim();
+            const currentPassword = document.getElementById('current-password-email').value;
+            const btnSubmit = formChangeEmail.querySelector('button');
+
+            try {
+                btnSubmit.textContent = "A atualizar...";
+                btnSubmit.disabled = true;
+
+                await window.AuthService.changeEmail(newEmail, currentPassword);
+                
+                window.showToast("E-mail atualizado com sucesso! 🐆", "success");
+                formChangeEmail.reset(); // Limpa os campos
+            } catch (error) {
+                console.error(error);
+                window.showToast("Erro: A senha atual está incorreta ou o e-mail já existe.", "error");
+            } finally {
+                btnSubmit.textContent = "Atualizar E-mail";
+                btnSubmit.disabled = false;
+            }
+        });
+    }
+
+    // 2. Lidar com a troca de Senha
+    const formChangePassword = document.getElementById('form-change-password');
+    if (formChangePassword) {
+        formChangePassword.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newPassword = document.getElementById('new-password-input').value;
+            const currentPassword = document.getElementById('current-password-pass').value;
+            const btnSubmit = formChangePassword.querySelector('button');
+
+            if (newPassword.length < 6) {
+                return window.showToast("A nova senha deve ter no mínimo 6 caracteres.", "error");
+            }
+
+            try {
+                btnSubmit.textContent = "A atualizar...";
+                btnSubmit.disabled = true;
+
+                await window.AuthService.changePassword(newPassword, currentPassword);
+                
+                window.showToast("Senha atualizada com sucesso! 🔐", "success");
+                formChangePassword.reset(); // Limpa os campos
+            } catch (error) {
+                console.error(error);
+                window.showToast("Erro: A senha atual está incorreta.", "error");
+            } finally {
+                btnSubmit.textContent = "Atualizar Senha";
+                btnSubmit.disabled = false;
+            }
+        });
+    }

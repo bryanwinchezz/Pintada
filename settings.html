@@ -225,14 +225,18 @@
                 <button class="icon-btn close-modal-btn"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="modal-body">
-                <form class="settings-form">
+                <form id="form-change-email" class="settings-form">
                     <div class="form-group">
                         <label>E-mail Atual</label>
-                        <input type="email" disabled>
+                        <input type="email" id="current-email-display" disabled>
                     </div>
                     <div class="form-group">
                         <label>Novo E-mail <span class="req">*</span></label>
-                        <input type="email" required placeholder="Digite o novo e-mail">
+                        <input type="email" id="new-email-input" required placeholder="Digite o novo e-mail">
+                    </div>
+                    <div class="form-group">
+                        <label>Senha Atual (Para confirmar) <span class="req">*</span></label>
+                        <input type="password" id="current-password-email" required placeholder="Digite sua senha atual">
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn-primary">Atualizar E-mail</button>
@@ -249,18 +253,18 @@
                 <button class="icon-btn close-modal-btn"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="modal-body">
-                <form class="settings-form">
+                <form id="form-change-password" class="settings-form">
                     <div class="form-group">
                         <label>Senha Atual <span class="req">*</span></label>
-                        <input type="password" required>
+                        <input type="password" id="current-password-pass" required>
                     </div>
                     <div class="form-group">
                         <label>Nova Senha <span class="req">*</span></label>
-                        <input type="password" required>
+                        <input type="password" id="new-password-input" minlength="6" required>
                     </div>
                     <div class="form-group">
                         <label>Confirmar Nova Senha <span class="req">*</span></label>
-                        <input type="password" required>
+                        <input type="password" id="confirm-password-input" minlength="6" required>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn-primary">Salvar Nova Senha</button>

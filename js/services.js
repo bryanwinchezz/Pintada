@@ -1,7 +1,16 @@
 // ==========================================
 // js/services.js - SERVIÇOS DO FIREBASE
 // ==========================================
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    deleteUser,
+    updateEmail, // <-- NOVO
+    updatePassword, // <-- NOVO
+    EmailAuthProvider, // <-- NOVO
+    reauthenticateWithCredential // <-- NOVO
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { collection, addDoc, getDocs, query, orderBy, doc, updateDoc, setDoc, getDoc, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
@@ -137,15 +146,35 @@ const AuthService = {
         const oldData = oldSnap.exists() ? oldSnap.data() : {};
         const finalAvatar = updatedData.avatar || oldData.avatar || "";
 
+        // SE ELE MUDOU O NOME DE USUÁRIO:
         if (oldUsername !== updatedData.username) {
-            await setDoc(doc(window.db, "users", updatedData.username), updatedData);
+
+            // 1. Verifica no banco de dados se esse novo nome já tem dono
+            const newUsernameRef = doc(window.db, "users", updatedData.username);
+            const newUsernameSnap = await getDoc(newUsernameRef);
+
+            if (newUsernameSnap.exists()) {
+                throw new Error("Este nome de usuário já está em uso por outra pessoa!");
+            }
+
+            // 2. Se estiver livre, cria o novo e apaga o velho
+            await setDoc(newUsernameRef, updatedData);
             await deleteDoc(userRef);
             localStorage.setItem('pintada_active_user', updatedData.username);
         } else {
+            // Se não mudou o nome, só atualiza os dados normais
             await setDoc(userRef, updatedData, { merge: true });
         }
+
+        // Atualiza a foto, o nome e o @ em todas as postagens antigas dele!
         const postsSnap = await getDocs(query(collection(window.db, "posts"), where("authorUsername", "==", oldUsername)));
-        postsSnap.forEach(async(postDoc) => { await updateDoc(doc(window.db, "posts", postDoc.id), { authorName: updatedData.name, authorAvatar: finalAvatar }); });
+        postsSnap.forEach(async(postDoc) => {
+            await updateDoc(doc(window.db, "posts", postDoc.id), {
+                authorName: updatedData.name,
+                authorUsername: updatedData.username, // Se ele mudou de @, atualiza nos posts também
+                authorAvatar: finalAvatar
+            });
+        });
     },
     async toggleFollow(targetUsername) {
         const currentUser = this.getCurrentUser();
@@ -182,6 +211,31 @@ const AuthService = {
 
         // 3. Limpa o navegador
         localStorage.removeItem('pintada_active_user');
+    },
+    // --- NOVAS FUNÇÕES DE SEGURANÇA ---
+
+    // Função para confirmar a identidade do usuário (Reautenticação)
+    async reauthenticate(currentPassword) {
+        const user = window.auth.currentUser;
+        if (!user) throw new Error("Nenhum utilizador logado.");
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+        await reauthenticateWithCredential(user, credential);
+    },
+
+    // Trocar o E-mail (No Auth e no Banco de Dados)
+    async changeEmail(newEmail, currentPassword) {
+        await this.reauthenticate(currentPassword); // Pede a senha atual
+        await updateEmail(window.auth.currentUser, newEmail); // Muda no cofre do Google
+
+        // Atualiza o e-mail no seu banco de dados público também
+        const activeUsername = this.getCurrentUser();
+        await updateDoc(doc(window.db, "users", activeUsername), { email: newEmail });
+    },
+
+    // Trocar a Senha
+    async changePassword(newPassword, currentPassword) {
+        await this.reauthenticate(currentPassword); // Pede a senha atual
+        await updatePassword(window.auth.currentUser, newPassword); // Atualiza a senha
     }
 };
 
