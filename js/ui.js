@@ -36,7 +36,7 @@ function showToast(message, type = 'success') {
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 400);
-    }, 3000);
+    }, 6000);
 }
 window.showToast = showToast;
 
@@ -719,10 +719,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-}); // LÓGICA DE TROCA DE E-MAIL E SENHA
+}); 
+
+// ==========================================
+    // LÓGICA DE TROCA DE E-MAIL E SENHA
     // ==========================================
 
-    // 1. Lidar com a troca de E-mail
+    // 1. Mostrar o e-mail atual no modal (UX)
+    const emailDisplay = document.getElementById('current-email-display');
+    if (emailDisplay && window.AuthService) {
+        const activeUser = window.AuthService.getCurrentUser();
+        window.AuthService.getUserData(activeUser).then(user => {
+            if (user) emailDisplay.value = user.email; // Preenche o campo vazio!
+        });
+    }
+
+    // 2. Lidar com a troca de E-mail
     const formChangeEmail = document.getElementById('form-change-email');
     if (formChangeEmail) {
         formChangeEmail.addEventListener('submit', async (e) => {
@@ -737,11 +749,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await window.AuthService.changeEmail(newEmail, currentPassword);
                 
-                window.showToast("E-mail atualizado com sucesso! 🐆", "success");
-                formChangeEmail.reset(); // Limpa os campos
+                // Aviso de 7 segundos!
+                window.showToast("Link de confirmação enviado! Verifique a caixa de entrada ou SPAM do novo e-mail.", "success", 7000);
+                formChangeEmail.reset(); 
+                document.getElementById('modal-email').classList.remove('active'); 
             } catch (error) {
-                console.error(error);
-                window.showToast("Erro: A senha atual está incorreta ou o e-mail já existe.", "error");
+                console.error("ERRO FIREBASE:", error);
+                let msg = error.message;
+                
+                if (msg.includes("auth/invalid-credential") || msg.includes("auth/wrong-password")) {
+                    msg = "A senha atual está incorreta.";
+                } else if (msg.includes("auth/email-already-in-use")) {
+                    msg = "Este e-mail já está a ser usado por outra conta.";
+                } else if (msg.includes("Nenhum utilizador logado") || msg.includes("auth/user-not-found")) {
+                    msg = "Sessão fantasma! Clique em 'Sair' no menu e faça login novamente.";
+                } else if (msg.includes("auth/requires-recent-login")) {
+                    msg = "Por segurança, faça logout e login novamente para alterar o e-mail.";
+                }
+                
+                window.showToast(msg, "error");
             } finally {
                 btnSubmit.textContent = "Atualizar E-mail";
                 btnSubmit.disabled = false;
@@ -749,14 +775,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Lidar com a troca de Senha
+    // 3. Lidar com a troca de Senha
     const formChangePassword = document.getElementById('form-change-password');
     if (formChangePassword) {
         formChangePassword.addEventListener('submit', async (e) => {
             e.preventDefault();
             const newPassword = document.getElementById('new-password-input').value;
             const currentPassword = document.getElementById('current-password-pass').value;
+            const confirmPassword = document.getElementById('confirm-password-input').value;
             const btnSubmit = formChangePassword.querySelector('button');
+
+            if (newPassword !== confirmPassword) {
+                return window.showToast("As novas senhas não coincidem!", "error");
+            }
 
             if (newPassword.length < 6) {
                 return window.showToast("A nova senha deve ter no mínimo 6 caracteres.", "error");
@@ -769,10 +800,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 await window.AuthService.changePassword(newPassword, currentPassword);
                 
                 window.showToast("Senha atualizada com sucesso! 🔐", "success");
-                formChangePassword.reset(); // Limpa os campos
+                formChangePassword.reset(); 
+                document.getElementById('modal-password').classList.remove('active'); 
             } catch (error) {
-                console.error(error);
-                window.showToast("Erro: A senha atual está incorreta.", "error");
+                console.error("ERRO FIREBASE:", error);
+                let msg = error.message;
+
+                if (msg.includes("auth/invalid-credential") || msg.includes("auth/wrong-password")) {
+                    msg = "A senha atual está incorreta.";
+                } else if (msg.includes("Nenhum utilizador logado") || msg.includes("auth/user-not-found")) {
+                    msg = "Sessão fantasma! Clique em 'Sair' no menu e faça login novamente.";
+                } else if (msg.includes("auth/requires-recent-login")) {
+                    msg = "Por segurança, faça logout e login novamente para alterar a senha.";
+                }
+                
+                window.showToast(msg, "error");
             } finally {
                 btnSubmit.textContent = "Atualizar Senha";
                 btnSubmit.disabled = false;

@@ -6,10 +6,10 @@ import {
     createUserWithEmailAndPassword,
     signOut,
     deleteUser,
-    updateEmail, // <-- NOVO
-    updatePassword, // <-- NOVO
-    EmailAuthProvider, // <-- NOVO
-    reauthenticateWithCredential // <-- NOVO
+    verifyBeforeUpdateEmail, // <-- AQUI ESTÁ A NOVA FUNÇÃO
+    updatePassword,
+    EmailAuthProvider,
+    reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { collection, addDoc, getDocs, query, orderBy, doc, updateDoc, setDoc, getDoc, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
@@ -225,9 +225,11 @@ const AuthService = {
     // Trocar o E-mail (No Auth e no Banco de Dados)
     async changeEmail(newEmail, currentPassword) {
         await this.reauthenticate(currentPassword); // Pede a senha atual
-        await updateEmail(window.auth.currentUser, newEmail); // Muda no cofre do Google
 
-        // Atualiza o e-mail no seu banco de dados público também
+        // Dispara o e-mail de confirmação do Google para o NOVO e-mail
+        await verifyBeforeUpdateEmail(window.auth.currentUser, newEmail);
+
+        // Atualiza o e-mail no seu banco de dados público
         const activeUsername = this.getCurrentUser();
         await updateDoc(doc(window.db, "users", activeUsername), { email: newEmail });
     },
