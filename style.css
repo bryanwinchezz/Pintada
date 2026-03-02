@@ -2021,3 +2021,85 @@ body {
         /* Garante que a barra de rolagem funcione perfeitamente */
     }
 }
+
+
+/* DESIGN DE MÍDIA NO CHAT */
+
+.chat-bubble img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 5px;
+    cursor: pointer;
+    display: block;
+}
+
+.audio-player {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+}
+
+.audio-player audio {
+    height: 30px;
+    width: 180px;
+}
+
+.recording-active {
+    color: #EF4444 !important;
+    animation: pulse-red 1s infinite;
+}
+
+@keyframes pulse-red {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+
+/* Balões de Mídia */
+
+.chat-bubble img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 5px;
+    cursor: pointer;
+}
+
+.audio-player {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 180px;
+}
+
+.audio-player audio {
+    height: 30px;
+    width: 100%;
+}
+
+
+/* Animação do Microfone Gravando */
+
+.recording-active {
+    color: #EF4444 !important;
+    animation: pulse-red 1s infinite;
+}
+
+@keyframes pulse-red {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
