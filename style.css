@@ -2305,3 +2305,37 @@ body {
         font-size: 0.95rem !important;
     }
 }
+
+/* =========================================
+   CORREÇÃO FINAL: LAYOUT MOBILE (FEED E CHAT)
+   ========================================= */
+
+@media (max-width: 768px) {
+    /* 1. Remove o espaço (buraco preto) abaixo do campo de texto no chat */
+    .messages-container {
+        /* Usa 'dvh' para calcular perfeitamente a altura em celulares, ignorando a barra de endereço */
+        height: calc(100dvh - var(--nav-height) - 52px) !important; 
+        margin-bottom: 0 !important;
+        border-bottom: none !important;
+    }
+    
+    .chat-input-area {
+        padding-bottom: 10px !important; /* Reduz o espaçamento inútil embaixo */
+        margin-bottom: 0 !important;
+    }
+
+    /* 2. Impede o botão "Postar" de vazar para fora do quadro */
+    .create-post {
+        overflow: hidden !important; /* Corta qualquer elemento que tente sair do quadrado */
+        padding: 12px !important;
+    }
+
+    .create-post-actions {
+        width: 100% !important;
+        box-sizing: border-box !important; /* O segredo: faz o 100% respeitar as bordas */
+        padding-right: 5px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+}
