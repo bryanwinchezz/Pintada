@@ -142,14 +142,27 @@ function generatePostHTML(post, currentUser) {
 }
 
 async function renderAllFeeds() {
+    // 1. Verifica se está na página do post isolado
+    const isSinglePostPage = window.location.pathname.includes('post.html');
+    
+    // 2. Tenta pegar o usuário ativo
     const activeUsername = window.AuthService.getCurrentUser();
-    if (!activeUsername) return;
+    
+    // 3. Bloqueio para visitantes (quem não tem conta logada)
+    if (!activeUsername) {
+        if (isSinglePostPage) {
+            alert("Faça login na Pintada para ver esta publicação! 🐆");
+            window.location.href = "index.html"; // Manda para a tela de login
+        }
+        return; // Interrompe a execução
+    }
+
     const currentUser = await window.AuthService.getUserData(activeUsername);
     if (!currentUser) return;
+
     // ==========================================
     // LÓGICA DA PÁGINA DE POST ISOLADO (post.html)
     // ==========================================
-    const isSinglePostPage = window.location.pathname.includes('post.html');
     const singlePostArea = document.getElementById('single-post-render-area');
 
     if (isSinglePostPage && singlePostArea) {
@@ -158,6 +171,7 @@ async function renderAllFeeds() {
 
         if (postId) {
             const allPosts = await window.PostService.getPosts();
+            // Comparação segura garantindo que ambos são Strings
             const thePost = allPosts.find(p => String(p.id) === String(postId));
 
             if (thePost) {

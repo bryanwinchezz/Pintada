@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicação - Pintada</title>
+
+    <meta property="og:title" content="Veja esta publicação na Pintada 🐆">
+    <meta property="og:description" content="Participe da conversa na nova rede social.">
+    <meta property="og:image" content="https://pintada.netlify.app/assets/logo.png">
+    <meta property="og:type" content="website">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand" style="text-decoration: none;">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Voltar
+        </a>
+        <div class="nav-actions">
+            <a href="index.html" class="btn-primary" style="text-decoration: none;">Abrir App</a>
+        </div>
+    </nav>
+
+    <div class="layout-grid" style="display: flex; justify-content: center; margin-top: 100px;">
+        <main class="feed-container" style="max-width: 600px; width: 100%;">
+            <div id="single-post-render-area">
+                <p style="text-align: center; color: var(--text-muted); padding: 40px;">Carregando publicação...</p>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/services.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/feed.js"></script>
+
+</body>
+
+</html>

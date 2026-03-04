@@ -919,6 +919,7 @@ window.getBadgeHTML = function(badgeType) {
         'green': 'color: #10B981;',
         'pink': 'color: #EC4899;',
         'black': 'color: #171717;',
+        'brown': 'color: #A0522D;',
         'rainbow': 'background: linear-gradient(to bottom, #E40303 0%, #E40303 16.6%, #FF8C00 16.6%, #FF8C00 33.3%, #FFED00 33.3%, #FFED00 50%, #008026 50%, #008026 66.6%, #004DFF 66.6%, #004DFF 83.3%, #750787 83.3%, #750787 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;',
         'owner': 'background: linear-gradient(135deg, #FFDF00 0%, #F4B41A 40%, #8B0000 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;'
     };

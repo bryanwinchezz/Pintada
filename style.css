@@ -2197,12 +2197,13 @@ body {
 }
 
 /* Forçar quebra de texto em posts e mensagens */
-.post-content p, 
+.post-content p,
 .comment-content p {
     word-wrap: break-word;
     word-break: break-word;
     overflow-wrap: break-word;
-    white-space: pre-wrap; /* Mantém as quebras de linha manuais */
+    white-space: pre-wrap;
+    /* Mantém as quebras de linha manuais */
 }
 
 /* Estilo do botão X nos previews */
@@ -2239,17 +2240,21 @@ body {
 /* 1. Corrigir estouro de texto (Parede de Letras) */
 .post-content p {
     word-wrap: break-word;
-    word-break: break-all; /* Força a quebra mesmo sem espaços */
+    word-break: break-all;
+    /* Força a quebra mesmo sem espaços */
     overflow-wrap: anywhere;
     white-space: pre-wrap;
 }
 
 /* 2. Arrumar Bolhas de Mensagem (image_4495c1) */
 .chat-bubble {
-    max-width: 85% !important; /* Impede que a bolha ocupe 100% da largura */
-    width: fit-content !important; /* Encolhe a bolha para o tamanho do texto */
+    max-width: 85% !important;
+    /* Impede que a bolha ocupe 100% da largura */
+    width: fit-content !important;
+    /* Encolhe a bolha para o tamanho do texto */
     padding: 8px 12px !important;
-    height: auto !important; /* Remove qualquer altura fixa que possa ter herdado */
+    height: auto !important;
+    /* Remove qualquer altura fixa que possa ter herdado */
     display: flex;
     flex-direction: column;
 }
@@ -2276,13 +2281,16 @@ body {
    CORREÇÃO: OVERLAP DO BOTÃO POSTAR (MOBILE)
    ========================================= */
 @media (max-width: 500px) {
+
     /* 1. Reduz o espaço entre os ícones para eles não ficarem tão separados */
     .create-post-tools {
         gap: 8px !important;
-        border-bottom: none !important; /* Remove a linha bugada no meio */
+        border-bottom: none !important;
+        /* Remove a linha bugada no meio */
         padding-bottom: 0 !important;
         margin-bottom: 8px !important;
-        flex-wrap: wrap; /* Permite quebrar linha se for muito estreito */
+        flex-wrap: wrap;
+        /* Permite quebrar linha se for muito estreito */
     }
 
     .tool-btn {
@@ -2292,7 +2300,8 @@ body {
     /* 2. Força a área do contador e do botão para uma linha nova */
     .create-post-actions {
         width: 100% !important;
-        justify-content: space-between !important; /* Coloca o contador na esquerda e o botão na direita */
+        justify-content: space-between !important;
+        /* Coloca o contador na esquerda e o botão na direita */
         align-items: center !important;
         border-top: 1px solid var(--border-color);
         padding-top: 12px;
@@ -2311,31 +2320,151 @@ body {
    ========================================= */
 
 @media (max-width: 768px) {
+
     /* 1. Remove o espaço (buraco preto) abaixo do campo de texto no chat */
     .messages-container {
         /* Usa 'dvh' para calcular perfeitamente a altura em celulares, ignorando a barra de endereço */
-        height: calc(100dvh - var(--nav-height) - 52px) !important; 
+        height: calc(100dvh - var(--nav-height) - 52px) !important;
         margin-bottom: 0 !important;
         border-bottom: none !important;
     }
-    
+
     .chat-input-area {
-        padding-bottom: 10px !important; /* Reduz o espaçamento inútil embaixo */
+        padding-bottom: 10px !important;
+        /* Reduz o espaçamento inútil embaixo */
         margin-bottom: 0 !important;
     }
 
     /* 2. Impede o botão "Postar" de vazar para fora do quadro */
     .create-post {
-        overflow: hidden !important; /* Corta qualquer elemento que tente sair do quadrado */
+        overflow: hidden !important;
+        /* Corta qualquer elemento que tente sair do quadrado */
         padding: 12px !important;
     }
 
     .create-post-actions {
         width: 100% !important;
-        box-sizing: border-box !important; /* O segredo: faz o 100% respeitar as bordas */
+        box-sizing: border-box !important;
+        /* O segredo: faz o 100% respeitar as bordas */
         padding-right: 5px !important;
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
     }
+}
+
+/* =========================================
+   CORREÇÕES: ENQUETE E BUGS MOBILE (HEADER/FOOTER)
+   ========================================= */
+
+/* 1. Design da Enquete no Criador de Posts */
+#poll-panel {
+    background: transparent;
+    padding: 10px 0;
+}
+
+.poll-opt-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg) !important;
+    color: var(--text-main);
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: 0.2s;
+}
+
+.poll-opt-input:focus {
+    border-color: #F4B41A;
+    box-shadow: 0 0 0 2px rgba(244, 180, 26, 0.2);
+}
+
+#add-poll-opt-btn {
+    background: rgba(244, 180, 26, 0.1);
+    color: #D97A00;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    display: block;
+    width: fit-content;
+}
+
+#add-poll-opt-btn:hover {
+    background: rgba(244, 180, 26, 0.2);
+}
+
+/* 2. Correção do Topo (Barra de Pesquisa Esmagando Ícones) */
+@media (max-width: 768px) {
+    .navbar {
+        gap: 10px;
+        padding: 0 15px;
+    }
+
+    .nav-search {
+        flex-grow: 1;
+        max-width: 180px;
+        /* Impede a barra de crescer infinitamente */
+        margin: 0;
+    }
+
+    .nav-search input {
+        padding: 0.5rem 1rem 0.5rem 2.2rem !important;
+    }
+
+    .nav-actions {
+        gap: 8px;
+        /* Junta mais os ícones da direita */
+    }
+}
+
+/* 3. Correção do Fundo Preto no Menu Inferior */
+body {
+    padding-bottom: 0 !important;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 50px !important;
+        /* Espaço exato do menu */
+    }
+
+    .mobile-bottom-nav {
+        height: 50px;
+        /* Altura fixa */
+        padding: 0;
+    }
+}
+
+/* =========================================
+   CORREÇÃO: CAMPO DE PERGUNTA DA ENQUETE
+   ========================================= */
+
+#poll-question-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg) !important;
+    color: var(--text-main);
+    margin-bottom: 15px;
+    font-size: 1rem;
+    font-weight: bold;
+    /* Deixa a pergunta com mais destaque */
+    outline: none;
+    transition: 0.2s;
+}
+
+#poll-question-input:focus {
+    border-color: #F4B41A;
+    box-shadow: 0 0 0 2px rgba(244, 180, 26, 0.2);
+}
+
+/* Garante que o painel de enquete tenha um espaçamento correto */
+#poll-options-container {
+    margin-top: 10px;
 }
