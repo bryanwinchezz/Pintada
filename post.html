@@ -16,6 +16,21 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 </head>
 
+<script>
+        // Lê o que o usuário escolheu na Home antes mesmo de desenhar a página
+        const temaSalvo = localStorage.getItem('theme') || localStorage.getItem('darkMode') || localStorage.getItem('tema');
+        
+        // Aplica as classes mais comuns de modo escuro (uma delas vai "bater" com o seu CSS)
+        if (temaSalvo === 'dark' || temaSalvo === 'true' || temaSalvo === 'escuro') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.classList.add('dark-theme', 'dark-mode', 'dark');
+            // Como o body ainda não existe neste ponto, a gente garante que ele receba a classe assim que carregar
+            window.addEventListener('DOMContentLoaded', () => {
+                document.body.classList.add('dark-theme', 'dark-mode', 'dark');
+            });
+        }
+    </script>
+
 <body>
 
     <nav class="navbar">
@@ -40,8 +55,8 @@
     <script type="module" src="js/services.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/feed.js"></script>
+    <script src="js/theme.js"></script>
 
 </body>
-
 
 </html>
