@@ -872,6 +872,39 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// Função Global para abrir imagens em tela cheia
+window.openImageModal = function(imgSrc) {
+    let modal = document.getElementById('chat-image-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'chat-image-modal';
+        
+        // A MÁGICA ESTÁ AQUI: Adicionando os estilos para a tela inteira!
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.9); z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        `;
+        
+        modal.innerHTML = `
+            <span class="material-symbols-outlined" style="position:absolute; top:20px; right:20px; color:white; font-size:40px; cursor:pointer; background:rgba(0,0,0,0.5); border-radius:50%; padding:4px;">close</span>
+            <img id="modal-large-image" src="" style="max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+        `;
+        document.body.appendChild(modal);
+        
+        // Lógica para fechar com efeito
+        modal.onclick = () => {
+            modal.style.opacity = '0';
+            setTimeout(() => modal.style.display = 'none', 300);
+        };
+    }
+    
+    document.getElementById('modal-large-image').src = imgSrc;
+    modal.style.display = 'flex';
+    setTimeout(() => modal.style.opacity = '1', 10); // Dispara o fade-in
+};
+
 // ==========================================
 // GERADOR DE SELOS DE VERIFICAÇÃO
 // ==========================================
@@ -882,7 +915,6 @@ window.getBadgeHTML = function(badgeType) {
     const styles = {
         'blue': 'color: #1D9BF0;',
         'red': 'color: #EF4444;',
-        'gold': 'color: #F4B41A;',
         'staff': 'color: #8B5CF6;',
         'green': 'color: #10B981;',
         'pink': 'color: #EC4899;',

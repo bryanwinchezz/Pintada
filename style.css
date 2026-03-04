@@ -3,7 +3,7 @@
    ========================================= */
 
 :root {
-    --brand-gradient: linear-gradient( 135deg, #F7B51D 0%, #F5A300 25%, #F07A00 60%, #E85C0D 85%, #D94A0C 100%);
+    --brand-gradient: linear-gradient(135deg, #F7B51D 0%, #F5A300 25%, #F07A00 60%, #E85C0D 85%, #D94A0C 100%);
     --nav-height: 70px;
     --bg-color: #F0F2F5;
     --card-bg: #FFFFFF;
@@ -539,9 +539,11 @@ body {
     0% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.3);
     }
+
     100% {
         transform: scale(1);
     }
@@ -551,9 +553,11 @@ body {
     0% {
         transform: rotate(0deg) scale(1);
     }
+
     50% {
         transform: rotate(180deg) scale(1.2);
     }
+
     100% {
         transform: rotate(360deg) scale(1);
     }
@@ -564,6 +568,7 @@ body {
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1516,6 +1521,7 @@ body {
     0% {
         background-position: 200% 0;
     }
+
     100% {
         background-position: -200% 0;
     }
@@ -1641,7 +1647,7 @@ body {
     color: var(--text-main);
 }
 
-.chat-header-info span {
+#chat-contact-status {
     font-size: 0.8rem;
     color: #10B981;
 }
@@ -1768,9 +1774,11 @@ body {
     0% {
         opacity: 1;
     }
+
     50% {
         opacity: 0.5;
     }
+
     100% {
         opacity: 1;
     }
@@ -1786,12 +1794,15 @@ body {
         grid-template-columns: 80px minmax(auto, 600px);
         justify-content: start;
     }
+
     .sidebar-right {
         display: none;
     }
+
     .menu-text {
         display: none;
     }
+
     .menu-item {
         padding: 12px;
         justify-content: center;
@@ -1800,48 +1811,59 @@ body {
 }
 
 @media (max-width: 768px) {
+
     /* TRAVA A TELA NAS MENSAGENS PARA SUMIR O FUNDO PRETO */
     body:has(.messages-layout) {
         padding-bottom: 0 !important;
         overflow: hidden !important;
         background-color: var(--bg-color) !important;
     }
+
     .layout-grid {
         display: block;
         margin-top: calc(var(--nav-height) + 1rem);
     }
+
     .sidebar-left {
         display: none;
     }
+
     .navbar {
         padding: 0 1rem;
     }
+
     /* Configurações da Pesquisa Navbar */
     .nav-search {
         display: block !important;
         flex-grow: 1;
         margin: 0 10px;
     }
+
     .nav-search input {
         padding: 0.6rem 1rem 0.6rem 2.2rem !important;
         font-size: 0.9rem !important;
     }
+
     .search-icon {
         left: 10px !important;
         font-size: 1.1rem !important;
     }
+
     .nav-brand img {
         width: 45px !important;
         height: 45px !important;
         margin: 0 !important;
     }
+
     .profile-pic img {
         width: 35px;
         height: 35px;
     }
+
     .nav-actions {
         gap: 10px;
     }
+
     /* Barra Mobile Inferior */
     .mobile-bottom-nav {
         display: flex !important;
@@ -1855,9 +1877,11 @@ body {
         justify-content: space-around;
         z-index: 1000;
     }
+
     body {
         padding-bottom: 70px;
     }
+
     /* DESIGN DO CHAT TIPO "STORIES" DO INSTAGRAM */
     .layout-grid.messages-layout {
         display: flex !important;
@@ -1869,6 +1893,7 @@ body {
         width: 100% !important;
         max-width: 100% !important;
     }
+
     .messages-container {
         display: flex !important;
         flex-direction: column !important;
@@ -1879,6 +1904,7 @@ body {
         margin: 0 !important;
         /* Remove qualquer espaço extra */
     }
+
     /* Garante que os contatos lá em cima fiquem no topo certinho */
     .contacts-panel {
         width: 100% !important;
@@ -1887,9 +1913,11 @@ body {
         border-bottom: 1px solid var(--border-color) !important;
         background: var(--card-bg) !important;
     }
+
     .contacts-header {
         display: none !important;
     }
+
     .contacts-list {
         display: flex !important;
         flex-direction: row !important;
@@ -1897,9 +1925,11 @@ body {
         padding: 10px 5px !important;
         gap: 12px;
     }
+
     .contacts-list::-webkit-scrollbar {
         height: 0px;
     }
+
     .contact-item {
         flex-direction: column !important;
         padding: 0 !important;
@@ -1908,6 +1938,7 @@ body {
         text-align: center;
         background: transparent !important;
     }
+
     .contact-avatar {
         width: 54px !important;
         height: 54px !important;
@@ -1915,35 +1946,57 @@ body {
         padding: 2px;
         transition: 0.3s;
     }
+
     .contact-item.active .contact-avatar {
         border-color: #D97A00;
     }
+
     .contact-info {
-        display: flex !important;
-        width: 100%;
+        flex: 1;
+        min-width: 0;
+        /* Essencial para o ellipsis funcionar */
+        display: flex;
+        flex-direction: column;
         justify-content: center;
+        align-items: center;
+        overflow: hidden;
     }
-    .contact-info span:not(.contact-name) {
+
+    .contact-info .contact-handle {
         display: none !important;
     }
+
+    .contact-name-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        /* Força a ocupar a largura disponível */
+        max-width: 90px;
+        /* Limite máximo de largura no celular */
+    }
+
     .contact-name {
         font-size: 0.7rem !important;
-        margin-top: 4px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 65px;
-        font-weight: 500 !important;
+        /* Aqui estão os 3 pontos */
+        flex: 1;
+        min-width: 0;
     }
+
     .contact-item.active .contact-name {
         color: #D97A00;
         font-weight: bold !important;
     }
+
     .chat-panel {
         width: 100% !important;
         flex-grow: 1 !important;
         height: auto !important;
     }
+
     /* A MÁGICA 3: Força o Cabeçalho e a barra de digitar a encostarem perfeitamente nas laterais direita/esquerda */
     .chat-header,
     .chat-input-area {
@@ -1956,22 +2009,26 @@ body {
     .form-row {
         grid-template-columns: 1fr;
     }
+
     /* Formulário em 1 coluna */
     .profile-avatar-row {
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 15px;
     }
+
     .profile-avatar-row>.btn-outline.skeleton,
     .profile-avatar-row>a.btn-outline {
         width: 100%;
         text-align: center;
     }
+
     #btn-group-others {
         width: 100%;
         display: flex;
         gap: 10px;
     }
+
     #btn-group-others button {
         flex: 1;
         padding: 10px 0 !important;
@@ -2014,6 +2071,7 @@ body {
         display: flex !important;
         flex-direction: column !important;
     }
+
     .chat-history {
         flex-grow: 1 !important;
         /* Empurra a barra de digitar lá para baixo */
@@ -2054,9 +2112,11 @@ body {
     0% {
         opacity: 1;
     }
+
     50% {
         opacity: 0.5;
     }
+
     100% {
         opacity: 1;
     }
@@ -2096,10 +2156,152 @@ body {
     0% {
         opacity: 1;
     }
+
     50% {
         opacity: 0.5;
     }
+
     100% {
         opacity: 1;
+    }
+}
+
+/* =========================================
+   CORREÇÕES NOVAS: CHAT E MENSAGENS
+   ========================================= */
+.chat-bubble {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.chat-bubble a {
+    color: #fff;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.chat-bubble.received a {
+    color: #1D9BF0;
+}
+
+/* Arrumando o chat no celular para não cortar a caixa de texto */
+@media (max-width: 768px) {
+    .messages-container {
+        height: calc(100vh - var(--nav-height) - 80px) !important;
+    }
+
+    .chat-input-area {
+        padding-bottom: 15px !important;
+    }
+}
+
+/* Forçar quebra de texto em posts e mensagens */
+.post-content p, 
+.comment-content p {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap; /* Mantém as quebras de linha manuais */
+}
+
+/* Estilo do botão X nos previews */
+.remove-media-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Card de preview do áudio no criador de post */
+.audio-preview-card {
+    background: var(--hover-bg);
+    padding: 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0;
+    border: 1px solid var(--border-color);
+}
+
+/* 1. Corrigir estouro de texto (Parede de Letras) */
+.post-content p {
+    word-wrap: break-word;
+    word-break: break-all; /* Força a quebra mesmo sem espaços */
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+/* 2. Arrumar Bolhas de Mensagem (image_4495c1) */
+.chat-bubble {
+    max-width: 85% !important; /* Impede que a bolha ocupe 100% da largura */
+    width: fit-content !important; /* Encolhe a bolha para o tamanho do texto */
+    padding: 8px 12px !important;
+    height: auto !important; /* Remove qualquer altura fixa que possa ter herdado */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 3. Ajuste do Contador de Caracteres no Mobile (image_3aa7bd) */
+#char-counter {
+    white-space: nowrap;
+    min-width: fit-content;
+    font-size: 0.75rem !important;
+}
+
+/* 4. Popup da Imagem (Ajuste para Celular) */
+#chat-image-modal {
+    z-index: 99999 !important;
+}
+
+#modal-large-image {
+    max-width: 95vw !important;
+    max-height: 80vh !important;
+    object-fit: contain;
+}
+
+/* =========================================
+   CORREÇÃO: OVERLAP DO BOTÃO POSTAR (MOBILE)
+   ========================================= */
+@media (max-width: 500px) {
+    /* 1. Reduz o espaço entre os ícones para eles não ficarem tão separados */
+    .create-post-tools {
+        gap: 8px !important;
+        border-bottom: none !important; /* Remove a linha bugada no meio */
+        padding-bottom: 0 !important;
+        margin-bottom: 8px !important;
+        flex-wrap: wrap; /* Permite quebrar linha se for muito estreito */
+    }
+
+    .tool-btn {
+        padding: 4px 6px !important;
+    }
+
+    /* 2. Força a área do contador e do botão para uma linha nova */
+    .create-post-actions {
+        width: 100% !important;
+        justify-content: space-between !important; /* Coloca o contador na esquerda e o botão na direita */
+        align-items: center !important;
+        border-top: 1px solid var(--border-color);
+        padding-top: 12px;
+        margin-top: 4px;
+    }
+
+    /* 3. Ajusta o tamanho do botão para não ficar gigante no mobile */
+    .btn-primary {
+        padding: 8px 18px !important;
+        font-size: 0.95rem !important;
     }
 }

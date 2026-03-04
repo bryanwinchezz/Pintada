@@ -19,10 +19,27 @@ const PostService = {
         const snapshot = await getDocs(query(collection(window.db, "posts"), orderBy("timestamp", "desc")));
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     },
-    async addPost(content, user, gifUrl = null, pollData = null) {
+    async addPost(content, user, gifUrl = null, pollData = null, media = {}) {
         try {
-            await addDoc(collection(window.db, "posts"), { authorName: user.name || "Utilizador", authorUsername: user.username || "anonimo", authorAvatar: user.avatar || "", authorBadge: user.badge || "", content: content || "", gif: gifUrl || null, poll: pollData || null, likes: 0, likedBy: [], reposts: 0, repostedBy: [], comments: [], timestamp: Date.now(), time: "Agora", isEdited: false });
-        } catch (e) { console.error("Erro ao salvar:", e); }
+            await addDoc(collection(window.db, "posts"), {
+                authorName: user.name || "Utilizador",
+                authorUsername: user.username || "anonimo",
+                authorAvatar: user.avatar || "",
+                authorBadge: user.badge || "",
+                content: content || "",
+                gif: gifUrl || null,
+                image: media.image || null, // NOVO: Salva a URL da imagem do ImgBB
+                audio: media.audio || null, // NOVO: Salva o áudio em Base64
+                poll: pollData || null,
+                likes: 0,
+                likedBy: [],
+                reposts: 0,
+                repostedBy: [],
+                comments: [],
+                timestamp: Date.now(),
+                isEdited: false
+            });
+        } catch (e) { console.error("Erro ao salvar post:", e); }
     },
     async deletePost(postId) { await deleteDoc(doc(window.db, "posts", postId)); },
     async editPost(postId, newContent) { await updateDoc(doc(window.db, "posts", postId), { content: newContent, isEdited: true }); },
@@ -301,6 +318,10 @@ const MessageService = {
             type: type, // 'text', 'image' ou 'audio'
             timestamp: Date.now()
         });
+    },
+    // NOVA FUNÇÃO: Apagar mensagem específica
+    async deleteMessage(messageId) {
+        await deleteDoc(doc(window.db, "messages", messageId));
     }
 };
 

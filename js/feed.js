@@ -31,11 +31,41 @@ function generatePostHTML(post, currentUser) {
     const isReposted = post.repostedBy && post.repostedBy.includes(currentUser.username);
 
     let displayTime = post.timestamp ? timeAgo(post.timestamp) : post.time;
-    let contentWithHashtags = window.escapeHTML(post.content).replace(/#[a-zA-Z0-9_À-ÿ]+/gi, '<span style="color: #1d9bf0; font-weight: 500; cursor: pointer;">$&</span>');
-    let parsedContent = contentWithHashtags.replace(/\n/g, '<br>');
+    // Garante que o conteúdo não seja undefined
+    const safeContent = post.content || "";
+    let parsedContent = window.escapeHTML(safeContent)
+        .replace(/#[a-zA-Z0-9_À-ÿ]+/gi, '<span style="color: #1d9bf0; font-weight: 500; cursor: pointer;">$&</span>')
+        .replace(/@([a-zA-Z0-9_.]+)/g, '<a href="profile.html?user=$1" style="color: #1d9bf0; font-weight: 600; text-decoration: none;">@$1</a>')
+        .replace(/\n/g, '<br>');
 
     let editedTag = post.isEdited ? `<span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 5px;">(Editado)</span>` : '';
-    let mediaHTML = post.gif ? `<div class="post-media-container" style="margin-top: 12px;"><img src="${post.gif}" style="border-radius: 12px; max-width: 100%; border: 1px solid var(--border-color);"></div>` : '';
+    // === LÓGICA DE MÍDIAS (IMAGEM, GIF E ÁUDIO) ===
+    let mediaHTML = '';
+
+    // Verifica se há Imagem ou GIF
+    // Dentro de generatePostHTML, na parte da mediaHTML:
+    if (post.image) {
+        mediaHTML = `<div class="post-media-container" style="margin-top: 12px;">
+                    <img src="${post.image}" 
+                         onclick="window.openImageModal('${post.image}')" 
+                         style="border-radius: 12px; max-width: 100%; border: 1px solid var(--border-color); cursor: pointer; display: block;">
+                 </div>`;
+    } else if (post.gif) {
+        mediaHTML = `<div class="post-media-container" style="margin-top: 12px;">
+                        <img src="${post.gif}" style="border-radius: 12px; max-width: 100%; border: 1px solid var(--border-color);">
+                     </div>`;
+    }
+
+    // Verifica se há Áudio
+    if (post.audio) {
+        mediaHTML += `
+            <div class="post-audio-container" style="margin-top: 12px; background: var(--hover-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="material-symbols-outlined" style="color: var(--brand-color);">play_circle</span>
+                    <audio controls src="${post.audio}" style="height: 35px; flex-grow: 1; outline: none;"></audio>
+                </div>
+            </div>`;
+    }
 
     let pollHTML = '';
     if (post.poll) {
@@ -73,11 +103,14 @@ function generatePostHTML(post, currentUser) {
                 <a href="profile.html?user=${post.authorUsername}">
                     <img src="${displayAvatar}" alt="Avatar" class="post-avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
                 </a>
-                <div class="post-info" style="flex-grow: 1; display: flex; flex-direction: column;">
-                    <a href="profile.html?user=${post.authorUsername}" style="text-decoration: none; color: var(--text-main); font-weight: bold; font-size: 1.05rem; display: flex; align-items: center;">
-                        ${post.authorName} ${badgeHTML}
-                    </a>
-                    <span class="post-meta" style="color: var(--text-muted); font-size: 0.9rem;">@${post.authorUsername} • ${displayTime} ${editedTag}</span>
+                <div class="post-info" style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0; padding-right: 10px;">
+                    <div style="line-height: 1.3; display: block; word-wrap: break-word;">
+                        <a href="profile.html?user=${post.authorUsername}" style="text-decoration: none; color: var(--text-main); font-weight: bold; font-size: 1.05rem; display: inline;">
+                            <span style="vertical-align: middle;">${window.escapeHTML(post.authorName)}</span>
+                        </a>
+                        ${badgeHTML}
+                    </div>
+                    <span class="post-meta" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">@${post.authorUsername} • ${displayTime} ${editedTag}</span>
                 </div>
                 ${followBtnHTML}
                 ${isAuthor ? `<div class="post-options-wrapper" style="position: relative; margin-left: 8px;"><button class="icon-btn more-options" style="background: none; border: none; cursor: pointer; color: var(--text-muted);"><span class="material-symbols-outlined">more_horiz</span></button><div class="post-dropdown"><button class="dropdown-item edit-post-btn">Editar</button><button class="dropdown-item text-danger delete-post-btn">Apagar</button></div></div>` : ''}
@@ -256,26 +289,128 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const publishBtn = document.getElementById('publish-btn');
-    if (publishBtn) {
-        publishBtn.addEventListener('click', async () => {
-            const activeUsername = window.AuthService.getCurrentUser();
-            if (!activeUsername) return showToast("Sessão expirada!", "error");
-            const content = postInput ? postInput.value.trim() : '';
-            const pollInputs = Array.from(document.querySelectorAll('.poll-opt-input')).map(i => i.value.trim()).filter(v => v);
-            let pollData = null;
-            if (pollInputs.length >= 2) { pollData = { question: document.getElementById('poll-question-input') ? document.getElementById('poll-question-input').value.trim() : '', options: pollInputs.map((opt, idx) => ({ id: idx, text: opt, votes: 0 })), voters: {} }; }
-            if (!content && !window.selectedGifUrl && !pollData) return;
-            const userFullData = await window.AuthService.getUserData(activeUsername);
-            await window.PostService.addPost(content, userFullData, window.selectedGifUrl, pollData);
-            if (postInput) postInput.value = '';
-            window.selectedGifUrl = null;
-            if (previewContainer) previewContainer.style.display = 'none';
-            hideAllPanels();
-            await renderAllFeeds();
-            showToast("Publicado com sucesso! 🐆");
+    // ==========================================
+    // MONITOR DO CONTADOR DE CARACTERES (FIX)
+    // ==========================================
+    const postInputText = document.getElementById('post-input');
+    const charCountDisplay = document.getElementById('char-counter');
+
+    if (postInputText && charCountDisplay) {
+        postInputText.addEventListener('input', () => {
+            const currentLength = postInputText.value.length;
+            charCountDisplay.textContent = `${currentLength} / 1000`;
+
+            // Busca o botão atual no DOM (caso tenha sido clonado)
+            const currentBtn = document.getElementById('publish-btn');
+
+            if (currentLength > 1000) {
+                charCountDisplay.style.color = '#EF4444'; // Vermelho
+                if (currentBtn) currentBtn.style.opacity = "0.5";
+                if (currentBtn) currentBtn.style.cursor = "not-allowed";
+            } else {
+                charCountDisplay.style.color = 'var(--text-muted)';
+                if (currentBtn) currentBtn.style.opacity = "1";
+                if (currentBtn) currentBtn.style.cursor = "pointer";
+            }
         });
     }
+
+    // ==========================================
+    // MOTOR DE POSTAGEM ÚNICO (SEM DUPLICIDADE)
+    // ==========================================
+    const finalPublishBtn = document.getElementById('publish-btn');
+
+    if (finalPublishBtn) {
+        // Removemos qualquer listener anterior por segurança antes de adicionar o novo
+        finalPublishBtn.replaceWith(finalPublishBtn.cloneNode(true));
+        const newPublishBtn = document.getElementById('publish-btn');
+
+        newPublishBtn.addEventListener('click', async () => {
+            const postInput = document.getElementById('post-input');
+            const content = postInput.value.trim();
+            const activeUsername = window.AuthService.getCurrentUser();
+
+            // TRANCA DE SEGURANÇA EXTRA
+            if (content.length > 1000) {
+                showToast("O limite é de 1000 caracteres! Reduza o texto para postar.", "error");
+                return; // Interrompe a postagem aqui
+            }
+
+            // Mídias
+            const imageFile = document.getElementById('post-image-input').files[0];
+            const audioBase64 = window.lastRecordedAudioBase64;
+            const gifUrl = window.selectedGifUrl;
+
+            // Poll (Enquete)
+            const pollQuestion = document.getElementById('poll-question-input')?.value.trim();
+            const pollInputs = Array.from(document.querySelectorAll('.poll-opt-input')).map(i => i.value.trim()).filter(v => v);
+            let pollData = null;
+            if (pollInputs.length >= 2) {
+                pollData = {
+                    question: pollQuestion || '',
+                    options: pollInputs.map((opt, idx) => ({ id: idx, text: opt, votes: 0 })),
+                    voters: {}
+                };
+            }
+
+            if (!content && !imageFile && !audioBase64 && !gifUrl && !pollData) return;
+
+            newPublishBtn.disabled = true;
+            newPublishBtn.textContent = "...";
+
+            try {
+                const user = await window.AuthService.getUserData(activeUsername);
+                let finalImageUrl = null;
+
+                // 1. Upload Imagem se houver
+                if (imageFile) {
+                    const formData = new FormData();
+                    formData.append('image', imageFile);
+                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) finalImageUrl = data.data.url;
+                }
+
+                // 2. ENVIO ÚNICO PARA O BANCO
+                await window.PostService.addPost(content, user, gifUrl, pollData, {
+                    image: finalImageUrl,
+                    audio: audioBase64
+                });
+
+                // 3. LIMPEZA TOTAL
+                postInput.value = '';
+                document.getElementById('char-counter').textContent = '0 / 1000';
+                document.getElementById('post-image-input').value = '';
+                window.lastRecordedAudioBase64 = null;
+                window.selectedGifUrl = null;
+
+                // Esconde Paineis e Previews
+                document.querySelectorAll('.media-panel').forEach(p => p.style.display = 'none');
+                document.getElementById('post-preview-container').style.display = 'none';
+                document.getElementById('post-audio-preview').style.display = 'none';
+                document.getElementById('selected-gif-preview').style.display = 'none';
+                document.getElementById('mic-icon').style.color = 'var(--text-muted)';
+                if (document.getElementById('poll-options-container')) document.getElementById('poll-options-container').innerHTML = '';
+
+                showToast("Publicado com sucesso! 🐆");
+                renderAllFeeds();
+            } catch (err) {
+                showToast("Erro ao publicar", "error");
+            } finally {
+                newPublishBtn.disabled = false;
+                newPublishBtn.textContent = "Postar";
+            }
+        });
+    }
+
+    // Pressionar ENTER para enviar comentário
+    document.addEventListener('keypress', (e) => {
+        if (e.target.classList.contains('comment-input') && e.key === 'Enter') {
+            e.preventDefault();
+            const btn = e.target.closest('.comment-input-area').querySelector('.send-comment-btn');
+            if (btn) btn.click();
+        }
+    });
 
     document.addEventListener('click', async (e) => {
         const activeUsername = window.AuthService.getCurrentUser();
@@ -370,4 +505,134 @@ document.addEventListener('DOMContentLoaded', () => {
             await renderAllFeeds();
         });
     });
+});
+
+// ==========================================
+// PARTE 2 FINAL: MÍDIAS (IMGBB + AUDIO BASE64)
+// ==========================================
+
+const IMGBB_API_KEY = '02d34ec2cd7054a202c57bf35f17bc5a'; // Chave que você usa no messages.js
+let mediaRecorder;
+let audioChunks = [];
+window.lastRecordedAudioBase64 = null; // Armazena o áudio convertido
+
+// 1. Preview e Preparação de Imagem
+document.getElementById('post-image-input')?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            document.getElementById('post-preview-img').src = event.target.result;
+            document.getElementById('post-preview-container').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// 2. Gravação de Áudio (Lógica idêntica ao messages.js)
+document.getElementById('post-audio-btn')?.addEventListener('click', async () => {
+    const micIcon = document.getElementById('mic-icon');
+    const audioPreview = document.getElementById('post-audio-preview');
+    const audioPlayer = document.getElementById('post-audio-player-preview');
+
+    if (!mediaRecorder || mediaRecorder.state === "inactive") {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = () => {
+                    window.lastRecordedAudioBase64 = reader.result;
+                    if (audioPlayer) audioPlayer.src = reader.result; // PERMITE OUVIR ANTES!
+                    audioPreview.style.display = 'flex';
+                    showToast("Áudio gravado! Você pode ouvir antes de postar.");
+                };
+            };
+
+            mediaRecorder.start();
+            micIcon.style.color = "#EF4444";
+            micIcon.textContent = "stop_circle";
+        } catch (err) {
+            showToast("Erro ao acessar microfone", "error");
+        }
+    } else {
+        mediaRecorder.stop();
+        micIcon.style.color = "var(--text-muted)";
+        micIcon.textContent = "mic";
+    }
+});
+
+// 3. Botões de Remover Previews
+document.getElementById('remove-preview')?.addEventListener('click', () => {
+    document.getElementById('post-image-input').value = '';
+    document.getElementById('post-preview-container').style.display = 'none';
+});
+document.getElementById('remove-audio-btn')?.addEventListener('click', () => {
+    window.lastRecordedAudioBase64 = null;
+    document.getElementById('post-audio-preview').style.display = 'none';
+});
+
+// 4. BOTÃO POSTAR (A LOGICA REAL AGORA)
+document.getElementById('publish-btn')?.addEventListener('click', async () => {
+    const postInput = document.getElementById('post-input');
+    const charCounter = document.getElementById('char-counter');
+    const imageInput = document.getElementById('post-image-input');
+    const publishBtn = document.getElementById('publish-btn');
+
+    const activeUsername = window.AuthService.getCurrentUser();
+    const content = postInput.value.trim();
+    const imageFile = imageInput.files[0];
+    const audioBase64 = window.lastRecordedAudioBase64;
+    const gifUrl = window.selectedGifUrl;
+
+    if (!content && !imageFile && !audioBase64 && !gifUrl) return;
+
+    publishBtn.disabled = true;
+    publishBtn.textContent = "...";
+
+    try {
+        const user = await window.AuthService.getUserData(activeUsername);
+        let finalImageUrl = null;
+
+        // Upload ImgBB (idêntico ao messages.js)
+        if (imageFile) {
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) finalImageUrl = data.data.url;
+        }
+
+        // Envia para o banco de dados
+        await window.PostService.addPost(content, user, gifUrl, null, {
+            image: finalImageUrl,
+            audio: audioBase64
+        });
+
+        // --- RESET TOTAL ---
+        postInput.value = '';
+        charCounter.textContent = '0 / 1000'; // Reseta o contador
+        charCounter.style.color = 'var(--text-muted)';
+        imageInput.value = '';
+        window.lastRecordedAudioBase64 = null;
+        window.selectedGifUrl = null;
+
+        // Esconde Previews
+        document.getElementById('post-preview-container').style.display = 'none';
+        document.getElementById('post-audio-preview').style.display = 'none';
+        document.getElementById('selected-gif-preview').style.display = 'none';
+
+        showToast("Publicado com sucesso! 🐆");
+        renderAllFeeds();
+    } catch (err) {
+        showToast("Erro ao publicar", "error");
+    } finally {
+        publishBtn.disabled = false;
+        publishBtn.textContent = "Postar";
+    }
 });

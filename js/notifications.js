@@ -1,7 +1,7 @@
 // ==========================================
 // js/notifications.js - LÓGICA DE NOTIFICAÇÕES (FIREBASE)
 // ==========================================
-document.addEventListener('DOMContentLoaded', async() => {
+document.addEventListener('DOMContentLoaded', async () => {
     const activeUsername = AuthService.getCurrentUser();
     if (!activeUsername) {
         window.location.href = 'auth.html';
@@ -60,6 +60,21 @@ document.addEventListener('DOMContentLoaded', async() => {
                         });
                     }
                 });
+            }
+        });
+
+        // --- Varre TODOS OS POSTS para achar menções a você ---
+        allPosts.forEach(post => {
+            if (post.content && post.content.includes(`@${activeUsername}`)) {
+                if (post.authorUsername !== activeUsername) { // Não notifica se você mencionar a si mesmo
+                    notifications.push({
+                        type: 'mention',
+                        icon: 'alternate_email',
+                        color: '#1D9BF0',
+                        text: `<strong>${window.escapeHTML(post.authorName)}</strong> mencionou você numa publicação.`,
+                        time: post.time || 'Recente'
+                    });
+                }
             }
         });
 

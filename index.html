@@ -77,87 +77,67 @@
                 <div class="create-post-header">
                     <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Seu Perfil"
                         class="post-avatar skeleton" style="background: var(--hover-bg);">
-
                     <textarea id="post-input" placeholder="O que você quer compartilhar na Pintada?"></textarea>
                 </div>
 
-                <div id="emoji-panel" class="media-panel" style="display: none;">
-                    <div id="emoji-list" class="emoji-list">
-                        <p style="font-size: 14px; padding: 10px; color: var(--text-muted);">Carregando emojis...</p>
-                    </div>
-                </div>
-
+                <div id="emoji-panel" class="media-panel" style="display: none;"></div>
                 <div id="gif-panel" class="media-panel" style="display: none;">
                     <input type="text" id="gif-search-input" placeholder="Pesquisar no Giphy...">
                     <div id="gif-results" class="media-results"></div>
                 </div>
-
                 <div id="poll-panel" class="media-panel" style="display: none; padding: 16px;">
-                    <input type="text" id="poll-question-input"
-                        placeholder="Faça uma pergunta... (Ex: Qual sua cor favorita?)"
-                        style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-main); outline: none; font-size: 1rem; font-weight: bold; margin-bottom: 16px;">
-
-                    <div id="poll-options-container">
-                        <div class="poll-opt-row"
-                            style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                            <input type="text" class="poll-opt-input" placeholder="Opção 1"
-                                style="flex-grow: 1; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-main); outline: none; font-size: 0.95rem;">
-                            <button type="button" class="icon-btn remove-opt-btn" title="Excluir opção"><span
-                                    class="material-symbols-outlined"
-                                    style="color: var(--text-muted);">close</span></button>
-                        </div>
-                        <div class="poll-opt-row"
-                            style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                            <input type="text" class="poll-opt-input" placeholder="Opção 2"
-                                style="flex-grow: 1; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-main); outline: none; font-size: 0.95rem;">
-                            <button type="button" class="icon-btn remove-opt-btn" title="Excluir opção"><span
-                                    class="material-symbols-outlined"
-                                    style="color: var(--text-muted);">close</span></button>
-                        </div>
-                    </div>
-
-                    <button id="add-poll-opt-btn" class="btn-outline"
-                        style="font-size: 0.9rem; padding: 8px 16px; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
-                        <span class="material-symbols-outlined" style="font-size: 18px;">add</span> Adicionar opção
-                    </button>
+                    <input type="text" id="poll-question-input" placeholder="Faça uma pergunta...">
+                    <div id="poll-options-container"></div>
+                    <button id="add-poll-opt-btn" class="btn-outline"> + Adicionar opção</button>
                 </div>
 
-                <div id="selected-gif-preview"
-                    style="display: none; position: relative; margin-bottom: 10px; width: fit-content;">
-                    <img src="" style="max-height: 200px; border-radius: 8px; border: 1px solid var(--border-color);">
-                    <button id="remove-gif-btn"
-                        style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center;">X</button>
+                <div id="media-preview-wrapper" style="margin-top: 10px;">
+
+                    <div id="post-preview-container" style="display: none; position: relative;">
+                        <img id="post-preview-img"
+                            style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <button id="remove-preview" class="remove-media-btn">&times;</button>
+                    </div>
+
+                    <div id="selected-gif-preview" style="display: none; position: relative;">
+                        <img src=""
+                            style="max-height: 200px; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <button id="remove-gif-btn" class="remove-media-btn">&times;</button>
+                    </div>
+                    <div id="post-audio-preview" style="display: none; position: relative;" class="audio-preview-card">
+                        <span class="material-symbols-outlined" style="color: var(--brand-color);">mic</span>
+                        <audio id="post-audio-player-preview" controls
+                            style="height: 30px; flex-grow: 1; outline: none;"></audio>
+                        <button id="remove-audio-btn" class="remove-media-btn"
+                            style="position: static; width: 24px; height: 24px; margin-left: 8px;">&times;</button>
+                    </div>
+
                 </div>
 
                 <hr style="border: none; border-top: 1px solid var(--border-color); margin: 15px 0;">
 
                 <div class="create-post-footer"
                     style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="create-post-tools" style="display: flex; gap: 12px;">
+                        <label for="post-image-input" class="tool-btn" title="Adicionar Imagem">
+                            <span class="material-symbols-outlined">image</span>
+                        </label>
+                        <input type="file" id="post-image-input" accept="image/*" hidden>
 
-                    <div class="create-post-tools" style="display: flex; gap: 10px; border: none; padding: 0;">
-                        <button class="tool-btn" id="add-emoji-btn"
-                            style="background: none; border: none; color: var(--brand-color, #F4B41A); cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 14px; padding: 5px; transition: 0.2s; border-radius: 50%;"
-                            onmouseover="this.style.background='rgba(244, 180, 26, 0.1)'"
-                            onmouseout="this.style.background='none'">
-                            <span class="material-symbols-outlined">sentiment_satisfied</span>
+                        <button class="tool-btn" id="post-audio-btn" title="Gravar Áudio">
+                            <span class="material-symbols-outlined" id="mic-icon">mic</span>
                         </button>
-                        <button class="tool-btn" id="add-gif-btn"
-                            style="background: none; border: none; color: var(--brand-color, #F4B41A); cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 14px; padding: 5px; transition: 0.2s; border-radius: 50%;"
-                            onmouseover="this.style.background='rgba(244, 180, 26, 0.1)'"
-                            onmouseout="this.style.background='none'">
-                            <span class="material-symbols-outlined">gif_box</span>
-                        </button>
-                        <button class="tool-btn" id="add-poll-btn"
-                            style="background: none; border: none; color: var(--brand-color, #F4B41A); cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 14px; padding: 5px; transition: 0.2s; border-radius: 50%;"
-                            onmouseover="this.style.background='rgba(244, 180, 26, 0.1)'"
-                            onmouseout="this.style.background='none'">
-                            <span class="material-symbols-outlined">poll</span>
-                        </button>
+                        <button class="tool-btn" id="add-emoji-btn"><span
+                                class="material-symbols-outlined">sentiment_satisfied</span></button>
+                        <button class="tool-btn" id="add-gif-btn"><span
+                                class="material-symbols-outlined">gif_box</span></button>
+                        <button class="tool-btn" id="add-poll-btn"><span
+                                class="material-symbols-outlined">poll</span></button>
                     </div>
 
-                    <div class="create-post-actions" style="border: none;">
-                        <button class="btn-primary" id="publish-btn"
-                            style="border-radius: 20px; padding: 8px 20px; font-weight: bold;">Postar</button>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div id="char-counter" style="font-size: 0.8rem; color: var(--text-muted);">0 / 1000</div>
+                        <button class="btn-primary" id="publish-btn">Postar</button>
                     </div>
                 </div>
             </section>

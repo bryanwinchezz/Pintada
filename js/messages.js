@@ -53,19 +53,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!activeContactId && contacts.length > 0) activeContactId = contacts[0].username;
 
     // ==========================================
-    // FUNÇÃO DE RENDERIZAR CONTEÚDO (MÍDIAS)
+    // FUNÇÃO DE RENDERIZAR CONTEÚDO (MÍDIAS E LINKS)
     // ==========================================
     function renderContent(m) {
-        if (m.type === 'image') {
-            // A imagem agora chama a função openImageModal em vez de abrir nova aba
-            return `<img src="${m.fileUrl}" onclick="window.openImageModal('${m.fileUrl}')" style="width: 100%; max-width: 280px; height: auto; border-radius: 8px; cursor: pointer; object-fit: cover; display: block;">`;
-        }
-        if (m.type === 'audio') return `
-            <div class="audio-player" style="display: flex; align-items: center; gap: 5px;">
-                <span class="material-symbols-outlined">play_circle</span>
-                <audio controls src="${m.fileUrl}" style="height:35px; width:200px; outline:none;"></audio>
-            </div>`;
-        return window.escapeHTML ? window.escapeHTML(m.text) : m.text;
+        if (m.type === 'image') return `<img src="${m.fileUrl}" onclick="window.openImageModal('${m.fileUrl}')" style="width: 100%; max-width: 280px; height: auto; border-radius: 8px; cursor: pointer; object-fit: cover; display: block;">`;
+        if (m.type === 'audio') return `<div class="audio-player" style="display: flex; align-items: center; gap: 5px;"><span class="material-symbols-outlined">play_circle</span><audio controls src="${m.fileUrl}" style="height:35px; width:200px; outline:none;"></audio></div>`;
+
+        let text = window.escapeHTML ? window.escapeHTML(m.text) : m.text;
+        // Mágica que acha o link e transforma num botão azul clicável
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
     }
 
     // ==========================================
@@ -124,9 +121,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="contact-item ${c.username === activeContactId && !isDeleteMode ? 'active' : ''}" data-id="${c.username}" style="cursor: pointer; display: flex; align-items: center;">
                     ${checkboxHTML}
                     <img src="${c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=F4B41A&color=fff`}" class="contact-avatar">
-                    <div class="contact-info">
-                        <span class="contact-name" style="font-weight: bold;">${c.name}</span>
-                        <span style="font-size: 0.8rem; color: var(--text-muted);">@${c.username}</span>
+                    <div class="contact-info" style="flex-grow: 1; min-width: 0; overflow: hidden;">
+                        <div class="contact-name-wrapper" style="display: flex; align-items: center; margin-bottom: 2px;">
+                            <span class="contact-name" style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">${window.escapeHTML(c.name)}</span>
+                            ${typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(c.badge) : ''}
+                        </div>
+                        <span class="contact-handle" style="font-size: 0.8rem; color: var(--text-muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@${c.username}</span>
                     </div>
                 </div>`;
         }).join('');
@@ -166,8 +166,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const contactStatusEl = document.getElementById('chat-contact-status');
         const headerAvatar = document.querySelector('.chat-header-avatar');
 
+        // Dentro de loadChatRealTime no messages.js
         if (contactNameEl) {
-            contactNameEl.textContent = target.name;
+            const badgeHTML = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(target.badge) : '';
+            contactNameEl.innerHTML = `<span style="vertical-align: middle; color: var(--text-main);">${window.escapeHTML(target.name)}</span> ${badgeHTML}`;
+            contactNameEl.style.display = 'inline-block';
+            contactNameEl.style.color = 'var(--text-main)'; // Força a cor correta para não ficar verde
+            contactNameEl.style.wordWrap = 'break-word';
+            contactNameEl.style.lineHeight = '1.3';
             contactNameEl.classList.remove('skeleton');
             contactNameEl.style.width = 'auto';
             contactNameEl.style.cursor = 'pointer';
@@ -236,7 +242,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 chatHistoryContainer.innerHTML = msgs.map(m => `
                     <div class="chat-bubble ${m.sender === chatUser ? 'sent' : 'received'}">
-                        ${renderContent(m)} 
+                        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 8px;">
+                            <div style="flex-grow: 1;">${renderContent(m)}</div>
+                            
+                            ${m.sender === chatUser ? `
+                                <span class="material-symbols-outlined delete-msg-btn" data-msg-id="${m.id}" title="Apagar para todos" style="font-size: 16px; cursor: pointer; color: rgba(255, 255, 255, 0.7); transition: 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'">delete</span>
+                            ` : ''}
+                        </div>
                     </div>`).join('');
 
                 if (isAtBottom || (msgs.length > 0 && msgs[msgs.length - 1].sender === chatUser)) {
@@ -298,16 +310,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         fileInput.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            if (!activeContactId) return safeToast("Selecione um chat primeiro!", "error");
 
-            safeToast("A enviar foto para o ImgBB...", "success");
+            if (!activeContactId) {
+                fileInput.value = ''; // Limpa caso não tenha chat selecionado
+                return safeToast("Selecione um chat primeiro!", "error");
+            }
+
+            safeToast("A enviar foto...", "success");
 
             try {
-                // Prepara o arquivo para o ImgBB
                 const formData = new FormData();
                 formData.append('image', file);
 
-                // Faz o upload direto pra API do ImgBB
                 const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
                     method: 'POST',
                     body: formData
@@ -316,24 +330,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const data = await response.json();
 
                 if (data.success) {
-                    const imageUrl = data.data.url; // Pega o link direto da imagem
+                    const imageUrl = data.data.url;
                     console.log("Upload no ImgBB concluído! URL:", imageUrl);
-
-                    // Salva a mensagem no Firebase Database com o link do ImgBB
                     await window.MessageService.sendMessage(chatUser, activeContactId, "", imageUrl, 'image');
-                    fileInput.value = '';
                 } else {
                     throw new Error("Erro na resposta do ImgBB");
                 }
 
             } catch (err) {
                 console.error("ERRO IMGBB:", err);
-                safeToast("Erro ao fazer upload da imagem.", "error");
+                safeToast("Erro ao carregar imagem. Ela pode ser muito grande.", "error");
+            } finally {
+                // O SEGREDO ESTÁ AQUI! 
+                // Independentemente de dar erro ou sucesso, limpamos o input para não "travar"
+                fileInput.value = '';
             }
         };
     }
 
-    // 3. Gravar e Enviar Áudio (SEM API - Convertendo para Base64)
+// 3. Gravar e Enviar Áudio (COM PREVIEW CORRIGIDO)
     let mediaRecorder;
     let audioChunks = [];
 
@@ -351,106 +366,142 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     mediaRecorder.onstop = async () => {
                         const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-                        safeToast("A processar áudio...", "success");
+                        safeToast("Áudio gravado! Pode ouvir antes de enviar.", "success");
 
-                        // --- A MÁGICA DO BASE64 AQUI ---
                         const reader = new FileReader();
                         reader.readAsDataURL(audioBlob);
                         reader.onloadend = async () => {
-                            const base64Audio = reader.result; // Vira um texto gigante
+                            const base64Audio = reader.result;
 
-                            try {
-                                console.log("Enviando áudio convertido pro banco de dados...");
-                                // Manda o texto Base64 no lugar do link da URL
-                                await window.MessageService.sendMessage(chatUser, activeContactId, "", base64Audio, 'audio');
-                                console.log("Áudio enviado com sucesso!");
-                            } catch (err) {
-                                console.error("ERRO AO SALVAR ÁUDIO:", err);
-                                safeToast("Erro ao enviar áudio. Ele pode estar muito longo.", "error");
-                            }
+                            // 1. Remove qualquer preview antigo
+                            const existingPreview = document.getElementById('chat-audio-preview-container');
+                            if (existingPreview) existingPreview.remove();
+
+                            // 2. Cria o container do player dinamicamente
+                            const previewContainer = document.createElement('div');
+                            previewContainer.id = 'chat-audio-preview-container';
+                            previewContainer.style.cssText = `
+                                position: absolute; bottom: 100%; left: 0; width: 100%;
+                                background: var(--card-bg); padding: 12px 20px;
+                                border-top: 1px solid var(--border-color);
+                                display: flex; align-items: center; gap: 12px;
+                                z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
+                                transition: opacity 0.2s ease;
+                            `;
+
+                            const inputArea = document.querySelector('.chat-input-area');
+                            inputArea.style.position = 'relative';
+                            inputArea.appendChild(previewContainer);
+
+                            // 3. Desenha o player
+                            previewContainer.innerHTML = `
+                                <audio controls src="${base64Audio}" style="height: 40px; flex-grow: 1; outline: none; border-radius: 20px;"></audio>
+                                <button id="cancel-chat-audio" class="icon-btn" style="color: #EF4444; background: var(--hover-bg); padding: 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;" title="Apagar gravação">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                                <button id="send-chat-audio" class="icon-btn" style="color: white; background: #10B981; padding: 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;" title="Enviar áudio">
+                                    <span class="material-symbols-outlined">send</span>
+                                </button>
+                            `;
+
+                            const closePreview = () => {
+                                previewContainer.style.opacity = '0';
+                                setTimeout(() => previewContainer.remove(), 200);
+                            };
+
+                            // AÇÃO: Cancelar Áudio
+                            document.getElementById('cancel-chat-audio').onclick = () => {
+                                closePreview();
+                                safeToast("Gravação descartada.");
+                            };
+
+                            // AÇÃO: Enviar Áudio
+                            document.getElementById('send-chat-audio').onclick = async () => {
+                                const sendBtn = document.getElementById('send-chat-audio');
+                                const cancelBtn = document.getElementById('cancel-chat-audio');
+
+                                sendBtn.disabled = true;
+                                cancelBtn.disabled = true;
+                                sendBtn.innerHTML = '<span class="material-symbols-outlined" style="animation: pulse 1s infinite;">sync</span>';
+
+                                try {
+                                    await window.MessageService.sendMessage(chatUser, activeContactId, "", base64Audio, 'audio');
+                                    closePreview();
+                                } catch (err) {
+                                    console.error("ERRO AO SALVAR ÁUDIO:", err);
+                                    safeToast("Erro ao enviar áudio. A gravação pode ser muito longa.", "error");
+                                    sendBtn.disabled = false;
+                                    cancelBtn.disabled = false;
+                                    sendBtn.innerHTML = '<span class="material-symbols-outlined">send</span>';
+                                }
+                            };
                         };
                     };
 
+                    // Inicia a gravação
                     mediaRecorder.start();
-                    audioBtn.classList.add('recording-active');
-                    audioBtn.querySelector('span').textContent = 'stop_circle';
                     audioBtn.style.color = "#EF4444";
+                    audioBtn.textContent = "stop_circle";
+
                 } catch (err) {
-                    safeToast("Microfone bloqueado ou indisponível.", "error");
+                    console.error("Erro no microfone:", err);
+                    safeToast("Erro ao acessar o microfone.", "error");
                 }
             } else {
+                // Para a gravação
                 mediaRecorder.stop();
-                audioBtn.classList.remove('recording-active');
-                audioBtn.querySelector('span').textContent = 'mic';
-                audioBtn.style.color = "";
+                audioBtn.style.color = "var(--text-muted)";
+                audioBtn.textContent = "mic";
             }
         };
     }
 
     // ==========================================
-    // POPUP DE IMAGEM EM TELA CHEIA (LIGHTBOX)
+    // DELETAR MENSAGEM ESPECÍFICA (AGORA NO LUGAR CERTO)
     // ==========================================
-    window.openImageModal = function (imgSrc) {
-        // Verifica se o popup já existe para não criar duplicado
-        let modal = document.getElementById('chat-image-modal');
-
-        if (!modal) {
-            // Cria o fundo escuro do popup
-            modal = document.createElement('div');
-            modal.id = 'chat-image-modal';
-            modal.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                background: rgba(0, 0, 0, 0.9); z-index: 99999;
-                display: flex; align-items: center; justify-content: center;
-                opacity: 0; transition: opacity 0.3s ease;
-            `;
-
-            // Cria o botão X
-            const closeBtn = document.createElement('span');
-            closeBtn.innerHTML = 'close';
-            closeBtn.className = 'material-symbols-outlined';
-            closeBtn.style.cssText = `
-                position: absolute; top: 20px; right: 20px;
-                color: white; font-size: 36px; cursor: pointer;
-                background: rgba(0,0,0,0.5); border-radius: 50%; padding: 4px;
-            `;
-
-            // Função para fechar suavemente
-            const closeModal = () => {
-                modal.style.opacity = '0';
-                setTimeout(() => modal.style.display = 'none', 300); // Aguarda a transição
-            };
-
-            closeBtn.onclick = closeModal;
-
-            // Cria a imagem em tamanho grande
-            const img = document.createElement('img');
-            img.id = 'modal-large-image';
-            img.style.cssText = `
-                max-width: 90vw; max-height: 90vh;
-                object-fit: contain; border-radius: 8px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            `;
-
-            // Monta tudo e joga no corpo da página
-            modal.appendChild(closeBtn);
-            modal.appendChild(img);
-            document.body.appendChild(modal);
-
-            // Fecha o popup se o usuário clicar fora da imagem (no fundo preto)
-            modal.onclick = (e) => {
-                if (e.target === modal) closeModal();
-            };
-        }
-
-        // Atualiza a imagem, mostra o popup e faz o efeito de fade-in
-        document.getElementById('modal-large-image').src = imgSrc;
-        modal.style.display = 'flex';
-        // Um pequeno atraso para o navegador registrar a mudança e rodar a transição CSS
-        setTimeout(() => modal.style.opacity = '1', 10);
-    };
+    if (chatHistoryContainer) {
+        chatHistoryContainer.addEventListener('click', async (e) => {
+            const deleteBtn = e.target.closest('.delete-msg-btn');
+            if (deleteBtn) {
+                const msgId = deleteBtn.getAttribute('data-msg-id');
+                if (confirm("Quer mesmo apagar esta mensagem para todos?")) {
+                    try {
+                        await window.MessageService.deleteMessage(msgId);
+                        safeToast("Mensagem apagada.", "success");
+                    } catch (err) {
+                        console.error("Erro ao apagar:", err);
+                        safeToast("Erro ao apagar a mensagem.", "error");
+                    }
+                }
+            }
+        });
+    }
 
     // Inicialização
     renderContacts();
     if (activeContactId) loadChatRealTime();
-});
+}); // <-- AQUI FECHA O DOMContentLoaded CORRETAMENTE
+
+// ==========================================
+// DELETAR MENSAGEM ESPECÍFICA (CORRIGIDO)
+// ==========================================
+if (chatHistoryContainer) {
+    chatHistoryContainer.addEventListener('click', async (e) => {
+        // O closest() procura o botão mesmo que você clique no centro do ícone
+        const deleteBtn = e.target.closest('.delete-msg-btn');
+
+        if (deleteBtn) {
+            const msgId = deleteBtn.getAttribute('data-msg-id');
+
+            if (confirm("Quer mesmo apagar esta mensagem para todos?")) {
+                try {
+                    await window.MessageService.deleteMessage(msgId);
+                    safeToast("Mensagem apagada.", "success");
+                } catch (err) {
+                    console.error("Erro ao apagar:", err);
+                    safeToast("Erro ao apagar a mensagem.", "error");
+                }
+            }
+        }
+    });
+}
