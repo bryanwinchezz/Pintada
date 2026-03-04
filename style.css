@@ -2526,6 +2526,41 @@ body {
 }
 
 /* ==========================================
+   CORREÇÃO DA BARRA DE MENSAGENS NO TEMA CLARO
+   ========================================== */
+[data-theme="light"] .chat-input-area {
+    background-color: #ffffff !important;
+    border-top: 1px solid #e5e7eb !important;
+}
+
+[data-theme="light"] .chat-input-area .chat-input {
+    background-color: #f3f4f6 !important;
+    color: #111827 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+[data-theme="light"] .chat-input-area .chat-input::placeholder {
+    color: #6b7280 !important;
+}
+
+/* Força os ícones (Foto, Áudio, Enviar) a ficarem escuros no tema claro */
+[data-theme="light"] .chat-input-area .icon-btn,
+[data-theme="light"] .chat-input-area .material-symbols-outlined {
+    color: #4b5563 !important;
+}
+
+/* Mantém o botão de gravar áudio vermelho quando ativo */
+[data-theme="light"] .chat-input-area .icon-btn[style*="color: rgb(239, 68, 68)"],
+[data-theme="light"] .chat-input-area .icon-btn[style*="color: #EF4444"] {
+    color: #EF4444 !important;
+}
+
+/* Efeito Hover nos botões no tema claro */
+[data-theme="light"] .chat-input-area .icon-btn:hover {
+    color: var(--brand-color) !important;
+}
+
+/* ==========================================
    MOLDURAS DE PERFIL (COM PADRÃO PRETO E NOVAS CORES)
    ========================================== */
 .moldura-padrao {
