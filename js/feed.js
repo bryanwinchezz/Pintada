@@ -146,6 +146,31 @@ async function renderAllFeeds() {
     if (!activeUsername) return;
     const currentUser = await window.AuthService.getUserData(activeUsername);
     if (!currentUser) return;
+    // ==========================================
+    // LÓGICA DA PÁGINA DE POST ISOLADO (post.html)
+    // ==========================================
+    const isSinglePostPage = window.location.pathname.includes('post.html');
+    const singlePostArea = document.getElementById('single-post-render-area');
+
+    if (isSinglePostPage && singlePostArea) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+
+        if (postId) {
+            const allPosts = await window.PostService.getPosts();
+            const thePost = allPosts.find(p => String(p.id) === String(postId));
+
+            if (thePost) {
+                // Renderiza o post e força a caixa de comentários a ficar aberta
+                singlePostArea.innerHTML = generatePostHTML(thePost, currentUser);
+                const commentsSection = singlePostArea.querySelector('.comments-section');
+                if(commentsSection) commentsSection.classList.add('active');
+            } else {
+                singlePostArea.innerHTML = `<div style="text-align:center; padding: 40px;"><h2>Post não encontrado 🐆</h2><p style="color:var(--text-muted); margin-top:10px;">Ele pode ter sido apagado pelo autor.</p><a href="index.html" class="btn-primary" style="display:inline-block; margin-top:20px; text-decoration:none;">Ir para a Home</a></div>`;
+            }
+        }
+        return; // Interrompe o resto da função para não dar erro procurando a home
+    }
 
     const homeArea = document.getElementById('posts-render-area');
     const profileArea = document.getElementById('profile-posts-render-area');
@@ -487,14 +512,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.target.closest('.delete-post-btn') && confirm("Apagar permanentemente?")) { await window.PostService.deletePost(postId); renderAllFeeds(); }
 
-        // CORREÇÃO DO COMPARTILHAMENTO (Copia direto para a área de transferência)
+// ==========================================
+        // NOVO SISTEMA DE COMPARTILHAMENTO (WHATSAPP + NATIVO)
+        // ==========================================
         if (e.target.closest('.share-btn')) {
-            const postUrl = `https://pintada.netlify.app/p/${postId}`;
-            navigator.clipboard.writeText(postUrl).then(() => {
-                showToast("Link copiado! 🔗", "success");
-            }).catch(() => {
-                showToast("Erro ao copiar o link.", "error");
-            });
+            const shareBtn = e.target.closest('.share-btn');
+            const postCard = shareBtn.closest('.post-card');
+            const postId = postCard.getAttribute('data-post-id');
+            
+            // Pega as informações do post
+            const authorNameElement = postCard.querySelector('.post-info span');
+            const authorName = authorNameElement ? authorNameElement.textContent : "um usuário";
+            const contentElement = postCard.querySelector('.post-content p');
+            const contentText = contentElement ? contentElement.innerText.substring(0, 100) : "Mídia";
+            
+            // Link exclusivo do Post
+            const postUrl = `${window.location.origin}/post.html?id=${postId}`;
+            
+            // Texto formatado para o WhatsApp e outros locais
+            const shareTitle = `Publicação de ${authorName} na Pintada 🐆`;
+            const shareText = `"${contentText}..."\n\nConfira na íntegra:`;
+
+            // 1. Tenta usar o compartilhamento nativo do celular (Abre aquela gaveta do Android/iOS)
+            if (navigator.share) {
+                navigator.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: postUrl
+                }).catch((error) => console.log('Erro ao compartilhar', error));
+            } else {
+                // 2. Fallback para PC: Abre uma janela perguntando se quer ir pro WhatsApp
+                const whatsappMsg = encodeURIComponent(`*${shareTitle}*\n\n${shareText}\n${postUrl}`);
+                const whatsappUrl = `https://api.whatsapp.com/send?text=${whatsappMsg}`;
+
+                if (confirm("Deseja compartilhar no WhatsApp?\n(Clique em Cancelar para apenas copiar o link)")) {
+                    window.open(whatsappUrl, '_blank');
+                } else {
+                    // Copia o link para a área de transferência
+                    navigator.clipboard.writeText(postUrl).then(() => {
+                        showToast("Link copiado! 🔗", "success");
+                    });
+                }
+            }
         }
     });
 
