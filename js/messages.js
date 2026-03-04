@@ -116,17 +116,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const renderContacts = () => {
         if (!contactListContainer) return;
         contactListContainer.innerHTML = contacts.map(c => {
-            const checkboxHTML = isDeleteMode ? `<input type="checkbox" style="width:18px; height:18px; margin-right:10px;" class="delete-chat-cb" data-id="${c.username}" ${selectedChatsToDelete.has(c.username) ? 'checked' : ''}>` : '';
+            const checkboxHTML = isDeleteMode ? `<input type="checkbox" style="width:18px; height:18px; margin-right:8px; flex-shrink: 0;" class="delete-chat-cb" data-id="${c.username}" ${selectedChatsToDelete.has(c.username) ? 'checked' : ''}>` : '';
+
+            // Selo ligeiramente menor para encaixar perfeito no Mobile
+            const seloPequeno = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(c.badge).replace('1.15em', '0.95em') : '';
+
+            // MÁGICA: Pega apenas a primeira palavra do nome da pessoa!
+            const primeiroNome = window.escapeHTML(c.name.trim().split(' ')[0]);
+
             return `
-                <div class="contact-item ${c.username === activeContactId && !isDeleteMode ? 'active' : ''}" data-id="${c.username}" style="cursor: pointer; display: flex; align-items: center;">
+                <div class="contact-item ${c.username === activeContactId && !isDeleteMode ? 'active' : ''}" data-id="${c.username}" style="cursor: pointer; padding: 6px; min-width: 75px; text-align: center;">
                     ${checkboxHTML}
-                    <img src="${c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=F4B41A&color=fff`}" class="contact-avatar">
-                    <div class="contact-info" style="flex-grow: 1; min-width: 0; overflow: hidden;">
-                        <div class="contact-name-wrapper" style="display: flex; align-items: center; margin-bottom: 2px;">
-                            <span class="contact-name" style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">${window.escapeHTML(c.name)}</span>
-                            ${typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(c.badge) : ''}
+                    <div style="position: relative; display: flex; justify-content: center;">
+                        <img src="${c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=F4B41A&color=fff`}" class="contact-avatar" style="margin: 0 auto;">
+                    </div>
+                    <div class="contact-info" style="margin-top: 6px; overflow: hidden;">
+                        <div class="contact-name-wrapper" style="display: flex; align-items: center; justify-content: center; gap: 2px;">
+                            <span class="contact-name" style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: clip;">${primeiroNome}</span>
+                            ${seloPequeno}
                         </div>
-                        <span class="contact-handle" style="font-size: 0.8rem; color: var(--text-muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@${c.username}</span>
+                        <span class="contact-handle" style="font-size: 0.75rem; color: var(--text-muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">@${c.username}</span>
                     </div>
                 </div>`;
         }).join('');
@@ -348,7 +357,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-// 3. Gravar e Enviar Áudio (COM PREVIEW CORRIGIDO)
+    // 3. Gravar e Enviar Áudio (COM PREVIEW CORRIGIDO)
     let mediaRecorder;
     let audioChunks = [];
 
@@ -450,6 +459,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 // Para a gravação
                 mediaRecorder.stop();
+                // Desliga o hardware do microfone!
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
                 audioBtn.style.color = "var(--text-muted)";
                 audioBtn.textContent = "mic";
             }

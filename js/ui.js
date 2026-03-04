@@ -210,14 +210,13 @@ async function loadUserDataUI() {
 
     // Preenche textos principais (AGORA COM O SELO!)
     const badgeHTML = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(user.badge) : '';
-    document.querySelectorAll('.profile-name').forEach(el => { 
-        el.innerHTML = `${window.escapeHTML(user.name || "Utilizador")} ${badgeHTML}`; 
+    document.querySelectorAll('.profile-name').forEach(el => {
+        el.innerHTML = `${window.escapeHTML(user.name || "Utilizador")} ${badgeHTML}`;
     });
     document.querySelectorAll('.profile-handle').forEach(el => { el.textContent = `@${user.username}`; });
     document.querySelectorAll('.profile-bio').forEach(el => { el.textContent = user.bio || ""; });
 
     // === CORREÇÃO DOS SEGUIDORES: MATEMÁTICA REAL ===
-    // Conta exatamente quantas pessoas têm você na lista delas (ignora o número fantasma do Firebase)
     const allNetworkUsers = await window.AuthService.getUsers();
     const realFollowersCount = allNetworkUsers.filter(u => u.followingList && u.followingList.includes(targetUsername)).length;
 
@@ -230,7 +229,7 @@ async function loadUserDataUI() {
         followingEl.parentElement.onclick = () => openConnectionsModal('following', targetUsername, user);
     }
     if (followersEl) {
-        followersEl.textContent = realFollowersCount; // Usa a matemática real aqui!
+        followersEl.textContent = realFollowersCount;
         followersEl.parentElement.style.cursor = 'pointer';
         followersEl.parentElement.onclick = () => openConnectionsModal('followers', targetUsername, user);
     }
@@ -241,25 +240,47 @@ async function loadUserDataUI() {
     if (document.getElementById('edit-bio')) document.getElementById('edit-bio').value = user.bio || "";
     if (document.getElementById('edit-phone')) document.getElementById('edit-phone').value = user.phone || "";
     if (document.getElementById('edit-website')) document.getElementById('edit-website').value = user.website || "";
-    if (document.getElementById('edit-birthdate')) document.getElementById('edit-birthdate').value = user.birthdate || "";
+
+    // Carrega as imagens para a pré-visualização no modal
+    if (document.getElementById('edit-avatar-preview')) {
+        document.getElementById('edit-avatar-preview').src = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=F4B41A&color=fff`;
+    }
+    if (document.getElementById('edit-banner-preview')) {
+        document.getElementById('edit-banner-preview').src = user.banner || 'var(--brand-gradient)';
+    }
+
+    // Carrega os outros dados
+    if (document.getElementById('edit-birthdate')) {
+        document.getElementById('edit-birthdate').value = user.birthdate || '';
+    }
+    if (document.getElementById('edit-profile-border')) {
+        document.getElementById('edit-profile-border').value = user.profileBorder || '';
+    }
     if (document.getElementById('edit-gender')) document.getElementById('edit-gender').value = user.gender || "";
     if (document.getElementById('edit-pronouns')) document.getElementById('edit-pronouns').value = user.pronouns || "";
     if (document.getElementById('edit-relationship')) document.getElementById('edit-relationship').value = user.relationship || "";
 
-    // === CORREÇÃO DA FOTO NA NAVBAR ===
-    // 1. Aplica a foto do dono do perfil (targetUsername) APENAS no quadrado grande do perfil e no modal de edição
+    // === CORREÇÃO DA FOTO NA NAVBAR E CONFIGURAÇÕES ===
     const targetAvatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=F4B41A&color=fff`;
-    document.querySelectorAll('.profile-page-avatar, #settings-avatar-preview').forEach(img => img.src = targetAvatarUrl);
+    document.querySelectorAll('.profile-page-avatar, #settings-avatar-preview').forEach(img => {
+        img.src = targetAvatarUrl;
+        // MÁGICA: Apaga qualquer moldura antiga automaticamente
+        Array.from(img.classList).forEach(c => { if (c.startsWith('moldura-')) img.classList.remove(c); });
+        // Adiciona a moldura escolhida ou a padrão preta!
+        img.classList.add(user.profileBorder || 'moldura-padrao');
+        img.style.border = 'none';
+    });
 
-    // 2. Aplica a SUA foto (activeUsername) na Navbar lá em cima e APENAS na caixinha de Criar Post!
     const activeUserData = await window.AuthService.getUserData(activeUsername);
     if (activeUserData) {
         const myAvatarUrl = activeUserData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeUserData.name)}&background=F4B41A&color=fff`;
-        
-        // Agora usamos .create-post-header .post-avatar para não afetar os posts do feed
+
         document.querySelectorAll('.profile-pic img, .create-post-header .post-avatar').forEach(img => {
             img.src = myAvatarUrl;
             img.classList.remove('skeleton');
+            Array.from(img.classList).forEach(c => { if (c.startsWith('moldura-')) img.classList.remove(c); });
+            img.classList.add(activeUserData.profileBorder || 'moldura-padrao');
+            img.style.border = 'none';
         });
     }
 
@@ -267,9 +288,7 @@ async function loadUserDataUI() {
     if (document.getElementById('profile-page-banner')) document.getElementById('profile-page-banner').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
     if (document.getElementById('settings-banner-preview')) document.getElementById('settings-banner-preview').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
 
-    // ========================================================
     // RENDERIZAÇÃO DAS TAGS DE INFORMAÇÕES
-    // ========================================================
     const detailsRow = document.getElementById('profile-details-render');
     if (detailsRow) {
         detailsRow.innerHTML = '';
@@ -300,9 +319,7 @@ async function loadUserDataUI() {
         }
     }
 
-    // ========================================================
-    // NOVO DESIGN DOS HOBBIES (Estilo Pílula Marrom)
-    // ========================================================
+    // NOVO DESIGN DOS HOBBIES
     const hobbiesRow = document.getElementById('profile-hobbies-render');
     if (hobbiesRow) {
         hobbiesRow.innerHTML = '';
@@ -328,9 +345,7 @@ async function loadUserDataUI() {
         }
     }
 
-    // ========================================================
-    // BOTÕES DE SEGUIR E MENSAGEM (Para perfis de terceiros)
-    // ========================================================
+    // BOTÕES DE SEGUIR E MENSAGEM
     if (isProfilePage) {
         const actionContainer = document.querySelector('.profile-avatar-row');
         const existingBtn = actionContainer.querySelector('.btn-outline, .btn-primary');
@@ -358,11 +373,8 @@ async function loadUserDataUI() {
         }
     }
 
-    // ========================================================
-    // DESLIGA O CARREGAMENTO (Remove os esqueletos)
-    // ========================================================
+    // DESLIGA O CARREGAMENTO
     document.querySelectorAll('.skeleton').forEach(el => {
-        // Se o elemento já tiver texto ou src real, remove o skeleton
         if (el.innerText.trim() !== "" || el.src?.includes('http')) {
             el.classList.remove('skeleton');
         }
@@ -378,32 +390,54 @@ function initProfileForm() {
         formProfile.onsubmit = async (e) => {
             e.preventDefault();
             const activeUsername = window.AuthService.getCurrentUser();
+            if (!activeUsername) return;
 
-            // Dados básicos
-            const updatedData = {
-                name: document.getElementById('edit-name') ? document.getElementById('edit-name').value.trim() : "",
-                username: document.getElementById('edit-username') ? document.getElementById('edit-username').value.trim() : "",
-                bio: document.getElementById('edit-bio') ? document.getElementById('edit-bio').value.trim() : ""
-            };
-
-            // Dados Avançados do seu print (verifica se os campos existem antes de salvar)
-            if (document.getElementById('edit-phone')) updatedData.phone = document.getElementById('edit-phone').value.trim();
-            if (document.getElementById('edit-website')) updatedData.website = document.getElementById('edit-website').value.trim();
-            if (document.getElementById('edit-birthdate')) updatedData.birthdate = document.getElementById('edit-birthdate').value.trim();
-            if (document.getElementById('edit-gender')) updatedData.gender = document.getElementById('edit-gender').value;
-            if (document.getElementById('edit-pronouns')) updatedData.pronouns = document.getElementById('edit-pronouns').value;
-            if (document.getElementById('edit-relationship')) updatedData.relationship = document.getElementById('edit-relationship').value;
-
-            // Imagens
-            if (window.tempAvatarBase64) updatedData.avatar = window.tempAvatarBase64;
-            if (window.tempBannerBase64) updatedData.banner = window.tempBannerBase64;
+            const submitBtn = formProfile.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = 'A guardar...';
 
             try {
+                // 1. Puxa os dados que já estão no banco para NÃO APAGAR nada (como os hobbies)
+                const activeUserData = await window.AuthService.getUserData(activeUsername);
+
+                // 2. Lê a tela. Se o campo existir, pega o texto. Se não, mantém o antigo!
+                const newName = document.getElementById('edit-name') ? document.getElementById('edit-name').value.trim() : activeUserData.name;
+                const newBio = document.getElementById('edit-bio') ? document.getElementById('edit-bio').value.trim() : (activeUserData.bio || "");
+                const newPhone = document.getElementById('edit-phone') ? document.getElementById('edit-phone').value.trim() : (activeUserData.phone || "");
+                const newWebsite = document.getElementById('edit-website') ? document.getElementById('edit-website').value.trim() : (activeUserData.website || "");
+                const newBirthdate = document.getElementById('edit-birthdate') ? document.getElementById('edit-birthdate').value.trim() : (activeUserData.birthdate || "");
+                const newGender = document.getElementById('edit-gender') ? document.getElementById('edit-gender').value : (activeUserData.gender || "");
+                const newPronouns = document.getElementById('edit-pronouns') ? document.getElementById('edit-pronouns').value : (activeUserData.pronouns || "");
+                const newRelationship = document.getElementById('edit-relationship') ? document.getElementById('edit-relationship').value : (activeUserData.relationship || "");
+                const newBorder = document.getElementById('edit-profile-border') ? document.getElementById('edit-profile-border').value : (activeUserData.profileBorder || "");
+
+                // 3. Monta o pacote com TUDO MISTURADO (Novo + Antigo)
+                const updatedData = {
+                    ...activeUserData, // Traz os hobbies, data de criação, etc!
+                    name: newName,
+                    username: activeUserData.username, // Trava o arroba para não estragar o login!
+                    email: activeUserData.email,       // Trava o email para não estragar o login!
+                    bio: newBio,
+                    phone: newPhone,
+                    website: newWebsite,
+                    birthdate: newBirthdate,
+                    gender: newGender,
+                    pronouns: newPronouns,
+                    relationship: newRelationship,
+                    profileBorder: newBorder
+                };
+
+                // Imagens (Se recortou alguma nova)
+                if (window.tempAvatarBase64) updatedData.avatar = window.tempAvatarBase64;
+                if (window.tempBannerBase64) updatedData.banner = window.tempBannerBase64;
+
+                // 4. Manda para a base de dados
                 await window.AuthService.updateUser(activeUsername, updatedData);
                 showToast('Perfil atualizado com sucesso! 🐆');
                 setTimeout(() => location.reload(), 1000);
             } catch (error) {
                 showToast('Erro ao guardar: ' + error.message, 'error');
+            } finally {
+                if (submitBtn) submitBtn.textContent = 'Salvar Alterações';
             }
         };
     }
@@ -510,7 +544,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         saveHobbiesBtn.addEventListener('click', async () => {
             try {
-                await window.AuthService.saveUserData(activeUser, { hobbies: savedHobbies });
+                // Agora usamos a função nova que SUBSTITUI tudo e apaga de vez!
+                await window.AuthService.updateUserHobbies(activeUser, savedHobbies);
                 showToast('Interesses atualizados!');
                 saveHobbiesBtn.closest('.modal-overlay').classList.remove('active');
             } catch (e) { showToast('Erro ao guardar.', 'error'); }
@@ -873,12 +908,12 @@ if ('serviceWorker' in navigator) {
 }
 
 // Função Global para abrir imagens em tela cheia
-window.openImageModal = function(imgSrc) {
+window.openImageModal = function (imgSrc) {
     let modal = document.getElementById('chat-image-modal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'chat-image-modal';
-        
+
         // A MÁGICA ESTÁ AQUI: Adicionando os estilos para a tela inteira!
         modal.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -886,20 +921,20 @@ window.openImageModal = function(imgSrc) {
             display: flex; align-items: center; justify-content: center;
             opacity: 0; transition: opacity 0.3s ease;
         `;
-        
+
         modal.innerHTML = `
             <span class="material-symbols-outlined" style="position:absolute; top:20px; right:20px; color:white; font-size:40px; cursor:pointer; background:rgba(0,0,0,0.5); border-radius:50%; padding:4px;">close</span>
             <img id="modal-large-image" src="" style="max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
         `;
         document.body.appendChild(modal);
-        
+
         // Lógica para fechar com efeito
         modal.onclick = () => {
             modal.style.opacity = '0';
             setTimeout(() => modal.style.display = 'none', 300);
         };
     }
-    
+
     document.getElementById('modal-large-image').src = imgSrc;
     modal.style.display = 'flex';
     setTimeout(() => modal.style.opacity = '1', 10); // Dispara o fade-in
@@ -908,9 +943,9 @@ window.openImageModal = function(imgSrc) {
 // ==========================================
 // GERADOR DE SELOS DE VERIFICAÇÃO
 // ==========================================
-window.getBadgeHTML = function(badgeType) {
+window.getBadgeHTML = function (badgeType) {
     if (!badgeType || badgeType === 'none') return '';
-    
+
     // Agora usamos regras CSS completas para suportar gradientes!
     const styles = {
         'blue': 'color: #1D9BF0;',
@@ -918,13 +953,55 @@ window.getBadgeHTML = function(badgeType) {
         'staff': 'color: #8B5CF6;',
         'green': 'color: #10B981;',
         'pink': 'color: #EC4899;',
-        'black': 'color: #171717;',
+        // Preto "brilhante" (Chumbo escuro metálico) para contrastar no Dark Mode
+        'black': 'color: #404040; text-shadow: 0px 0px 1px rgba(255,255,255,0.3);',
         'brown': 'color: #A0522D;',
         'rainbow': 'background: linear-gradient(to bottom, #E40303 0%, #E40303 16.6%, #FF8C00 16.6%, #FF8C00 33.3%, #FFED00 33.3%, #FFED00 50%, #008026 50%, #008026 66.6%, #004DFF 66.6%, #004DFF 83.3%, #750787 83.3%, #750787 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;',
         'owner': 'background: linear-gradient(135deg, #FFDF00 0%, #F4B41A 40%, #8B0000 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;'
     };
-    
+
     const styleString = styles[badgeType] || styles['blue'];
-    
+
     return `<span class="material-symbols-outlined verified-badge" title="Conta Verificada" style="${styleString} font-size: 1.15em; vertical-align: middle; margin-left: 4px; font-variation-settings: 'FILL' 1;">verified</span>`;
 };
+
+// ==========================================
+// APLICAR IMAGENS E MOLDURAS GLOBALMENTE (NAVBAR, SETTINGS, FEED)
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    const activeUserForBorder = window.AuthService ? window.AuthService.getCurrentUser() : null;
+    if (activeUserForBorder) {
+        try {
+            const userData = await window.AuthService.getUserData(activeUserForBorder);
+            if (userData) {
+                const myAvatar = userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=F4B41A&color=fff`;
+                const myBanner = userData.banner || 'var(--brand-gradient)';
+
+                // 1. Força a foto na Navbar, Caixa de Postar, e na edição de Configurações!
+                document.querySelectorAll('.profile-pic img, .post-input-area .post-avatar, .create-post-header .post-avatar, #edit-avatar-preview, #settings-avatar-preview').forEach(img => {
+                    img.src = myAvatar;
+                    img.classList.remove('skeleton');
+                    // MÁGICA: Apaga qualquer moldura antiga automaticamente
+                    Array.from(img.classList).forEach(c => { if (c.startsWith('moldura-')) img.classList.remove(c); });
+                    img.classList.add(userData.profileBorder || 'moldura-padrao');
+                    img.style.border = 'none';
+                });
+
+                // 2. Força o Banner correto no Modal de Configurações!
+                document.querySelectorAll('#edit-banner-preview, #settings-banner-preview').forEach(banner => {
+                    banner.style.background = userData.banner ? `url(${userData.banner}) center/cover` : myBanner;
+                });
+
+                // 3. Aplica na foto grande do Perfil
+                const profileAvatar = document.querySelector('.profile-page-avatar');
+                if (profileAvatar) {
+                    Array.from(profileAvatar.classList).forEach(c => { if (c.startsWith('moldura-')) profileAvatar.classList.remove(c); });
+                    profileAvatar.classList.add(userData.profileBorder || 'moldura-padrao');
+                    profileAvatar.style.border = 'none';
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao carregar UI global:", error);
+        }
+    }
+});

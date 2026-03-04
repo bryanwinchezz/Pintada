@@ -11,12 +11,34 @@ import {
     EmailAuthProvider,
     reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, addDoc, getDocs, query, orderBy, doc, updateDoc, setDoc, getDoc, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, addDoc, getDocs, query, orderBy, limit, startAfter, doc, updateDoc, setDoc, getDoc, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 const PostService = {
-    async getPosts() {
-        const snapshot = await getDocs(query(collection(window.db, "posts"), orderBy("timestamp", "desc")));
+    lastVisiblePost: null, // Guarda na memória onde a página parou
+
+    async getPosts(loadMore = false) {
+        let q;
+        if (loadMore && this.lastVisiblePost) {
+            // Continua de onde parou (Pega os próximos 15)
+            q = query(collection(window.db, "posts"), orderBy("timestamp", "desc"), startAfter(this.lastVisiblePost), limit(15));
+        } else {
+            // Começa do zero (Pega os primeiros 15)
+            q = query(collection(window.db, "posts"), orderBy("timestamp", "desc"), limit(15));
+        }
+
+        const snapshot = await getDocs(q);
+
+        if (snapshot.docs.length > 0) {
+            // Atualiza o marcador com o último post baixado
+            this.lastVisiblePost = snapshot.docs[snapshot.docs.length - 1];
+        }
+
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+    async getMyPosts(username) {
+        // Busca APENAS os posts onde o autor é o usuário logado
+        const snapshot = await getDocs(query(collection(window.db, "posts"), where("authorUsername", "==", username)));
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     },
     async addPost(content, user, gifUrl = null, pollData = null, media = {}) {
@@ -25,6 +47,7 @@ const PostService = {
                 authorName: user.name || "Utilizador",
                 authorUsername: user.username || "anonimo",
                 authorAvatar: user.avatar || "",
+                authorBorder: user.profileBorder || "",
                 authorBadge: user.badge || "",
                 content: content || "",
                 gif: gifUrl || null,
@@ -50,18 +73,25 @@ const PostService = {
             const data = postSnap.data();
             const listField = type === 'like' ? 'likedBy' : 'repostedBy';
             const countField = type === 'like' ? 'likes' : 'reposts';
+            const dataField = type === 'like' ? 'likesData' : 'repostsData'; // NOVO: Dicionário de tempo
+
             let newList = data[listField] || [];
             let newCount = data[countField] || 0;
+            let newData = data[dataField] || {}; // NOVO: Puxa o histórico de horas
+
             if (newList.includes(username)) {
                 newList = newList.filter(u => u !== username);
                 newCount = Math.max(0, newCount - 1);
+                delete newData[username]; // Remove a hora se a pessoa tirar o like
             } else {
                 newList.push(username);
                 newCount++;
+                newData[username] = Date.now(); // NOVO: Salva a HORA EXATA do clique!
             }
             await updateDoc(postRef, {
                 [listField]: newList,
-                [countField]: newCount
+                [countField]: newCount,
+                [dataField]: newData // Salva o dicionário de tempo no banco
             });
         }
     },
@@ -70,7 +100,18 @@ const PostService = {
         const postSnap = await getDoc(postRef);
         if (postSnap.exists()) {
             const comments = postSnap.data().comments || [];
-            comments.push(comment);
+            // Adiciona a data e hora exata do momento do comentário
+            comments.push({ ...comment, timestamp: Date.now() });
+            await updateDoc(postRef, { comments: comments });
+        }
+    },
+    async deleteComment(postId, commentIndex) {
+        const postRef = doc(window.db, "posts", postId);
+        const postSnap = await getDoc(postRef);
+        if (postSnap.exists()) {
+            let comments = postSnap.data().comments || [];
+            // Remove o comentário pela posição exata dele na lista (index)
+            comments.splice(commentIndex, 1);
             await updateDoc(postRef, { comments: comments });
         }
     },
@@ -90,6 +131,10 @@ const PostService = {
 };
 
 const AuthService = {
+    // NOVA FUNÇÃO: Substitui completamente os hobbies para não voltar os apagados
+    async updateUserHobbies(username, newHobbies) {
+        await updateDoc(doc(window.db, "users", username), { hobbies: newHobbies });
+    },
     // 1. ADICIONE ESTAS DUAS FUNÇÕES AQUI
     async setOnlineStatus(username, isOnline) {
         if (!username) return;
@@ -117,6 +162,27 @@ const AuthService = {
     },
     async getUsers() {
         const snapshot = await getDocs(collection(window.db, "users"));
+        return snapshot.docs.map(doc => doc.data());
+    },
+    // === NOVO MOTOR DO EXPLORAR COM SCROLL INFINITO ===
+    lastVisibleUser: null,
+    async getExploreUsers(loadMore = false) {
+        let q;
+        if (loadMore && this.lastVisibleUser) {
+            // Continua de onde parou (pega os próximos 6)
+            q = query(collection(window.db, "users"), orderBy("createdAt", "desc"), startAfter(this.lastVisibleUser), limit(6));
+        } else {
+            // Começa do zero (pega os primeiros 6)
+            this.lastVisibleUser = null;
+            q = query(collection(window.db, "users"), orderBy("createdAt", "desc"), limit(6));
+        }
+
+        const snapshot = await getDocs(q);
+
+        if (snapshot.docs.length > 0) {
+            this.lastVisibleUser = snapshot.docs[snapshot.docs.length - 1];
+        }
+
         return snapshot.docs.map(doc => doc.data());
     },
     async getUserData(username) {
@@ -194,13 +260,14 @@ const AuthService = {
             await setDoc(userRef, updatedData, { merge: true });
         }
 
-        // Atualiza a foto, o nome e o @ em todas as postagens antigas dele!
+        // Atualiza a foto, nome, @ e MOLDURA em todas as postagens antigas dele!
         const postsSnap = await getDocs(query(collection(window.db, "posts"), where("authorUsername", "==", oldUsername)));
         postsSnap.forEach(async (postDoc) => {
             await updateDoc(doc(window.db, "posts", postDoc.id), {
                 authorName: updatedData.name,
-                authorUsername: updatedData.username, // Se ele mudou de @, atualiza nos posts também
-                authorAvatar: finalAvatar
+                authorUsername: updatedData.username,
+                authorAvatar: finalAvatar,
+                authorBorder: updatedData.profileBorder || "" // <-- AGORA ATUALIZA A BORDA NOS POSTS ANTIGOS!
             });
         });
     },
@@ -213,16 +280,23 @@ const AuthService = {
         const targetSnap = await getDoc(targetRef);
         if (userSnap.exists() && targetSnap.exists()) {
             let followingList = userSnap.data().followingList || [];
+            let followingData = userSnap.data().followingData || {}; // NOVO: Dicionário de tempo
             let targetFollowers = targetSnap.data().followers || 0;
             const index = followingList.indexOf(targetUsername);
+
             if (index === -1) {
                 followingList.push(targetUsername);
+                followingData[targetUsername] = Date.now(); // NOVO: Salva a hora exata do follow!
                 targetFollowers++;
             } else {
                 followingList.splice(index, 1);
+                delete followingData[targetUsername]; // Remove a hora se der unfollow
                 targetFollowers = Math.max(0, targetFollowers - 1);
             }
-            await updateDoc(userRef, { followingList: followingList });
+            await updateDoc(userRef, {
+                followingList: followingList,
+                followingData: followingData // Salva no banco
+            });
             await updateDoc(targetRef, { followers: targetFollowers });
         }
     },

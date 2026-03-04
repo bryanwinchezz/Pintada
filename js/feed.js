@@ -18,12 +18,47 @@ function generatePostHTML(post, currentUser) {
     const currentUserAvatar = currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=F4B41A&color=fff`;
     let displayAvatar = post.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.authorName)}&background=F4B41A&color=fff`;
 
+    // Se o usuário não tiver moldura salva, aplica a borda preta padrão
+    let finalBorder = post.authorBorder || 'moldura-padrao';
+    if (currentUser && post.authorUsername === currentUser.username) {
+        finalBorder = currentUser.profileBorder || 'moldura-padrao';
+    }
+
     // === GERA O HTML DO SELO (Se o autor do post tiver um) ===
     const badgeHTML = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(post.authorBadge) : '';
 
-    const commentsHTML = post.comments ? post.comments.map(c => {
+    // Função mágica que acha o @ e transforma em link azul
+    const formatText = (text) => {
+        let formatted = text.replace(/@(\w+)/g, '<a href="profile.html?user=$1" class="mention-text">@$1</a>');
+        formatted = formatted.replace(/#(\w+)/g, '<span style="color: #1D9BF0; font-weight: 500;">#$1</span>');
+        return formatted;
+    };
+
+    // Adicionamos o (c, index) para o código saber a posição exata de cada comentário na fila
+    const commentsHTML = post.comments ? post.comments.map((c, index) => {
         let cAvatar = c.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.authorName)}&background=F4B41A&color=fff`;
-        return `<div class="comment"><img src="${cAvatar}" alt="Foto" class="comment-avatar"><div class="comment-content"><span class="comment-author">${c.authorName}</span><p>${window.escapeHTML(c.text)}</p></div></div>`;
+        let cTime = c.timestamp ? timeAgo(c.timestamp) : timeAgo(post.timestamp || Date.now());
+
+        // Trocamos o data-comment-ts pelo data-comment-index="${index}"
+        let deleteBtnHTML = (c.authorUsername === currentUser.username || post.authorUsername === currentUser.username)
+            ? `<span class="material-symbols-outlined delete-comment-btn" data-post-id="${post.id}" data-comment-index="${index}" title="Apagar comentário" style="font-size: 16px; color: var(--text-muted); cursor: pointer; position: absolute; right: 12px; bottom: 8px; transition: 0.2s;" onmouseover="this.style.color='#EF4444'" onmouseout="this.style.color='var(--text-muted)'">delete</span>`
+            : '';
+
+        let replyBtnHTML = `<span class="reply-comment-btn" data-username="${c.authorUsername}" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='var(--brand-color)'" onmouseout="this.style.color='var(--text-muted)'">Responder</span>`;
+
+        return `<div class="comment" style="margin-bottom: 8px;">
+                    <img src="${cAvatar}" alt="Foto" class="comment-avatar">
+                    <div class="comment-content" style="position: relative; padding-bottom: 8px;">
+                        <span class="comment-author">${window.escapeHTML(c.authorName)}</span>
+                        <p>${formatText(window.escapeHTML(c.text))}</p>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); position: absolute; top: 8px; right: 12px;">${cTime}</span>
+                        ${deleteBtnHTML}
+                        
+                        <div style="margin-top: 6px; margin-left: 2px;">
+                            ${replyBtnHTML}
+                        </div>
+                    </div>
+                </div>`;
     }).join('') : '';
 
     const isAuthor = currentUser.username === post.authorUsername;
@@ -101,7 +136,7 @@ function generatePostHTML(post, currentUser) {
         <article class="post-card" data-post-id="${post.id}" style="background: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <header class="post-header" style="display: flex; align-items: center; margin-bottom: 12px;">
                 <a href="profile.html?user=${post.authorUsername}">
-                    <img src="${displayAvatar}" alt="Avatar" class="post-avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
+                    <img src="${displayAvatar}" alt="Avatar" class="post-avatar ${finalBorder}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
                 </a>
                 <div class="post-info" style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0; padding-right: 10px;">
                     <div style="line-height: 1.3; display: block; word-wrap: break-word;">
@@ -116,8 +151,8 @@ function generatePostHTML(post, currentUser) {
                 ${isAuthor ? `<div class="post-options-wrapper" style="position: relative; margin-left: 8px;"><button class="icon-btn more-options" style="background: none; border: none; cursor: pointer; color: var(--text-muted);"><span class="material-symbols-outlined">more_horiz</span></button><div class="post-dropdown"><button class="dropdown-item edit-post-btn">Editar</button><button class="dropdown-item text-danger delete-post-btn">Apagar</button></div></div>` : ''}
             </header>
             
-            <div class="post-content" style="color: var(--text-main); font-size: 1rem; line-height: 1.5; margin-bottom: 16px;">
-                <p style="margin: 0;">${parsedContent}</p>
+            <div class="post-content">
+                <p>${formatText(window.escapeHTML(post.content).replace(/\n/g, '<br>'))}</p>
                 ${mediaHTML}
                 ${pollHTML}
             </div>
@@ -144,10 +179,10 @@ function generatePostHTML(post, currentUser) {
 async function renderAllFeeds() {
     // 1. Verifica se está na página do post isolado
     const isSinglePostPage = window.location.pathname.includes('post.html');
-    
+
     // 2. Tenta pegar o usuário ativo
     const activeUsername = window.AuthService.getCurrentUser();
-    
+
     // 3. Bloqueio para visitantes (quem não tem conta logada)
     if (!activeUsername) {
         if (isSinglePostPage) {
@@ -178,7 +213,7 @@ async function renderAllFeeds() {
                 // Renderiza o post e força a caixa de comentários a ficar aberta
                 singlePostArea.innerHTML = generatePostHTML(thePost, currentUser);
                 const commentsSection = singlePostArea.querySelector('.comments-section');
-                if(commentsSection) commentsSection.classList.add('active');
+                if (commentsSection) commentsSection.classList.add('active');
             } else {
                 singlePostArea.innerHTML = `<div style="text-align:center; padding: 40px;"><h2>Post não encontrado 🐆</h2><p style="color:var(--text-muted); margin-top:10px;">Ele pode ter sido apagado pelo autor.</p><a href="index.html" class="btn-primary" style="display:inline-block; margin-top:20px; text-decoration:none;">Ir para a Home</a></div>`;
             }
@@ -220,7 +255,13 @@ async function renderAllFeeds() {
     if (profileArea && activeTab) {
         const tab = activeTab.getAttribute('data-tab');
         let filtered = [];
-        if (tab === 'postagens') filtered = allPosts.filter(p => p.authorUsername === viewedUsername);
+
+        // CORREÇÃO: Busca as postagens do Perfil direto do Banco de Dados para furar o limite de 15 da Home!
+        if (tab === 'postagens') {
+            filtered = await window.PostService.getMyPosts(viewedUsername);
+            // ORDENAÇÃO: Força a lista a ficar do post mais NOVO para o mais ANTIGO
+            filtered.sort((a, b) => b.timestamp - a.timestamp);
+        }
         else if (tab === 'republicados') filtered = allPosts.filter(p => p.repostedBy && p.repostedBy.includes(viewedUsername));
         else if (tab === 'curtidas') filtered = allPosts.filter(p => p.likedBy && p.likedBy.includes(viewedUsername));
         else if (tab === 'respostas') filtered = allPosts.filter(p => p.comments && p.comments.some(c => c.authorUsername === viewedUsername));
@@ -230,7 +271,14 @@ async function renderAllFeeds() {
 
     const exploreArea = document.getElementById('explore-posts-render-area');
     if (exploreArea) {
-        const trendingPosts = [...allPosts].sort((a, b) => ((b.likes || 0) + (b.reposts || 0)) - ((a.likes || 0) + (a.reposts || 0))).slice(0, 10);
+        // MÁGICA DE ORDENAÇÃO: 1º Mais curtidas, 2º Mais recentes
+        const trendingPosts = [...allPosts].sort((a, b) => {
+            const likesB = b.likes || 0;
+            const likesA = a.likes || 0;
+            if (likesB !== likesA) return likesB - likesA; // Quem tem mais likes ganha
+            return (b.timestamp || 0) - (a.timestamp || 0); // Desempate: Mais recente ganha
+        }).slice(0, 10);
+
         exploreArea.innerHTML = trendingPosts.length === 0 ? `<p style="text-align: center; color: var(--text-muted); padding: 40px;">Nenhuma publicação em alta.</p>` : trendingPosts.map(p => generatePostHTML(p, currentUser)).join('');
     }
 
@@ -243,9 +291,26 @@ window.renderTrendingTopics = async function () {
     if (!trendingContainer) return;
     const allPosts = await window.PostService.getPosts();
     let hashtagCounts = {};
-    allPosts.forEach(post => { const words = post.content.match(/#[a-zA-Z0-9_À-ÿ]+/gi) || []; words.forEach(w => { hashtagCounts[w] = (hashtagCounts[w] || 0) + 1; }); });
+
+    allPosts.forEach(post => {
+        // Pega todas as hashtags que o utilizador digitou no post
+        const words = post.content.match(/#[a-zA-Z0-9_À-ÿ]+/gi) || [];
+
+        // O SEGREDO AQUI: O 'Set' remove as duplicadas DENTRO da mesma publicação
+        const uniqueWords = [...new Set(words)];
+
+        uniqueWords.forEach(w => {
+            hashtagCounts[w] = (hashtagCounts[w] || 0) + 1;
+        });
+    });
+
     const sortedHashtags = Object.entries(hashtagCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    let topics = sortedHashtags.length > 0 ? sortedHashtags.map(h => ({ category: 'Em Alta na Pintada', title: h[0], stats: `${h[1]} publicações` })) : [{ category: 'Bem-vindo', title: '#NovaPintada', stats: 'Recomendado' }];
+
+    // Pequena correção gramatical: se for 1, escreve "publicação", se for mais, escreve "publicações"
+    let topics = sortedHashtags.length > 0
+        ? sortedHashtags.map(h => ({ category: 'Em Alta na Pintada', title: h[0], stats: `${h[1]} ${h[1] === 1 ? 'publicação' : 'publicações'}` }))
+        : [{ category: 'Bem-vindo', title: '#NovaPintada', stats: 'Recomendado' }];
+
     trendingContainer.innerHTML = `<h3 class="widget-title">O que está acontecendo</h3>` + topics.map(t => `<div class="trending-item"><span class="trending-meta">${t.category}</span><h4 class="trending-title" style="color: #D97A00;">${t.title}</h4><span class="trending-stats">${t.stats}</span></div>`).join('');
 };
 
@@ -515,7 +580,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.target.closest('.edit-post-btn')) {
             const pTag = postCard.querySelector('.post-content p');
-            const currentContent = pTag.innerHTML.replace(/<br>/g, '\n').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+            // Usar innerText extrai apenas o texto legível, ignorando todo o código HTML (como os links e cores)
+            const currentContent = pTag.innerText;
             const newContent = prompt("Edite a sua publicação:", currentContent);
             if (newContent !== null && newContent.trim() !== "") {
                 await window.PostService.editPost(postId, newContent.trim());
@@ -525,24 +591,58 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (e.target.closest('.delete-post-btn') && confirm("Apagar permanentemente?")) { await window.PostService.deletePost(postId); renderAllFeeds(); }
+        // Ação de Apagar Comentário
+        if (e.target.closest('.delete-comment-btn')) {
+            const btn = e.target.closest('.delete-comment-btn');
+            const commentPostId = btn.getAttribute('data-post-id');
+            // Agora pegamos o index em vez do timestamp
+            const commentIndex = parseInt(btn.getAttribute('data-comment-index'));
 
-// ==========================================
+            if (confirm("Quer mesmo apagar este comentário?")) {
+                // Mandamos a posição exata para o Firebase
+                await window.PostService.deleteComment(commentPostId, commentIndex);
+                renderAllFeeds();
+                showToast("Comentário apagado! 🗑️", "success");
+            }
+            return;
+        }
+
+        // Ação de Responder Comentário
+        if (e.target.closest('.reply-comment-btn')) {
+            const btn = e.target.closest('.reply-comment-btn');
+            const usernameToReply = btn.getAttribute('data-username');
+            const postCard = btn.closest('.post-card');
+
+            // Garante que a caixa de comentários abre automaticamente se estiver fechada
+            const commentsSection = postCard.querySelector('.comments-section');
+            if (!commentsSection.classList.contains('active')) {
+                commentsSection.classList.add('active');
+            }
+
+            // Coloca o @nomedapessoa na caixa e seleciona para o utilizador poder digitar logo a seguir
+            const input = postCard.querySelector('.comment-input');
+            input.value = `@${usernameToReply} `;
+            input.focus();
+            return;
+        }
+
+        // ==========================================
         // NOVO SISTEMA DE COMPARTILHAMENTO (WHATSAPP + NATIVO)
         // ==========================================
         if (e.target.closest('.share-btn')) {
             const shareBtn = e.target.closest('.share-btn');
             const postCard = shareBtn.closest('.post-card');
             const postId = postCard.getAttribute('data-post-id');
-            
+
             // Pega as informações do post
             const authorNameElement = postCard.querySelector('.post-info span');
             const authorName = authorNameElement ? authorNameElement.textContent : "um usuário";
             const contentElement = postCard.querySelector('.post-content p');
             const contentText = contentElement ? contentElement.innerText.substring(0, 100) : "Mídia";
-            
+
             // Link exclusivo do Post
             const postUrl = `${window.location.origin}/post.html?id=${postId}`;
-            
+
             // Texto formatado para o WhatsApp e outros locais
             const shareTitle = `Publicação de ${authorName} na Pintada 🐆`;
             const shareText = `"${contentText}..."\n\nConfira na íntegra:`;
@@ -634,9 +734,12 @@ document.getElementById('post-audio-btn')?.addEventListener('click', async () =>
             showToast("Erro ao acessar microfone", "error");
         }
     } else {
+        // Para a gravação
         mediaRecorder.stop();
-        micIcon.style.color = "var(--text-muted)";
-        micIcon.textContent = "mic";
+        // Desliga o hardware do microfone!
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        audioBtn.style.color = "var(--text-muted)";
+        audioBtn.textContent = "mic";
     }
 });
 
@@ -707,5 +810,133 @@ document.getElementById('publish-btn')?.addEventListener('click', async () => {
     } finally {
         publishBtn.disabled = false;
         publishBtn.textContent = "Postar";
+    }
+});
+
+// ==========================================
+// SCROLL INFINITO (A DETETAR O FINAL DA PÁGINA)
+// ==========================================
+window.addEventListener('scroll', async () => {
+    const homeArea = document.getElementById('posts-render-area');
+    // Só roda na Home, e ignora se estiver na página de um post só
+    if (!homeArea || window.location.pathname.includes('post.html')) return;
+
+    // Deteta se o utilizador rolou quase até o fim da página
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
+
+        if (window.isFetchingMorePosts) return; // Evita puxar 20x ao mesmo tempo
+        window.isFetchingMorePosts = true;
+
+        const activeUsername = window.AuthService.getCurrentUser();
+        if (!activeUsername) return;
+
+        const loaderId = 'loading-more-posts';
+        if (!document.getElementById(loaderId)) {
+            homeArea.insertAdjacentHTML('beforeend', `<p id="${loaderId}" style="text-align:center; padding: 20px; color: var(--text-muted);">A carregar publicações mais antigas... 🐆</p>`);
+        }
+
+        try {
+            const currentUser = await window.AuthService.getUserData(activeUsername);
+            // Avisa o Firebase: "Mande mais!"
+            const morePosts = await window.PostService.getPosts(true);
+
+            document.getElementById(loaderId)?.remove();
+
+            if (morePosts.length > 0) {
+                // Junta os novos posts aos antigos na tela
+                homeArea.insertAdjacentHTML('beforeend', morePosts.map(p => generatePostHTML(p, currentUser)).join(''));
+            } else {
+                if (!document.getElementById('no-more-posts')) {
+                    homeArea.insertAdjacentHTML('beforeend', `<p id="no-more-posts" style="text-align:center; padding: 20px; color: var(--text-muted);">Você chegou ao fim! Não há mais publicações.</p>`);
+                }
+            }
+        } catch (error) {
+            console.error("Erro no Scroll:", error);
+            document.getElementById(loaderId)?.remove();
+        } finally {
+            // Aguarda 1 segundo antes de permitir carregar mais
+            setTimeout(() => window.isFetchingMorePosts = false, 1000);
+        }
+    }
+});
+
+// ==========================================
+// AUTOCOMPLETE DE MENÇÕES (@)
+// ==========================================
+let allUsersCache = [];
+const mentionDropdown = document.createElement('ul');
+mentionDropdown.className = 'mentions-dropdown';
+document.body.appendChild(mentionDropdown);
+let activeInputForMention = null;
+
+// Baixa os usuários de forma invisível para a busca ser instantânea
+document.addEventListener('DOMContentLoaded', async () => {
+    allUsersCache = await window.AuthService.getUsers();
+});
+
+document.addEventListener('input', (e) => {
+    // Funciona tanto na caixa de novo post quanto nos comentários
+    if (!e.target.matches('.comment-input') && e.target.id !== 'post-content-input') return;
+
+    activeInputForMention = e.target;
+    const text = activeInputForMention.value;
+    const cursorPosition = activeInputForMention.selectionStart;
+
+    // Pega o texto até onde o cursor está e procura pelo "@"
+    const textBeforeCursor = text.substring(0, cursorPosition);
+    const match = textBeforeCursor.match(/@(\w*)$/);
+
+    if (match) {
+        const searchStr = match[1].toLowerCase();
+        // Acha até 5 usuários parecidos com o que está sendo digitado
+        const filteredUsers = allUsersCache.filter(u => u.username.toLowerCase().includes(searchStr)).slice(0, 5);
+
+        if (filteredUsers.length > 0) {
+            // Posiciona o menu flutuante exatamente embaixo do input
+            const rect = activeInputForMention.getBoundingClientRect();
+            mentionDropdown.style.left = `${rect.left}px`;
+            mentionDropdown.style.top = `${rect.bottom + window.scrollY + 5}px`;
+
+            mentionDropdown.innerHTML = filteredUsers.map(u => `
+                <li data-username="${u.username}">
+                    <img src="${u.avatar || `https://ui-avatars.com/api/?name=${u.name}&background=F4B41A&color=fff`}">
+                    <div style="display:flex; flex-direction:column; line-height:1.2;">
+                        <strong>${window.escapeHTML(u.name)}</strong>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">@${u.username}</span>
+                    </div>
+                </li>
+            `).join('');
+            mentionDropdown.style.display = 'block';
+        } else {
+            mentionDropdown.style.display = 'none';
+        }
+    } else {
+        mentionDropdown.style.display = 'none';
+    }
+});
+
+// Quando o usuário CLICAR no nome da lista
+mentionDropdown.addEventListener('click', (e) => {
+    const li = e.target.closest('li');
+    if (!li || !activeInputForMention) return;
+
+    const username = li.getAttribute('data-username');
+    const text = activeInputForMention.value;
+    const cursorPosition = activeInputForMention.selectionStart;
+    const textBeforeCursor = text.substring(0, cursorPosition);
+    const textAfterCursor = text.substring(cursorPosition);
+
+    // Troca a letra incompleta pelo @username correto + 1 espaço
+    const newTextBeforeCursor = textBeforeCursor.replace(/@\w*$/, `@${username} `);
+    activeInputForMention.value = newTextBeforeCursor + textAfterCursor;
+
+    activeInputForMention.focus();
+    mentionDropdown.style.display = 'none';
+});
+
+// Esconde o menu se clicar em qualquer outro lugar da tela
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.mentions-dropdown')) {
+        mentionDropdown.style.display = 'none';
     }
 });
