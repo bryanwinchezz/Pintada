@@ -6,26 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mensagens | Pintada</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="shortcut icon" href="pintada_ico.png" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
 
     <nav class="navbar">
         <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
-            <a href="index.html" style="display: flex; text-decoration: none; outline: none; border: none; background: transparent;">
-                <img src="pintada.png" alt="Logo Pintada" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: -10px 0; flex-shrink: 0; border: none;">
+            <a href="index.html"
+                style="display: flex; text-decoration: none; outline: none; border: none; background: transparent;">
+                <img src="pintada.png" alt="Logo Pintada"
+                    style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: -10px 0; flex-shrink: 0; border: none;">
             </a>
         </div>
-        <div class="nav-search"><span class="material-symbols-outlined search-icon">search</span><input type="text" placeholder="Pesquisar nas mensagens..."></div>
+        <div class="nav-search"><span class="material-symbols-outlined search-icon">search</span><input type="text"
+                placeholder="Pesquisar nas mensagens..."></div>
         <div class="nav-actions">
             <button class="icon-btn" id="theme-toggle" title="Alternar Tema">
                 <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
             </button>
 
             <a href="profile.html" class="profile-pic" title="Meu Perfil">
-                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Perfil" class="skeleton" style="background: var(--hover-bg);">
+                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Perfil" class="skeleton"
+                    style="background: var(--hover-bg);">
             </a>
         </div>
     </nav>
@@ -64,20 +70,26 @@
             <div class="contacts-panel">
                 <div class="contacts-header">
                     <h3>Mensagens</h3>
-                    <button class="icon-btn" id="edit-chats-btn" title="Excluir conversas"><span class="material-symbols-outlined">edit_square</span></button>
+                    <button class="icon-btn" id="edit-chats-btn" title="Excluir conversas"><span
+                            class="material-symbols-outlined">edit_square</span></button>
                 </div>
-                <button id="confirm-delete-chats-btn" style="display: none; background: #EF4444; color: white; border: none; padding: 10px; font-weight: bold; cursor: pointer; width: 100%;">Apagar Selecionados</button>
+                <button id="confirm-delete-chats-btn"
+                    style="display: none; background: #EF4444; color: white; border: none; padding: 10px; font-weight: bold; cursor: pointer; width: 100%;">Apagar
+                    Selecionados</button>
                 <div class="contacts-list" id="contacts-list-render">
                 </div>
             </div>
 
             <div class="chat-panel">
                 <div class="chat-header" id="chat-header">
-                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Avatar" class="chat-header-avatar skeleton" style="background: var(--hover-bg); border-radius: 50%;">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Avatar"
+                        class="chat-header-avatar skeleton" style="background: var(--hover-bg); border-radius: 50%;">
 
                     <div class="chat-header-info">
-                        <h4 id="chat-contact-name" class="skeleton" style="width: 120px; height: 18px; border-radius: 4px; margin-bottom: 6px;"></h4>
-                        <span id="chat-contact-status" class="skeleton" style="width: 80px; height: 12px; border-radius: 4px; display: block;"></span>
+                        <h4 id="chat-contact-name" class="skeleton"
+                            style="width: 120px; height: 18px; border-radius: 4px; margin-bottom: 6px;"></h4>
+                        <span id="chat-contact-status" class="skeleton"
+                            style="width: 80px; height: 12px; border-radius: 4px; display: block;"></span>
                     </div>
                 </div>
 
@@ -88,18 +100,18 @@
                     <input type="file" id="chat-file-input" accept="image/*" style="display: none;">
 
                     <button class="icon-btn" id="photo-btn" title="Enviar Foto">
-        <span class="material-symbols-outlined">add_photo_alternate</span>
-    </button>
+                        <span class="material-symbols-outlined">add_photo_alternate</span>
+                    </button>
 
                     <button class="icon-btn" id="audio-btn" title="Gravar Áudio">
-        <span class="material-symbols-outlined">mic</span>
-    </button>
+                        <span class="material-symbols-outlined">mic</span>
+                    </button>
 
                     <input type="text" id="chat-input-box" placeholder="Escreva uma mensagem...">
 
                     <button class="icon-btn send-msg-btn" id="send-msg-btn">
-        <span class="material-symbols-outlined">send</span>
-    </button>
+                        <span class="material-symbols-outlined">send</span>
+                    </button>
                 </div>
             </div>
         </main>
@@ -108,7 +120,8 @@
     <nav class="mobile-bottom-nav">
         <a href="index.html" class="mobile-item"><span class="material-symbols-outlined">home</span></a>
         <a href="explore.html" class="mobile-item"><span class="material-symbols-outlined">explore</span></a>
-        <a href="notifications.html" class="mobile-item"><span class="material-symbols-outlined">notifications</span></a>
+        <a href="notifications.html" class="mobile-item"><span
+                class="material-symbols-outlined">notifications</span></a>
         <a href="messages.html" class="mobile-item active"><span class="material-symbols-outlined">mail</span></a>
         <a href="profile.html" class="mobile-item"><span class="material-symbols-outlined">person</span></a>
         <a href="settings.html" class="mobile-item"><span class="material-symbols-outlined">settings</span></a>
@@ -118,7 +131,7 @@
     <script src="js/theme.js"></script>
     <script type="module" src="js/services.js"></script>
     <script type="module" src="js/ui.js"></script>
-    <script src="js/messages.js"></script>
+    <script type="module" src="js/messages.js"></script>
 </body>
 
 </html>

@@ -1,126 +1,126 @@
 // ==========================================
 // js/messages.js - CHAT REAL-TIME E MEMÓRIA DE CONTATOS
 // ==========================================
-document.addEventListener('DOMContentLoaded', async() => {
-            const chatUser = window.AuthService.getCurrentUser();
-            if (!chatUser) { window.location.href = 'auth.html'; return; }
+document.addEventListener('DOMContentLoaded', async () => {
+    const chatUser = window.AuthService.getCurrentUser();
+    if (!chatUser) { window.location.href = 'auth.html'; return; }
 
-            let activeContactId = new URLSearchParams(window.location.search).get('chat');
-            const chatHistoryContainer = document.getElementById('chat-history-render');
-            const contactListContainer = document.getElementById('contacts-list-render');
+    let activeContactId = new URLSearchParams(window.location.search).get('chat');
+    const chatHistoryContainer = document.getElementById('chat-history-render');
+    const contactListContainer = document.getElementById('contacts-list-render');
 
-            let isDeleteMode = false;
-            let selectedChatsToDelete = new Set();
-            let currentUnsubscribe = null;
-            let currentStatusUnsubscribe = null;
+    let isDeleteMode = false;
+    let selectedChatsToDelete = new Set();
+    let currentUnsubscribe = null;
+    let currentStatusUnsubscribe = null;
 
-            // 1. RECUPERA A MEMÓRIA DOS CHATS OCULTOS E RECENTES
-            let hiddenChats = JSON.parse(localStorage.getItem(`pintada_hidden_chats_${chatUser}`)) || [];
-            let recentChats = JSON.parse(localStorage.getItem(`pintada_recent_chats_${chatUser}`)) || [];
+    // 1. RECUPERA A MEMÓRIA DOS CHATS OCULTOS E RECENTES
+    let hiddenChats = JSON.parse(localStorage.getItem(`pintada_hidden_chats_${chatUser}`)) || [];
+    let recentChats = JSON.parse(localStorage.getItem(`pintada_recent_chats_${chatUser}`)) || [];
 
-            // 2. SE ABRIU UM CHAT NOVO, SALVA NA MEMÓRIA
-            if (activeContactId) {
-                if (!recentChats.includes(activeContactId)) {
-                    recentChats.push(activeContactId);
-                    localStorage.setItem(`pintada_recent_chats_${chatUser}`, JSON.stringify(recentChats));
-                }
-                if (hiddenChats.includes(activeContactId)) {
-                    hiddenChats = hiddenChats.filter(id => id !== activeContactId);
-                    localStorage.setItem(`pintada_hidden_chats_${chatUser}`, JSON.stringify(hiddenChats));
-                }
-            }
+    // 2. SE ABRIU UM CHAT NOVO, SALVA NA MEMÓRIA
+    if (activeContactId) {
+        if (!recentChats.includes(activeContactId)) {
+            recentChats.push(activeContactId);
+            localStorage.setItem(`pintada_recent_chats_${chatUser}`, JSON.stringify(recentChats));
+        }
+        if (hiddenChats.includes(activeContactId)) {
+            hiddenChats = hiddenChats.filter(id => id !== activeContactId);
+            localStorage.setItem(`pintada_hidden_chats_${chatUser}`, JSON.stringify(hiddenChats));
+        }
+    }
 
-            const currentUserData = await window.AuthService.getUserData(chatUser);
-            const allUsers = await window.AuthService.getUsers();
+    const currentUserData = await window.AuthService.getUserData(chatUser);
+    const allUsers = await window.AuthService.getUsers();
 
-            // 3. JUNTA QUEM VOCÊ SEGUE COM SEUS CHATS RECENTES
-            let contactUsernames = new Set([...(currentUserData.followingList || []), ...recentChats]);
+    // 3. JUNTA QUEM VOCÊ SEGUE COM SEUS CHATS RECENTES
+    let contactUsernames = new Set([...(currentUserData.followingList || []), ...recentChats]);
 
-            // 4. FILTRA E PREPARA A LISTA DA BARRA LATERAL
-            let contacts = allUsers.filter(u =>
-                contactUsernames.has(u.username) &&
-                u.username !== chatUser &&
-                !hiddenChats.includes(u.username)
-            );
+    // 4. FILTRA E PREPARA A LISTA DA BARRA LATERAL
+    let contacts = allUsers.filter(u =>
+        contactUsernames.has(u.username) &&
+        u.username !== chatUser &&
+        !hiddenChats.includes(u.username)
+    );
 
-            if (contacts.length === 0 && !activeContactId) {
-                if (contactListContainer) contactListContainer.innerHTML = "<p style='padding:20px; color:var(--text-muted); text-align: center; font-size: 0.9rem;'>Siga alguém ou pesquise perfis para conversar!</p>";
-                if (chatHistoryContainer) chatHistoryContainer.innerHTML = "";
-                document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton'));
-                return;
-            }
+    if (contacts.length === 0 && !activeContactId) {
+        if (contactListContainer) contactListContainer.innerHTML = "<p style='padding:20px; color:var(--text-muted); text-align: center; font-size: 0.9rem;'>Siga alguém ou pesquise perfis para conversar!</p>";
+        if (chatHistoryContainer) chatHistoryContainer.innerHTML = "";
+        document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton'));
+        return;
+    }
 
-            if (!activeContactId && contacts.length > 0) activeContactId = contacts[0].username;
+    if (!activeContactId && contacts.length > 0) activeContactId = contacts[0].username;
 
-            // ==========================================
-            // FUNÇÃO DE RENDERIZAR CONTEÚDO (MÍDIAS)
-            // ==========================================
-            function renderContent(m) {
-                if (m.type === 'image') {
-                    // A imagem agora chama a função openImageModal em vez de abrir nova aba
-                    return `<img src="${m.fileUrl}" onclick="window.openImageModal('${m.fileUrl}')" style="width: 100%; max-width: 280px; height: auto; border-radius: 8px; cursor: pointer; object-fit: cover; display: block;">`;
-                }
-                if (m.type === 'audio') return `
+    // ==========================================
+    // FUNÇÃO DE RENDERIZAR CONTEÚDO (MÍDIAS)
+    // ==========================================
+    function renderContent(m) {
+        if (m.type === 'image') {
+            // A imagem agora chama a função openImageModal em vez de abrir nova aba
+            return `<img src="${m.fileUrl}" onclick="window.openImageModal('${m.fileUrl}')" style="width: 100%; max-width: 280px; height: auto; border-radius: 8px; cursor: pointer; object-fit: cover; display: block;">`;
+        }
+        if (m.type === 'audio') return `
             <div class="audio-player" style="display: flex; align-items: center; gap: 5px;">
                 <span class="material-symbols-outlined">play_circle</span>
                 <audio controls src="${m.fileUrl}" style="height:35px; width:200px; outline:none;"></audio>
             </div>`;
-                return window.escapeHTML ? window.escapeHTML(m.text) : m.text;
+        return window.escapeHTML ? window.escapeHTML(m.text) : m.text;
+    }
+
+    // ==========================================
+    // BOTÕES DE APAGAR (OCULTAR)
+    // ==========================================
+    const btnEditChats = document.getElementById('edit-chats-btn');
+    const btnConfirmDelete = document.getElementById('confirm-delete-chats-btn');
+
+    if (btnEditChats) {
+        btnEditChats.addEventListener('click', () => {
+            isDeleteMode = !isDeleteMode;
+            selectedChatsToDelete.clear();
+            if (btnConfirmDelete) btnConfirmDelete.style.display = isDeleteMode ? 'block' : 'none';
+            renderContacts();
+        });
+    }
+
+    if (btnConfirmDelete) {
+        btnConfirmDelete.addEventListener('click', async () => {
+            if (selectedChatsToDelete.size === 0) return window.showToast("Nenhum chat selecionado.", "error");
+            if (confirm(`Ocultar ${selectedChatsToDelete.size} conversa(s) da sua lista? (As mensagens não serão apagadas)`)) {
+
+                for (let targetUser of selectedChatsToDelete) {
+                    if (!hiddenChats.includes(targetUser)) hiddenChats.push(targetUser);
+                }
+                localStorage.setItem(`pintada_hidden_chats_${chatUser}`, JSON.stringify(hiddenChats));
+
+                window.showToast("Conversas ocultadas da lista!");
+                isDeleteMode = false;
+                btnConfirmDelete.style.display = 'none';
+
+                if (selectedChatsToDelete.has(activeContactId)) {
+                    if (chatHistoryContainer) chatHistoryContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-muted);">Chat ocultado.</div>`;
+                    activeContactId = null;
+                    const nameEl = document.getElementById('chat-contact-name');
+                    if (nameEl) nameEl.textContent = "Selecione um chat";
+                }
+
+                contacts = allUsers.filter(u => contactUsernames.has(u.username) && u.username !== chatUser && !hiddenChats.includes(u.username));
+                if (contacts.length > 0 && !activeContactId) activeContactId = contacts[0].username;
+
+                renderContacts();
+                if (activeContactId) loadChatRealTime();
             }
+        });
+    }
 
-            // ==========================================
-            // BOTÕES DE APAGAR (OCULTAR)
-            // ==========================================
-            const btnEditChats = document.getElementById('edit-chats-btn');
-            const btnConfirmDelete = document.getElementById('confirm-delete-chats-btn');
-
-            if (btnEditChats) {
-                btnEditChats.addEventListener('click', () => {
-                    isDeleteMode = !isDeleteMode;
-                    selectedChatsToDelete.clear();
-                    if (btnConfirmDelete) btnConfirmDelete.style.display = isDeleteMode ? 'block' : 'none';
-                    renderContacts();
-                });
-            }
-
-            if (btnConfirmDelete) {
-                btnConfirmDelete.addEventListener('click', async() => {
-                    if (selectedChatsToDelete.size === 0) return window.showToast("Nenhum chat selecionado.", "error");
-                    if (confirm(`Ocultar ${selectedChatsToDelete.size} conversa(s) da sua lista? (As mensagens não serão apagadas)`)) {
-
-                        for (let targetUser of selectedChatsToDelete) {
-                            if (!hiddenChats.includes(targetUser)) hiddenChats.push(targetUser);
-                        }
-                        localStorage.setItem(`pintada_hidden_chats_${chatUser}`, JSON.stringify(hiddenChats));
-
-                        window.showToast("Conversas ocultadas da lista!");
-                        isDeleteMode = false;
-                        btnConfirmDelete.style.display = 'none';
-
-                        if (selectedChatsToDelete.has(activeContactId)) {
-                            if (chatHistoryContainer) chatHistoryContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-muted);">Chat ocultado.</div>`;
-                            activeContactId = null;
-                            const nameEl = document.getElementById('chat-contact-name');
-                            if (nameEl) nameEl.textContent = "Selecione um chat";
-                        }
-
-                        contacts = allUsers.filter(u => contactUsernames.has(u.username) && u.username !== chatUser && !hiddenChats.includes(u.username));
-                        if (contacts.length > 0 && !activeContactId) activeContactId = contacts[0].username;
-
-                        renderContacts();
-                        if (activeContactId) loadChatRealTime();
-                    }
-                });
-            }
-
-            // ==========================================
-            // RENDERIZAR OS CONTATOS NA TELA
-            // ==========================================
-            const renderContacts = () => {
-                    if (!contactListContainer) return;
-                    contactListContainer.innerHTML = contacts.map(c => {
-                                const checkboxHTML = isDeleteMode ? `<input type="checkbox" style="width:18px; height:18px; margin-right:10px;" class="delete-chat-cb" data-id="${c.username}" ${selectedChatsToDelete.has(c.username) ? 'checked' : ''}>` : '';
-                                return `
+    // ==========================================
+    // RENDERIZAR OS CONTATOS NA TELA
+    // ==========================================
+    const renderContacts = () => {
+        if (!contactListContainer) return;
+        contactListContainer.innerHTML = contacts.map(c => {
+            const checkboxHTML = isDeleteMode ? `<input type="checkbox" style="width:18px; height:18px; margin-right:10px;" class="delete-chat-cb" data-id="${c.username}" ${selectedChatsToDelete.has(c.username) ? 'checked' : ''}>` : '';
+            return `
                 <div class="contact-item ${c.username === activeContactId && !isDeleteMode ? 'active' : ''}" data-id="${c.username}" style="cursor: pointer; display: flex; align-items: center;">
                     ${checkboxHTML}
                     <img src="${c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=F4B41A&color=fff`}" class="contact-avatar">
@@ -187,7 +187,10 @@ document.addEventListener('DOMContentLoaded', async() => {
             if (currentStatusUnsubscribe) currentStatusUnsubscribe();
 
             currentStatusUnsubscribe = window.AuthService.listenToUserStatus(activeContactId, (isOnline, lastSeen) => {
-                if (isOnline) {
+                // Considera offline se passou mais de 5 minutos (300000 milissegundos) sem sinal de vida
+                const isReallyOnline = isOnline && lastSeen && (Date.now() - lastSeen < 300000);
+
+                if (isReallyOnline) {
                     contactStatusEl.textContent = "Online agora";
                     contactStatusEl.style.color = "#10B981";
                 } else {
@@ -230,7 +233,7 @@ document.addEventListener('DOMContentLoaded', async() => {
                 chatHistoryContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-muted);">Mande o primeiro "Oi" para ${target.name}! 🐆</div>`;
             } else {
                 const isAtBottom = chatHistoryContainer.scrollHeight - chatHistoryContainer.scrollTop <= chatHistoryContainer.clientHeight + 100;
-                
+
                 chatHistoryContainer.innerHTML = msgs.map(m => `
                     <div class="chat-bubble ${m.sender === chatUser ? 'sent' : 'received'}">
                         ${renderContent(m)} 
@@ -243,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         });
     };
 
-// ==========================================
+    // ==========================================
     // CONTROLES DE MENSAGEM (TEXTO, FOTO E ÁUDIO)
     // ==========================================
     const inputChatBox = document.getElementById('chat-input-box');
@@ -253,7 +256,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     const audioBtn = document.getElementById('audio-btn');
 
     // Chave da sua API do ImgBB (Crie uma conta lá e pegue a chave)
-    const IMGBB_API_KEY = '02d34ec2cd7054a202c57bf35f17bc5a'; 
+    const IMGBB_API_KEY = '02d34ec2cd7054a202c57bf35f17bc5a';
 
     const safeToast = (msg, type = 'success') => {
         console.log(`[${type.toUpperCase()}] ${msg}`);
@@ -291,38 +294,38 @@ document.addEventListener('DOMContentLoaded', async() => {
     // 2. Enviar Foto via ImgBB
     if (photoBtn && fileInput) {
         photoBtn.onclick = () => fileInput.click();
-        
+
         fileInput.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
             if (!activeContactId) return safeToast("Selecione um chat primeiro!", "error");
-            
+
             safeToast("A enviar foto para o ImgBB...", "success");
-            
+
             try {
                 // Prepara o arquivo para o ImgBB
                 const formData = new FormData();
                 formData.append('image', file);
-                
+
                 // Faz o upload direto pra API do ImgBB
                 const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const imageUrl = data.data.url; // Pega o link direto da imagem
                     console.log("Upload no ImgBB concluído! URL:", imageUrl);
-                    
+
                     // Salva a mensagem no Firebase Database com o link do ImgBB
                     await window.MessageService.sendMessage(chatUser, activeContactId, "", imageUrl, 'image');
-                    fileInput.value = ''; 
+                    fileInput.value = '';
                 } else {
                     throw new Error("Erro na resposta do ImgBB");
                 }
-                
+
             } catch (err) {
                 console.error("ERRO IMGBB:", err);
                 safeToast("Erro ao fazer upload da imagem.", "error");
@@ -330,7 +333,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         };
     }
 
-// 3. Gravar e Enviar Áudio (SEM API - Convertendo para Base64)
+    // 3. Gravar e Enviar Áudio (SEM API - Convertendo para Base64)
     let mediaRecorder;
     let audioChunks = [];
 
@@ -345,17 +348,17 @@ document.addEventListener('DOMContentLoaded', async() => {
                     audioChunks = [];
 
                     mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-                    
+
                     mediaRecorder.onstop = async () => {
                         const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
                         safeToast("A processar áudio...", "success");
-                        
+
                         // --- A MÁGICA DO BASE64 AQUI ---
                         const reader = new FileReader();
-                        reader.readAsDataURL(audioBlob); 
+                        reader.readAsDataURL(audioBlob);
                         reader.onloadend = async () => {
                             const base64Audio = reader.result; // Vira um texto gigante
-                            
+
                             try {
                                 console.log("Enviando áudio convertido pro banco de dados...");
                                 // Manda o texto Base64 no lugar do link da URL
@@ -371,7 +374,7 @@ document.addEventListener('DOMContentLoaded', async() => {
                     mediaRecorder.start();
                     audioBtn.classList.add('recording-active');
                     audioBtn.querySelector('span').textContent = 'stop_circle';
-                    audioBtn.style.color = "#EF4444"; 
+                    audioBtn.style.color = "#EF4444";
                 } catch (err) {
                     safeToast("Microfone bloqueado ou indisponível.", "error");
                 }
@@ -379,18 +382,18 @@ document.addEventListener('DOMContentLoaded', async() => {
                 mediaRecorder.stop();
                 audioBtn.classList.remove('recording-active');
                 audioBtn.querySelector('span').textContent = 'mic';
-                audioBtn.style.color = ""; 
+                audioBtn.style.color = "";
             }
         };
     }
 
-// ==========================================
+    // ==========================================
     // POPUP DE IMAGEM EM TELA CHEIA (LIGHTBOX)
     // ==========================================
-    window.openImageModal = function(imgSrc) {
+    window.openImageModal = function (imgSrc) {
         // Verifica se o popup já existe para não criar duplicado
         let modal = document.getElementById('chat-image-modal');
-        
+
         if (!modal) {
             // Cria o fundo escuro do popup
             modal = document.createElement('div');
@@ -411,7 +414,7 @@ document.addEventListener('DOMContentLoaded', async() => {
                 color: white; font-size: 36px; cursor: pointer;
                 background: rgba(0,0,0,0.5); border-radius: 50%; padding: 4px;
             `;
-            
+
             // Função para fechar suavemente
             const closeModal = () => {
                 modal.style.opacity = '0';

@@ -21,7 +21,7 @@ const PostService = {
     },
     async addPost(content, user, gifUrl = null, pollData = null) {
         try {
-            await addDoc(collection(window.db, "posts"), { authorName: user.name || "Utilizador", authorUsername: user.username || "anonimo", authorAvatar: user.avatar || "", content: content || "", gif: gifUrl || null, poll: pollData || null, likes: 0, likedBy: [], reposts: 0, repostedBy: [], comments: [], timestamp: Date.now(), time: "Agora", isEdited: false });
+            await addDoc(collection(window.db, "posts"), { authorName: user.name || "Utilizador", authorUsername: user.username || "anonimo", authorAvatar: user.avatar || "", authorBadge: user.badge || "", content: content || "", gif: gifUrl || null, poll: pollData || null, likes: 0, likedBy: [], reposts: 0, repostedBy: [], comments: [], timestamp: Date.now(), time: "Agora", isEdited: false });
         } catch (e) { console.error("Erro ao salvar:", e); }
     },
     async deletePost(postId) { await deleteDoc(doc(window.db, "posts", postId)); },
@@ -107,7 +107,18 @@ const AuthService = {
         const docSnap = await getDoc(doc(window.db, "users", username));
         return docSnap.exists() ? docSnap.data() : null;
     },
-    async saveUserData(username, data) { await setDoc(doc(window.db, "users", username), data, { merge: true }); },
+    // === NOVA FUNÇÃO: GERENCIAR SELOS ===
+    async updateUserBadge(targetUsername, badgeType) {
+        const userRef = doc(window.db, "users", targetUsername);
+        const newBadge = badgeType === 'none' ? "" : badgeType;
+        await updateDoc(userRef, { badge: newBadge });
+
+        // Atualiza o selo em todos os posts antigos da pessoa na mesma hora!
+        const postsSnap = await getDocs(query(collection(window.db, "posts"), where("authorUsername", "==", targetUsername)));
+        postsSnap.forEach(async (postDoc) => {
+            await updateDoc(doc(window.db, "posts", postDoc.id), { authorBadge: newBadge });
+        });
+    },
     async register(userData) {
         // 1. VERIFICA SE O NOME DE USUÁRIO JÁ EXISTE NO BANCO DE DADOS
         const userRef = doc(window.db, "users", userData.username);
@@ -168,7 +179,7 @@ const AuthService = {
 
         // Atualiza a foto, o nome e o @ em todas as postagens antigas dele!
         const postsSnap = await getDocs(query(collection(window.db, "posts"), where("authorUsername", "==", oldUsername)));
-        postsSnap.forEach(async(postDoc) => {
+        postsSnap.forEach(async (postDoc) => {
             await updateDoc(doc(window.db, "posts", postDoc.id), {
                 authorName: updatedData.name,
                 authorUsername: updatedData.username, // Se ele mudou de @, atualiza nos posts também
@@ -242,9 +253,6 @@ const AuthService = {
 };
 
 const MessageService = {
-    async sendMessage(sender, receiver, text) {
-        await addDoc(collection(window.db, "messages"), { sender, receiver, text, timestamp: Date.now() });
-    },
     listenToMessages(user1, user2, callback) {
         const q = query(collection(window.db, "messages"), orderBy("timestamp", "asc"));
         return onSnapshot(q, (snapshot) => {

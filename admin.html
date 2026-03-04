@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin | Pintada</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+
+<body style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;">
+
+    <div class="auth-card" style="width: 100%; max-width: 500px; text-align: center;">
+        <span class="material-symbols-outlined"
+            style="font-size: 48px; color: #EF4444; margin-bottom: 10px;">admin_panel_settings</span>
+        <h2 style="margin-bottom: 5px; color: var(--text-main);">Painel de Controle</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">Área restrita. Gerenciamento de
+            Selos.</p>
+
+        <div class="form-group" style="text-align: left; margin-bottom: 20px;">
+            <label>Buscar Usuário (Exato)</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="admin-search-input" placeholder="Digite o @ do usuário...">
+                <button id="admin-search-btn" class="btn-primary">Buscar</button>
+            </div>
+        </div>
+
+        <div id="admin-result-area"
+            style="display: none; background: var(--hover-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); text-align: left;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                <img id="admin-user-avatar" src=""
+                    style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                <div>
+                    <h3 id="admin-user-name"
+                        style="color: var(--text-main); margin: 0; display: flex; align-items: center;"></h3>
+                    <span id="admin-user-handle" style="color: var(--text-muted); font-size: 0.9rem;"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de Selo</label>
+                <select id="admin-badge-select">
+                    <option value="none">Nenhum (Remover Selo)</option>
+                    <option value="blue">Azul (Padrão)</option>
+                    <option value="gold">Dourado (Premium)</option>
+                    <option value="red">Vermelho (Especial)</option>
+                    <option value="staff">Roxo (Equipe Pintada)</option>
+                    <option value="green">Verde (Verificado Eco)</option>
+                    <option value="pink">Rosa (Apoiador)</option>
+                    <option value="black">Preto (Exclusivo)</option>
+                    <option value="rainbow">Arco-íris (LGBTQIA+)</option>
+                    <option value="owner" style="font-weight: bold; color: #D97A00;">👑 Supremo (Dono)</option>
+                </select>
+            </div>
+
+            <button id="admin-save-btn" class="btn-primary"
+                style="width: 100%; margin-top: 15px; background: #10B981;">Salvar Alterações</button>
+        </div>
+
+        <a href="index.html"
+            style="display: block; margin-top: 20px; color: var(--text-muted); text-decoration: none;">&larr; Voltar
+            para a Pintada</a>
+    </div>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script src="js/theme.js"></script>
+    <script type="module" src="js/services.js"></script>
+    <script type="module" src="js/ui.js"></script>
+    <script type="module" src="js/admin.js"></script>
+</body>
+
+</html>

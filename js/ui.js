@@ -59,10 +59,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            // Se o usuário não estiver na página de mensagens e tiver mensagens recebidas, mostra a bolinha
-            if (!window.location.pathname.includes('messages.html') && count > 0) {
-                addDot(menuMsgs);
-                addDot(mobileMsgs);
+            const removeDot = (el) => {
+                if (!el) return;
+                let dot = el.querySelector('.msg-dot');
+                if (dot) dot.remove();
+            };
+
+            const isMessagesPage = window.location.pathname.includes('messages.html');
+
+            if (isMessagesPage) {
+                // Se está na aba de mensagens, atualiza a memória para o número atual de mensagens e limpa a bolinha
+                localStorage.setItem(`pintada_msg_count_${activeUsername}`, count);
+                removeDot(menuMsgs);
+                removeDot(mobileMsgs);
+            } else {
+                // Se está em outra aba, só mostra a bolinha se o número de mensagens for MAIOR que o que está na memória
+                const savedCount = parseInt(localStorage.getItem(`pintada_msg_count_${activeUsername}`)) || 0;
+                if (count > savedCount) {
+                    addDot(menuMsgs);
+                    addDot(mobileMsgs);
+                } else {
+                    removeDot(menuMsgs);
+                    removeDot(mobileMsgs);
+                }
             }
         });
     }
@@ -70,35 +89,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initSearch() {
     document.querySelectorAll('.nav-search').forEach(searchContainer => {
-                const input = searchContainer.querySelector('input');
+        const input = searchContainer.querySelector('input');
 
-                // Cria a caixinha do dropdown dinamicamente se ela não existir
-                let dropdown = searchContainer.querySelector('.search-dropdown');
-                if (!dropdown) {
-                    dropdown = document.createElement('div');
-                    dropdown.className = 'search-dropdown';
-                    searchContainer.appendChild(dropdown);
-                }
+        // Cria a caixinha do dropdown dinamicamente se ela não existir
+        let dropdown = searchContainer.querySelector('.search-dropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.className = 'search-dropdown';
+            searchContainer.appendChild(dropdown);
+        }
 
-                // Evento que dispara a cada letra digitada
-                input.addEventListener('input', async(e) => {
-                            const query = e.target.value.replace('@', '').trim().toLowerCase();
+        // Evento que dispara a cada letra digitada
+        input.addEventListener('input', async (e) => {
+            const query = e.target.value.replace('@', '').trim().toLowerCase();
 
-                            if (query.length < 1) {
-                                dropdown.style.display = 'none';
-                                return;
-                            }
+            if (query.length < 1) {
+                dropdown.style.display = 'none';
+                return;
+            }
 
-                            const users = await window.AuthService.getUsers();
+            const users = await window.AuthService.getUsers();
 
-                            // Filtra os usuários (máximo de 5 resultados para não poluir a tela)
-                            const foundUsers = users.filter(u =>
-                                u.username.toLowerCase().includes(query) ||
-                                u.name.toLowerCase().includes(query)
-                            ).slice(0, 5);
+            // Filtra os usuários (máximo de 5 resultados para não poluir a tela)
+            const foundUsers = users.filter(u =>
+                u.username.toLowerCase().includes(query) ||
+                u.name.toLowerCase().includes(query)
+            ).slice(0, 5);
 
-                            if (foundUsers.length > 0) {
-                                dropdown.innerHTML = foundUsers.map(u => `
+            if (foundUsers.length > 0) {
+                dropdown.innerHTML = foundUsers.map(u => `
                     <a href="profile.html?user=${u.username}" class="search-result-item">
                         <img src="${u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=F4B41A&color=fff`}" class="search-result-avatar">
                         <div>
@@ -172,7 +191,7 @@ function initAuthToggles() {
 }
 
 // -----------------------------------------------------
-// 2. SUBSTITUA A FUNÇÃO loadUserDataUI
+// FUNÇÃO loadUserDataUI ATUALIZADA (CORREÇÃO DE FOTO E SEGUIDORES)
 // -----------------------------------------------------
 async function loadUserDataUI() {
     const activeUsername = window.AuthService.getCurrentUser();
@@ -189,13 +208,19 @@ async function loadUserDataUI() {
     const user = await window.AuthService.getUserData(targetUsername);
     if (!user) { showToast("Perfil não encontrado.", "error"); return; }
 
-    // Preenche textos principais
-    document.querySelectorAll('.profile-name').forEach(el => { el.textContent = user.name || "Utilizador"; });
+    // Preenche textos principais (AGORA COM O SELO!)
+    const badgeHTML = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(user.badge) : '';
+    document.querySelectorAll('.profile-name').forEach(el => { 
+        el.innerHTML = `${window.escapeHTML(user.name || "Utilizador")} ${badgeHTML}`; 
+    });
     document.querySelectorAll('.profile-handle').forEach(el => { el.textContent = `@${user.username}`; });
     document.querySelectorAll('.profile-bio').forEach(el => { el.textContent = user.bio || ""; });
 
-    // Preenche Seguidores
-    // Preenche Seguidores e Torna-os Clicáveis
+    // === CORREÇÃO DOS SEGUIDORES: MATEMÁTICA REAL ===
+    // Conta exatamente quantas pessoas têm você na lista delas (ignora o número fantasma do Firebase)
+    const allNetworkUsers = await window.AuthService.getUsers();
+    const realFollowersCount = allNetworkUsers.filter(u => u.followingList && u.followingList.includes(targetUsername)).length;
+
     const followingEl = document.getElementById('profile-following-count');
     const followersEl = document.getElementById('profile-followers-count');
 
@@ -205,7 +230,7 @@ async function loadUserDataUI() {
         followingEl.parentElement.onclick = () => openConnectionsModal('following', targetUsername, user);
     }
     if (followersEl) {
-        followersEl.textContent = user.followers || 0;
+        followersEl.textContent = realFollowersCount; // Usa a matemática real aqui!
         followersEl.parentElement.style.cursor = 'pointer';
         followersEl.parentElement.onclick = () => openConnectionsModal('followers', targetUsername, user);
     }
@@ -221,8 +246,22 @@ async function loadUserDataUI() {
     if (document.getElementById('edit-pronouns')) document.getElementById('edit-pronouns').value = user.pronouns || "";
     if (document.getElementById('edit-relationship')) document.getElementById('edit-relationship').value = user.relationship || "";
 
-    const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=F4B41A&color=fff`;
-    document.querySelectorAll('.profile-pic img, .profile-page-avatar, #settings-avatar-preview, .post-avatar').forEach(img => img.src = avatarUrl);
+    // === CORREÇÃO DA FOTO NA NAVBAR ===
+    // 1. Aplica a foto do dono do perfil (targetUsername) APENAS no quadrado grande do perfil e no modal de edição
+    const targetAvatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=F4B41A&color=fff`;
+    document.querySelectorAll('.profile-page-avatar, #settings-avatar-preview').forEach(img => img.src = targetAvatarUrl);
+
+    // 2. Aplica a SUA foto (activeUsername) na Navbar lá em cima e APENAS na caixinha de Criar Post!
+    const activeUserData = await window.AuthService.getUserData(activeUsername);
+    if (activeUserData) {
+        const myAvatarUrl = activeUserData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeUserData.name)}&background=F4B41A&color=fff`;
+        
+        // Agora usamos .create-post-header .post-avatar para não afetar os posts do feed
+        document.querySelectorAll('.profile-pic img, .create-post-header .post-avatar').forEach(img => {
+            img.src = myAvatarUrl;
+            img.classList.remove('skeleton');
+        });
+    }
 
     const bannerUrl = user.banner || 'var(--brand-gradient)';
     if (document.getElementById('profile-page-banner')) document.getElementById('profile-page-banner').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
@@ -270,8 +309,8 @@ async function loadUserDataUI() {
         if (user.hobbies && Object.keys(user.hobbies).length > 0) {
             let hobbiesContent = '';
             Object.keys(user.hobbies).forEach(theme => {
-                        if (user.hobbies[theme].length > 0) {
-                            hobbiesContent += `
+                if (user.hobbies[theme].length > 0) {
+                    hobbiesContent += `
                     <div style="margin-top: 18px;">
                         <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 10px; font-weight: bold;">${window.escapeHTML(theme)}</h3>
                         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
@@ -283,11 +322,11 @@ async function loadUserDataUI() {
                         </div>
                     </div>
                 `;
-            }
-        });
-        hobbiesRow.innerHTML = hobbiesContent;
+                }
+            });
+            hobbiesRow.innerHTML = hobbiesContent;
+        }
     }
-}
 
     // ========================================================
     // BOTÕES DE SEGUIR E MENSAGEM (Para perfis de terceiros)
@@ -295,13 +334,13 @@ async function loadUserDataUI() {
     if (isProfilePage) {
         const actionContainer = document.querySelector('.profile-avatar-row');
         const existingBtn = actionContainer.querySelector('.btn-outline, .btn-primary');
-        
+
         if (targetUsername !== activeUsername) {
             const activeUserFull = await window.AuthService.getUserData(activeUsername);
             const isFollowing = activeUserFull.followingList && activeUserFull.followingList.includes(targetUsername);
-            
+
             if (existingBtn) existingBtn.remove();
-            
+
             if (!document.getElementById('btn-group-others')) {
                 const btnGroup = document.createElement('div');
                 btnGroup.id = 'btn-group-others';
@@ -322,12 +361,12 @@ async function loadUserDataUI() {
     // ========================================================
     // DESLIGA O CARREGAMENTO (Remove os esqueletos)
     // ========================================================
-document.querySelectorAll('.skeleton').forEach(el => {
-    // Se o elemento já tiver texto ou src real, remove o skeleton
-    if (el.innerText.trim() !== "" || el.src?.includes('http')) {
-        el.classList.remove('skeleton');
-    }
-});
+    document.querySelectorAll('.skeleton').forEach(el => {
+        // Se o elemento já tiver texto ou src real, remove o skeleton
+        if (el.innerText.trim() !== "" || el.src?.includes('http')) {
+            el.classList.remove('skeleton');
+        }
+    });
 }
 
 // -----------------------------------------------------
@@ -336,7 +375,7 @@ document.querySelectorAll('.skeleton').forEach(el => {
 function initProfileForm() {
     const formProfile = document.getElementById('form-profile');
     if (formProfile) {
-        formProfile.onsubmit = async(e) => {
+        formProfile.onsubmit = async (e) => {
             e.preventDefault();
             const activeUsername = window.AuthService.getCurrentUser();
 
@@ -376,7 +415,7 @@ let cropper = null;
 function processImageUpload(file, type) {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         pendingImageType = type;
         const imagePreview = document.getElementById('adjust-preview-img');
         imagePreview.src = e.target.result;
@@ -387,7 +426,7 @@ function processImageUpload(file, type) {
     reader.readAsDataURL(file);
 }
 
-document.addEventListener('DOMContentLoaded', async() => {
+document.addEventListener('DOMContentLoaded', async () => {
 
     // SISTEMA DE SEGURANÇA: Redireciona quem não tem login para a tela de Auth
     const activeUsername = window.AuthService ? window.AuthService.getCurrentUser() : null;
@@ -445,7 +484,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             list.innerHTML = Object.keys(savedHobbies).map(theme => `
                 <div class="hobby-card"><div class="hobby-card-info"><h4>${theme}</h4><p>${savedHobbies[theme].join(', ')}</p></div><div class="hobby-card-actions"><span class="material-symbols-outlined" style="cursor:pointer;" onclick="deleteHobbyTheme('${theme}')">delete</span></div></div>`).join('');
         }
-        window.deleteHobbyTheme = function(theme) {
+        window.deleteHobbyTheme = function (theme) {
             delete savedHobbies[theme];
             renderFinalHobbiesList();
         };
@@ -469,7 +508,7 @@ document.addEventListener('DOMContentLoaded', async() => {
                 }
             });
         }
-        saveHobbiesBtn.addEventListener('click', async() => {
+        saveHobbiesBtn.addEventListener('click', async () => {
             try {
                 await window.AuthService.saveUserData(activeUser, { hobbies: savedHobbies });
                 showToast('Interesses atualizados!');
@@ -503,7 +542,7 @@ document.querySelectorAll('.close-modal-btn').forEach(btn => {
 
 // 2. LOGOUT
 document.querySelectorAll('#logout-btn').forEach(btn => {
-    btn.addEventListener('click', async(e) => {
+    btn.addEventListener('click', async (e) => {
         e.preventDefault();
         await window.AuthService.logout();
         window.location.href = 'auth.html';
@@ -513,7 +552,7 @@ document.querySelectorAll('#logout-btn').forEach(btn => {
 // 3. APAGAR CONTA (ZONA DE PERIGO)
 const confirmDeleteBtn = document.getElementById('confirm-delete-account-btn');
 if (confirmDeleteBtn) {
-    confirmDeleteBtn.addEventListener('click', async() => {
+    confirmDeleteBtn.addEventListener('click', async () => {
         const activeUsername = window.AuthService.getCurrentUser();
         const typed = document.getElementById('delete-username-input').value.trim();
 
@@ -557,7 +596,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ==========================================
 // FUNÇÃO PARA ABRIR LISTA DE SEGUIDORES/SEGUINDO
 // ==========================================
-window.openConnectionsModal = async function(type, targetUsername, userData) {
+window.openConnectionsModal = async function (type, targetUsername, userData) {
     const modal = document.getElementById('modal-connections');
     const title = document.getElementById('connections-modal-title');
     const body = document.getElementById('connections-modal-body');
@@ -602,7 +641,7 @@ window.openConnectionsModal = async function(type, targetUsername, userData) {
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const activeUser = window.AuthService ? window.AuthService.getCurrentUser() : null;
-    
+
     if (activeUser && window.AuthService.setOnlineStatus) {
         // 1. Fica ONLINE assim que entra no site
         window.AuthService.setOnlineStatus(activeUser, true);
@@ -654,9 +693,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Envio do formulário de cadastro
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
-        registerForm.addEventListener('submit', async(e) => {
+        registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const password = document.getElementById('reg-password').value;
             const username = document.getElementById('reg-username').value;
             const submitBtn = registerForm.querySelector('button[type="submit"]');
@@ -680,10 +719,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     bio: "Novo membro da Pintada! 🐆",
                     hobbies: {}
                 });
-                
+
                 window.showToast("Conta criada com sucesso!");
                 setTimeout(() => window.location.href = 'index.html', 1000);
-                
+
             } catch (error) {
                 // Mostra o erro exato na tela (ex: "Nome de usuário já em uso")
                 window.showToast(error.message, "error");
@@ -696,16 +735,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Envio do formulário de Login (Já que você não usa mais o script.js)
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
-        loginForm.addEventListener('submit', async(e) => {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = loginForm.querySelector('button[type="submit"]');
             try {
                 submitBtn.textContent = "Entrando...";
                 submitBtn.disabled = true;
-                
+
                 // Força o identificador a ficar minúsculo caso ele tente logar com o nome de usuário
                 const identifier = document.getElementById('login-identifier').value.toLowerCase();
-                
+
                 await window.AuthService.login(
                     identifier,
                     document.getElementById('login-password').value
@@ -718,106 +757,141 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
-}); 
+
+});
 
 // ==========================================
-    // LÓGICA DE TROCA DE E-MAIL E SENHA
-    // ==========================================
+// LÓGICA DE TROCA DE E-MAIL E SENHA
+// ==========================================
 
-    // 1. Mostrar o e-mail atual no modal (UX)
-    const emailDisplay = document.getElementById('current-email-display');
-    if (emailDisplay && window.AuthService) {
-        const activeUser = window.AuthService.getCurrentUser();
-        window.AuthService.getUserData(activeUser).then(user => {
-            if (user) emailDisplay.value = user.email; // Preenche o campo vazio!
-        });
-    }
+// 1. Mostrar o e-mail atual no modal (UX)
+const emailDisplay = document.getElementById('current-email-display');
+if (emailDisplay && window.AuthService) {
+    const activeUser = window.AuthService.getCurrentUser();
+    window.AuthService.getUserData(activeUser).then(user => {
+        if (user) emailDisplay.value = user.email; // Preenche o campo vazio!
+    });
+}
 
-    // 2. Lidar com a troca de E-mail
-    const formChangeEmail = document.getElementById('form-change-email');
-    if (formChangeEmail) {
-        formChangeEmail.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newEmail = document.getElementById('new-email-input').value.trim();
-            const currentPassword = document.getElementById('current-password-email').value;
-            const btnSubmit = formChangeEmail.querySelector('button');
+// 2. Lidar com a troca de E-mail
+const formChangeEmail = document.getElementById('form-change-email');
+if (formChangeEmail) {
+    formChangeEmail.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newEmail = document.getElementById('new-email-input').value.trim();
+        const currentPassword = document.getElementById('current-password-email').value;
+        const btnSubmit = formChangeEmail.querySelector('button');
 
-            try {
-                btnSubmit.textContent = "A atualizar...";
-                btnSubmit.disabled = true;
+        try {
+            btnSubmit.textContent = "A atualizar...";
+            btnSubmit.disabled = true;
 
-                await window.AuthService.changeEmail(newEmail, currentPassword);
-                
-                // Aviso de 7 segundos!
-                window.showToast("Link de confirmação enviado! Verifique a caixa de entrada ou SPAM do novo e-mail.", "success", 7000);
-                formChangeEmail.reset(); 
-                document.getElementById('modal-email').classList.remove('active'); 
-            } catch (error) {
-                console.error("ERRO FIREBASE:", error);
-                let msg = error.message;
-                
-                if (msg.includes("auth/invalid-credential") || msg.includes("auth/wrong-password")) {
-                    msg = "A senha atual está incorreta.";
-                } else if (msg.includes("auth/email-already-in-use")) {
-                    msg = "Este e-mail já está a ser usado por outra conta.";
-                } else if (msg.includes("Nenhum utilizador logado") || msg.includes("auth/user-not-found")) {
-                    msg = "Sessão fantasma! Clique em 'Sair' no menu e faça login novamente.";
-                } else if (msg.includes("auth/requires-recent-login")) {
-                    msg = "Por segurança, faça logout e login novamente para alterar o e-mail.";
-                }
-                
-                window.showToast(msg, "error");
-            } finally {
-                btnSubmit.textContent = "Atualizar E-mail";
-                btnSubmit.disabled = false;
-            }
-        });
-    }
+            await window.AuthService.changeEmail(newEmail, currentPassword);
 
-    // 3. Lidar com a troca de Senha
-    const formChangePassword = document.getElementById('form-change-password');
-    if (formChangePassword) {
-        formChangePassword.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newPassword = document.getElementById('new-password-input').value;
-            const currentPassword = document.getElementById('current-password-pass').value;
-            const confirmPassword = document.getElementById('confirm-password-input').value;
-            const btnSubmit = formChangePassword.querySelector('button');
+            // Aviso de 7 segundos!
+            window.showToast("Link de confirmação enviado! Verifique a caixa de entrada ou SPAM do novo e-mail.", "success", 7000);
+            formChangeEmail.reset();
+            document.getElementById('modal-email').classList.remove('active');
+        } catch (error) {
+            console.error("ERRO FIREBASE:", error);
+            let msg = error.message;
 
-            if (newPassword !== confirmPassword) {
-                return window.showToast("As novas senhas não coincidem!", "error");
+            if (msg.includes("auth/invalid-credential") || msg.includes("auth/wrong-password")) {
+                msg = "A senha atual está incorreta.";
+            } else if (msg.includes("auth/email-already-in-use")) {
+                msg = "Este e-mail já está a ser usado por outra conta.";
+            } else if (msg.includes("Nenhum utilizador logado") || msg.includes("auth/user-not-found")) {
+                msg = "Sessão fantasma! Clique em 'Sair' no menu e faça login novamente.";
+            } else if (msg.includes("auth/requires-recent-login")) {
+                msg = "Por segurança, faça logout e login novamente para alterar o e-mail.";
             }
 
-            if (newPassword.length < 6) {
-                return window.showToast("A nova senha deve ter no mínimo 6 caracteres.", "error");
+            window.showToast(msg, "error");
+        } finally {
+            btnSubmit.textContent = "Atualizar E-mail";
+            btnSubmit.disabled = false;
+        }
+    });
+}
+
+// 3. Lidar com a troca de Senha
+const formChangePassword = document.getElementById('form-change-password');
+if (formChangePassword) {
+    formChangePassword.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newPassword = document.getElementById('new-password-input').value;
+        const currentPassword = document.getElementById('current-password-pass').value;
+        const confirmPassword = document.getElementById('confirm-password-input').value;
+        const btnSubmit = formChangePassword.querySelector('button');
+
+        if (newPassword !== confirmPassword) {
+            return window.showToast("As novas senhas não coincidem!", "error");
+        }
+
+        if (newPassword.length < 6) {
+            return window.showToast("A nova senha deve ter no mínimo 6 caracteres.", "error");
+        }
+
+        try {
+            btnSubmit.textContent = "A atualizar...";
+            btnSubmit.disabled = true;
+
+            await window.AuthService.changePassword(newPassword, currentPassword);
+
+            window.showToast("Senha atualizada com sucesso! 🔐", "success");
+            formChangePassword.reset();
+            document.getElementById('modal-password').classList.remove('active');
+        } catch (error) {
+            console.error("ERRO FIREBASE:", error);
+            let msg = error.message;
+
+            if (msg.includes("auth/invalid-credential") || msg.includes("auth/wrong-password")) {
+                msg = "A senha atual está incorreta.";
+            } else if (msg.includes("Nenhum utilizador logado") || msg.includes("auth/user-not-found")) {
+                msg = "Sessão fantasma! Clique em 'Sair' no menu e faça login novamente.";
+            } else if (msg.includes("auth/requires-recent-login")) {
+                msg = "Por segurança, faça logout e login novamente para alterar a senha.";
             }
 
-            try {
-                btnSubmit.textContent = "A atualizar...";
-                btnSubmit.disabled = true;
+            window.showToast(msg, "error");
+        } finally {
+            btnSubmit.textContent = "Atualizar Senha";
+            btnSubmit.disabled = false;
+        }
+    });
+}
 
-                await window.AuthService.changePassword(newPassword, currentPassword);
-                
-                window.showToast("Senha atualizada com sucesso! 🔐", "success");
-                formChangePassword.reset(); 
-                document.getElementById('modal-password').classList.remove('active'); 
-            } catch (error) {
-                console.error("ERRO FIREBASE:", error);
-                let msg = error.message;
+// ==========================================
+// REGISTRO DO SERVICE WORKER (PARA INSTALAR COMO APP)
+// ==========================================
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('PWA: Service Worker registrado com sucesso!'))
+            .catch(err => console.log('PWA: Falha ao registrar Service Worker', err));
+    });
+}
 
-                if (msg.includes("auth/invalid-credential") || msg.includes("auth/wrong-password")) {
-                    msg = "A senha atual está incorreta.";
-                } else if (msg.includes("Nenhum utilizador logado") || msg.includes("auth/user-not-found")) {
-                    msg = "Sessão fantasma! Clique em 'Sair' no menu e faça login novamente.";
-                } else if (msg.includes("auth/requires-recent-login")) {
-                    msg = "Por segurança, faça logout e login novamente para alterar a senha.";
-                }
-                
-                window.showToast(msg, "error");
-            } finally {
-                btnSubmit.textContent = "Atualizar Senha";
-                btnSubmit.disabled = false;
-            }
-        });
-    }
+// ==========================================
+// GERADOR DE SELOS DE VERIFICAÇÃO
+// ==========================================
+window.getBadgeHTML = function(badgeType) {
+    if (!badgeType || badgeType === 'none') return '';
+    
+    // Agora usamos regras CSS completas para suportar gradientes!
+    const styles = {
+        'blue': 'color: #1D9BF0;',
+        'red': 'color: #EF4444;',
+        'gold': 'color: #F4B41A;',
+        'staff': 'color: #8B5CF6;',
+        'green': 'color: #10B981;',
+        'pink': 'color: #EC4899;',
+        'black': 'color: #171717;',
+        'rainbow': 'background: linear-gradient(to bottom, #E40303 0%, #E40303 16.6%, #FF8C00 16.6%, #FF8C00 33.3%, #FFED00 33.3%, #FFED00 50%, #008026 50%, #008026 66.6%, #004DFF 66.6%, #004DFF 83.3%, #750787 83.3%, #750787 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;',
+        'owner': 'background: linear-gradient(135deg, #FFDF00 0%, #F4B41A 40%, #8B0000 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;'
+    };
+    
+    const styleString = styles[badgeType] || styles['blue'];
+    
+    return `<span class="material-symbols-outlined verified-badge" title="Conta Verificada" style="${styleString} font-size: 1.15em; vertical-align: middle; margin-left: 4px; font-variation-settings: 'FILL' 1;">verified</span>`;
+};

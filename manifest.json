@@ -1,0 +1,21 @@
+{
+  "name": "Pintada",
+  "short_name": "Pintada",
+  "description": "A sua rede social",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F0F2F5",
+  "theme_color": "#F4B41A",
+  "icons": [
+    {
+      "src": "pintada.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "pintada.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

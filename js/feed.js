@@ -18,6 +18,9 @@ function generatePostHTML(post, currentUser) {
     const currentUserAvatar = currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=F4B41A&color=fff`;
     let displayAvatar = post.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.authorName)}&background=F4B41A&color=fff`;
 
+    // === GERA O HTML DO SELO (Se o autor do post tiver um) ===
+    const badgeHTML = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(post.authorBadge) : '';
+
     const commentsHTML = post.comments ? post.comments.map(c => {
         let cAvatar = c.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.authorName)}&background=F4B41A&color=fff`;
         return `<div class="comment"><img src="${cAvatar}" alt="Foto" class="comment-avatar"><div class="comment-content"><span class="comment-author">${c.authorName}</span><p>${window.escapeHTML(c.text)}</p></div></div>`;
@@ -71,7 +74,9 @@ function generatePostHTML(post, currentUser) {
                     <img src="${displayAvatar}" alt="Avatar" class="post-avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
                 </a>
                 <div class="post-info" style="flex-grow: 1; display: flex; flex-direction: column;">
-                    <a href="profile.html?user=${post.authorUsername}" style="text-decoration: none; color: var(--text-main); font-weight: bold; font-size: 1.05rem;">${post.authorName}</a>
+                    <a href="profile.html?user=${post.authorUsername}" style="text-decoration: none; color: var(--text-main); font-weight: bold; font-size: 1.05rem; display: flex; align-items: center;">
+                        ${post.authorName} ${badgeHTML}
+                    </a>
                     <span class="post-meta" style="color: var(--text-muted); font-size: 0.9rem;">@${post.authorUsername} • ${displayTime} ${editedTag}</span>
                 </div>
                 ${followBtnHTML}
@@ -112,7 +117,7 @@ async function renderAllFeeds() {
     const homeArea = document.getElementById('posts-render-area');
     const profileArea = document.getElementById('profile-posts-render-area');
     const isProfilePage = window.location.pathname.includes('profile.html');
-    
+
     // ANIMAÇÃO DE CARREGAMENTO (SKELETON) EXCLUSIVA PARA O PERFIL
     if (isProfilePage && profileArea && !window.hasClearedFakePosts) {
         const skeletonHTML = `
@@ -123,10 +128,10 @@ async function renderAllFeeds() {
                 </div>
                 <div class="skeleton" style="width: 100%; height: 60px; border-radius: 8px;"></div>
             </div>`.repeat(3);
-        
+
         profileArea.innerHTML = skeletonHTML;
         window.hasClearedFakePosts = true;
-        await new Promise(r => setTimeout(r, 1500)); 
+        await new Promise(r => setTimeout(r, 1500));
     }
 
     const allPosts = await window.PostService.getPosts();
@@ -161,7 +166,7 @@ async function renderAllFeeds() {
     if (typeof window.renderTrendingTopics === 'function') await window.renderTrendingTopics();
 }
 
-window.renderTrendingTopics = async function() {
+window.renderTrendingTopics = async function () {
     const trendingContainer = document.querySelector('.sidebar-right .widget');
     if (!trendingContainer) return;
     const allPosts = await window.PostService.getPosts();
@@ -185,21 +190,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewContainer = document.getElementById('selected-gif-preview');
 
     function hideAllPanels() {
-        if(panelEmoji) panelEmoji.style.display = 'none';
-        if(panelGif) panelGif.style.display = 'none';
-        if(panelPoll) panelPoll.style.display = 'none';
+        if (panelEmoji) panelEmoji.style.display = 'none';
+        if (panelGif) panelGif.style.display = 'none';
+        if (panelPoll) panelPoll.style.display = 'none';
     }
 
     // CORREÇÃO DOS EMOJIS (Nativo no HTML, nunca falha)
-    const nativeEmojis = ["😀","😂","🤣","😊","😍","🥰","😎","🤩","🥳","😏","😒","😔","😕","🥺","😢","😭","😤","😠","😡","🤯","😳","😱","😨","🤔","🤭","🤫","😶","😐","🙄","😲","😴","🤤","🤠","😈","💩","👻","💀","👽","👾","🤖","😺","😻","❤️","🧡","💛","💚","💙","💜","🖤","💔","💕","💖","👍","👎","👏","🙌","🤲","🤝","🙏","💪","👀","🔥","✨","🐆","⚽","☕"];
+    const nativeEmojis = ["😀", "😂", "🤣", "😊", "😍", "🥰", "😎", "🤩", "🥳", "😏", "😒", "😔", "😕", "🥺", "😢", "😭", "😤", "😠", "😡", "🤯", "😳", "😱", "😨", "🤔", "🤭", "🤫", "😶", "😐", "🙄", "😲", "😴", "🤤", "🤠", "😈", "💩", "👻", "💀", "👽", "👾", "🤖", "😺", "😻", "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "💔", "💕", "💖", "👍", "👎", "👏", "🙌", "🤲", "🤝", "🙏", "💪", "👀", "🔥", "✨", "🐆", "⚽", "☕"];
     if (panelEmoji) {
-        panelEmoji.innerHTML = '<div style="display:flex; flex-wrap:wrap; gap:10px; padding:10px; max-height:200px; overflow-y:auto;">' + 
-            nativeEmojis.map(e => `<span class="emoji-btn" style="cursor:pointer; font-size:1.6rem; transition:0.2s;" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'">${e}</span>`).join('') + 
+        panelEmoji.innerHTML = '<div style="display:flex; flex-wrap:wrap; gap:10px; padding:10px; max-height:200px; overflow-y:auto;">' +
+            nativeEmojis.map(e => `<span class="emoji-btn" style="cursor:pointer; font-size:1.6rem; transition:0.2s;" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'">${e}</span>`).join('') +
             '</div>';
     }
 
     if (btnEmoji) { btnEmoji.addEventListener('click', () => { const isHidden = panelEmoji.style.display === 'none' || panelEmoji.style.display === ''; hideAllPanels(); if (isHidden) panelEmoji.style.display = 'block'; }); }
-    
+
     // Captura o clique no emoji e adiciona no input
     if (panelEmoji) {
         panelEmoji.addEventListener('click', (e) => {
@@ -213,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnPoll) { btnPoll.addEventListener('click', () => { const isHidden = panelPoll.style.display === 'none' || panelPoll.style.display === ''; hideAllPanels(); if (isHidden) panelPoll.style.display = 'block'; }); }
 
     const gifInput = document.getElementById('gif-search-input');
-    const GIPHY_API_KEY = "k1rI7vq3jlZ37VjBIlpGcgbVCndPwghP"; 
+    const GIPHY_API_KEY = "k1rI7vq3jlZ37VjBIlpGcgbVCndPwghP";
 
     if (gifInput) {
         gifInput.addEventListener('input', async (e) => {
@@ -239,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('remove-gif-btn')?.addEventListener('click', () => { window.selectedGifUrl = null; if(previewContainer) previewContainer.style.display = 'none'; });
+    document.getElementById('remove-gif-btn')?.addEventListener('click', () => { window.selectedGifUrl = null; if (previewContainer) previewContainer.style.display = 'none'; });
     document.getElementById('add-poll-opt-btn')?.addEventListener('click', () => {
         const cont = document.getElementById('poll-options-container');
         const inputs = cont.querySelectorAll('.poll-opt-input');
@@ -274,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('click', async (e) => {
         const activeUsername = window.AuthService.getCurrentUser();
-        if(e.target.closest('.remove-opt-btn')) e.target.closest('div').remove();
+        if (e.target.closest('.remove-opt-btn')) e.target.closest('div').remove();
 
         const postCard = e.target.closest('.post-card');
         const postId = postCard ? postCard.getAttribute('data-post-id') : null;
@@ -287,27 +292,33 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (e.target.closest('.follow-btn')) { 
+        if (e.target.closest('.follow-btn')) {
             const btn = e.target.closest('.follow-btn');
             const targetUser = btn.getAttribute('data-target-user');
             const isFollowing = btn.classList.toggle('following');
             btn.textContent = isFollowing ? 'Seguindo' : 'Seguir';
-            if(isFollowing) { btn.style.background = 'transparent'; btn.style.color = 'var(--text-main)'; btn.style.border = '1px solid var(--border-color)'; } 
+            if (isFollowing) { btn.style.background = 'transparent'; btn.style.color = 'var(--text-main)'; btn.style.border = '1px solid var(--border-color)'; }
             else { btn.style.background = 'var(--brand-gradient)'; btn.style.color = 'white'; btn.style.border = 'none'; }
-            await window.AuthService.toggleFollow(targetUser); 
-            
+
+            // Trava o botão rapidinho para evitar cliques duplos (o erro da contagem)
+            btn.style.pointerEvents = 'none';
+            await window.AuthService.toggleFollow(targetUser);
+            btn.style.pointerEvents = 'auto';
+
             const followersCountEl = document.getElementById('profile-followers-count');
             const urlParams = new URLSearchParams(window.location.search);
-            if (followersCountEl && urlParams.get('user') === targetUser) {
-                let currentCount = parseInt(followersCountEl.textContent) || 0;
-                followersCountEl.textContent = isFollowing ? currentCount + 1 : currentCount - 1;
+            if (followersCountEl && (urlParams.get('user') === targetUser || (!urlParams.get('user') && targetUser === activeUsername))) {
+                // Faz a contagem matemática baseada em quem REALMENTE está na lista!
+                const allUsersNow = await window.AuthService.getUsers();
+                const actualFollowersCount = allUsersNow.filter(u => u.followingList && u.followingList.includes(targetUser)).length;
+                followersCountEl.textContent = actualFollowersCount;
             }
-            return; 
+            return;
         }
 
         if (e.target.closest('.like-btn')) { await window.PostService.toggleReaction(postId, activeUsername, 'like'); renderAllFeeds(); }
         if (e.target.closest('.repost-btn')) { await window.PostService.toggleReaction(postId, activeUsername, 'repost'); renderAllFeeds(); }
-        
+
         if (e.target.closest('.comment-toggle-btn')) {
             openCommentBoxes.includes(postId) ? openCommentBoxes = openCommentBoxes.filter(id => id !== postId) : openCommentBoxes.push(postId);
             renderAllFeeds();
@@ -340,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (e.target.closest('.delete-post-btn') && confirm("Apagar permanentemente?")) { await window.PostService.deletePost(postId); renderAllFeeds(); }
-        
+
         // CORREÇÃO DO COMPARTILHAMENTO (Copia direto para a área de transferência)
         if (e.target.closest('.share-btn')) {
             const postUrl = `https://pintada.netlify.app/p/${postId}`;
@@ -353,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelectorAll('.profile-tab').forEach(btn => {
-        btn.addEventListener('click', async() => {
+        btn.addEventListener('click', async () => {
             document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
             await renderAllFeeds();
