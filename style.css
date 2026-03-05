@@ -2593,6 +2593,7 @@ div:has(> #chat-history-render),
 body:not([data-theme="dark"]) .chat-input-area { background-color: #ffffff !important; }
 body[data-theme="dark"] .chat-input-area { background-color: #16181c !important; }
 
+
 /* ============================================================
    CONFIGURAÇÃO PARA PC (ECRÃS MAIORES)
    ============================================================ */
@@ -2622,6 +2623,44 @@ body[data-theme="dark"] .chat-input-area { background-color: #16181c !important;
         border-radius: 50% !important;
         object-fit: cover;
     }
+}
+
+/* ==========================================
+   TRAVA DE ESTRUTURA DO CHAT (IMPEDE O SALTO)
+   ========================================== */
+
+/* 1. O contêiner principal do chat deve ocupar a altura toda sem rolar a página inteira */
+.chat-container, 
+.chat-main-area {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    max-height: 100vh !important;
+    overflow: hidden !important; /* Impede que o chat inteiro role e esconda a barra */
+}
+
+/* 2. O histórico de mensagens "come" o espaço que sobra e empurra a barra para o fundo */
+#chat-history-render {
+    flex-grow: 1 !important;
+    overflow-y: auto !important; /* Só as mensagens rolam */
+    min-width: 0 !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 3. A BARRA DE INPUT: Altura fixa e imutável para não "pular" */
+.chat-input-area {
+    flex-shrink: 0 !important;   /* Proíbe o navegador de diminuir a barra */
+    height: 75px !important;     /* Altura travada */
+    box-sizing: border-box !important; 
+    display: flex !important;
+    align-items: center !important;
+    
+    /* Linha Laranja Lacre: Mesma espessura sempre para evitar saltos de 1px */
+    border-top: 2px solid #F4B41A !important; 
+    
+    /* MÁGICA: Só transita a COR, nunca o tamanho ou posição */
+    transition: background-color 0.2s ease !important; 
 }
 
 /* ============================================================
