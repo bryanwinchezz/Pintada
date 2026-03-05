@@ -2696,6 +2696,48 @@ body[data-theme="dark"] .chat-input-area {
     }
 }
 
+/* ==========================================
+   CAIXA DE MENSAGENS 100% ESTÁTICA (FIX)
+   ========================================== */
+
+/* 1. Garante que o contêiner principal do chat ocupe a tela toda sem rolar a página inteira */
+.chat-main-area, 
+.chat-container, 
+#chat-history-render {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important; /* Impede que o chat inteiro role e esconda a barra */
+}
+
+/* 2. Força a história do chat a ocupar o espaço que sobra, empurrando a barra para o fundo */
+#chat-history-render {
+    flex-grow: 1 !important;
+    overflow-y: auto !important; /* Só as mensagens rolam */
+    min-width: 0 !important;
+}
+
+/* 3. TRAVA A BARRA DE INPUT: Altura fixa e bordas iguais para não "pular" */
+.chat-input-area {
+    flex-shrink: 0 !important; /* Impede que a barra seja esmagada ou suma */
+    height: 75px !important;    /* Altura fixa obrigatória */
+    box-sizing: border-box !important; /* Garante que a borda não aumente a altura */
+    display: flex !important;
+    align-items: center !important;
+    border-top: 2px solid #F4B41A !important; /* Sua borda laranja sempre presente */
+    transition: background-color 0.2s ease !important; /* Muda a COR, mas não o TAMANHO */
+}
+
+/* TEMA CLARO */
+body:not([data-theme="dark"]) .chat-input-area {
+    background-color: #ffffff !important;
+}
+
+/* TEMA ESCURO */
+body[data-theme="dark"] .chat-input-area {
+    background-color: #16181c !important;
+}
+
 
 /* ==========================================
    MOLDURAS DE PERFIL (COM PADRÃO PRETO E NOVAS CORES)
