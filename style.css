@@ -2534,6 +2534,219 @@ body {
     text-decoration: underline;
 }
 
+@media (max-width: 500px) {
+
+    /* 1. Força a barra de ferramentas a ser uma linha única que pode rolar para o lado */
+    .create-post-tools {
+        gap: 4px !important;
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 8px !important;
+        flex-wrap: nowrap !important;
+        /* MÁGICA: Proíbe de quebrar a linha */
+        overflow-x: auto !important;
+        -ms-overflow-style: none;
+        /* IE/Edge */
+        scrollbar-width: none;
+        /* Firefox */
+    }
+
+    .create-post-tools::-webkit-scrollbar {
+        display: none;
+        /* Chrome/Safari */
+    }
+
+    .tool-btn {
+        padding: 4px !important;
+    }
+
+    .create-post-actions {
+        width: 100% !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-top: 1px solid var(--border-color);
+        padding-top: 10px !important;
+        margin-top: 4px !important;
+    }
+
+    .btn-primary {
+        padding: 6px 16px !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* ==========================================
+   MELHORIAS: ABA COMUNIDADES NO CELULAR
+   ========================================== */
+@media (max-width: 768px) {
+
+    /* Diminui o tamanho das abas superiores (Chats / Comunidades) */
+    .messages-tabs button {
+        padding: 8px !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* Corrige o problema do banner espremido */
+    #communities-list-render {
+        flex-direction: column !important;
+        padding: 0 !important;
+        gap: 0 !important;
+    }
+
+    /* Transforma o banner numa barra horizontal elegante */
+    .community-banner {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 8px 15px !important;
+        text-align: left !important;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .community-banner p {
+        margin: 0 !important;
+        font-size: 0.75rem !important;
+        max-width: 60%;
+    }
+
+    .community-banner button {
+        width: auto !important;
+        padding: 6px 12px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Transforma a lista de comunidades numa barra de rolagem igual aos contatos */
+    #my-communities-render {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        padding: 10px 5px !important;
+        gap: 12px;
+        width: 100%;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    #my-communities-render::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Esconde o botão fixo de Entrar com Código no celular para poupar espaço */
+@media (max-width: 768px) {
+    .community-bottom-btn {
+        display: none !important;
+    }
+}
+
+/* ==========================================
+   COMPACTAR CHAT E ABAS NO CELULAR
+   ========================================== */
+@media (max-width: 768px) {
+
+    /* 1. O painel de contatos ocupa o topo inteiro, mas bem fininho */
+    .contacts-panel {
+        width: 100% !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        background: var(--card-bg) !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* 2. Esconde o título "Mensagens" e a Lixeira para poupar espaço vertical (Mas mantém as abas) */
+    .contacts-title-row {
+        display: none !important;
+    }
+
+    .contacts-header {
+        display: flex !important;
+        padding: 0 !important;
+    }
+
+    /* 3. Força as listas (Chats e Comunidades) a rolarem de lado! */
+    .contacts-list,
+    #communities-list-render {
+        display: flex !important;
+        flex-direction: row !important;
+        /* Roda para o lado */
+        overflow-x: auto !important;
+        padding: 6px 4px !important;
+        gap: 8px !important;
+        width: 100%;
+    }
+
+    .contact-item {
+        flex-direction: column !important;
+        padding: 0 !important;
+        min-width: 60px !important;
+        text-align: center !important;
+        border: none !important;
+    }
+
+    .contact-avatar {
+        width: 48px !important;
+        height: 48px !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Diminui a altura das abas */
+    .messages-tabs button {
+        padding: 6px !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* 4. Faz a área do chat esticar e preencher a tela toda por baixo */
+    .chat-panel {
+        flex-grow: 1 !important;
+        height: 0 !important;
+        /* Mágica para o flex-grow dominar o espaço vertical */
+    }
+}
+
+/* NOTIFICAÇÃO NO PC: Fica elegantemente ao lado do texto da aba */
+@media (min-width: 769px) {
+    .sidebar-link, .nav-item { position: relative; }
+    .msg-dot {
+        position: absolute !important;
+        right: 15px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        width: 10px !important;
+        height: 10px !important;
+    }
+}
+
+/* INTERFACE MOBILE: Notificação e Botões de Gestão */
+@media (max-width: 768px) {
+    /* Mostra os botões de Criar Grupo e Lixeira no topo do chat mobile */
+    .contacts-title-row {
+        display: flex !important;
+        justify-content: flex-end !important;
+        padding: 8px 15px !important;
+        gap: 10px;
+    }
+    .contacts-title-row h3 { display: none; } /* Ganha espaço escondendo o texto "Mensagens" */
+
+    /* Notificação no telemóvel: Fica centralizada abaixo do ícone */
+    .mobile-item { 
+        position: relative; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+    }
+    .msg-dot {
+        position: absolute !important;
+        bottom: 5px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 7px !important;
+        height: 7px !important;
+        border: 1px solid var(--bg-color) !important;
+    }
+}
+
 /* ============================================================
    ESTRUTURA GLOBAL DO CHAT E BOLHAS (PC & MOBILE)
    ============================================================ */

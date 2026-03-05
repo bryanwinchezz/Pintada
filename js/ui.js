@@ -58,18 +58,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const mobileMsgs = Array.from(document.querySelectorAll('.mobile-item')).find(el => el.href && el.href.includes('messages.html'));
 
             const addDot = (el) => {
-                if (!el) return;
-                let dot = el.querySelector('.msg-dot');
-                if (!dot) {
-                    // Prepara o botão para segurar a bolinha no lugar certo
-                    el.style.position = 'relative';
-
-                    dot = document.createElement('span');
-                    dot.className = 'msg-dot';
-                    // MÁGICA: Posição absoluta faz a bolinha flutuar no canto superior direito do ícone
-                    dot.style.cssText = 'position: absolute; top: 4px; right: calc(50% - 14px); background: #EF4444; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--card-bg);';
-                    el.appendChild(dot);
-                }
+                if (!el || el.querySelector('.msg-dot')) return;
+                const dot = document.createElement('span');
+                dot.className = 'msg-dot';
+                dot.style.background = '#EF4444'; // Vermelho notificação
+                dot.style.borderRadius = '50%';
+                el.appendChild(dot);
             };
 
             const removeDot = (el) => {
@@ -397,6 +391,9 @@ async function loadUserDataUI() {
                     </button>
                     <button class="btn-outline msg-btn" onclick="window.location.href='messages.html?chat=${targetUsername}'" style="padding: 8px 20px; border-radius: 9999px;">
                         Mensagem
+                    </button>
+                    <button class="icon-btn" onclick="window.shareProfile('${targetUsername}')" title="Compartilhar Perfil" style="background: var(--hover-bg); border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+                        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-main);">share</span>
                     </button>
                 `;
                 actionContainer.appendChild(btnGroup);
@@ -1067,3 +1064,96 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 });
+
+// ==========================================
+// COMPARTILHAR PERFIL
+// ==========================================
+window.shareProfile = function (usernameTarget) {
+    // Se não passar um alvo, ele tenta pegar o usuário da URL ou o usuário logado
+    const target = usernameTarget || new URLSearchParams(window.location.search).get('user') || window.AuthService.getCurrentUser();
+
+    // Monta o link completo (ex: https://seusite.com/profile.html?user=bryan)
+    const url = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/') + 'profile.html?user=' + target;
+
+    navigator.clipboard.writeText(url).then(() => {
+        window.showToast('Link do perfil copiado! 📋', 'success');
+    }).catch(err => {
+        window.showToast('Erro ao copiar o link.', 'error');
+    });
+};
+
+const logoutSettingsBtn = document.getElementById('logout-settings-card');
+if (logoutSettingsBtn) {
+    logoutSettingsBtn.addEventListener('click', () => {
+        if (confirm("Deseja realmente sair da sua conta? 🐆")) {
+            if (window.AuthService && window.AuthService.logout) {
+                window.AuthService.logout();
+                alert("RECARREGUE A PÁGINA 🐆");
+            } else {
+                console.error("Serviço de autenticação não carregado.");
+            }
+        }
+    });
+};
+
+// ==========================================
+// LOGICA DE NOTIFICAÇÕES (CHATS E COMUNIDADES)
+// ==========================================
+if (activeUser) {
+    const addDot = (el) => {
+        if (!el || el.querySelector('.msg-dot')) return;
+        const dot = document.createElement('span');
+        dot.className = 'msg-dot';
+        el.appendChild(dot);
+    };
+
+    const storageKeyPrivate = `pintada_msg_count_${activeUser}`;
+    const storageKeyComm = `pintada_comm_msg_count_${activeUser}`;
+    const hiddenChatsKey = `pintada_hidden_chats_${activeUser}`;
+
+    // 1. MONITORAR MENSAGENS PRIVADAS E "DESOCULTAR" CHATS
+    window.MessageService.listenToInbox(activeUser, (allMsgs) => {
+        const currentCount = allMsgs.length;
+        const storedCount = parseInt(localStorage.getItem(storageKeyPrivate) || "0");
+
+        let hiddenChats = JSON.parse(localStorage.getItem(hiddenChatsKey)) || [];
+        let mudou = false;
+
+        allMsgs.forEach(msg => {
+            if (hiddenChats.includes(msg.sender)) {
+                hiddenChats = hiddenChats.filter(id => id !== msg.sender);
+                mudou = true;
+            }
+        });
+
+        if (mudou) {
+            localStorage.setItem(hiddenChatsKey, JSON.stringify(hiddenChats));
+            if (window.location.pathname.includes('messages.html')) {
+                if (typeof window.renderContacts === 'function') window.renderContacts();
+                else location.reload();
+            }
+        }
+
+        if (currentCount > storedCount) {
+            document.querySelectorAll('a[href="messages.html"], .mobile-item[href="messages.html"]').forEach(addDot);
+        }
+    });
+
+    // 2. MONITORAR COMUNIDADES
+    const checkCommNotifs = async () => {
+        try {
+            const myComms = await window.CommunityService.getMyCommunities(activeUser);
+            const commIds = myComms.map(c => c.id);
+            if (commIds.length > 0) {
+                window.MessageService.listenToAllJoinedCommunities(commIds, (commMsgs) => {
+                    const currentCommCount = commMsgs.length;
+                    const storedCommCount = parseInt(localStorage.getItem(storageKeyComm) || "0");
+                    if (currentCommCount > storedCommCount) {
+                        document.querySelectorAll('a[href="messages.html"], .mobile-item[href="messages.html"]').forEach(addDot);
+                    }
+                });
+            }
+        } catch (e) { console.error("Erro notif comm:", e); }
+    };
+    checkCommNotifs();
+}

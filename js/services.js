@@ -11,7 +11,7 @@ import {
     EmailAuthProvider,
     reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, addDoc, getDocs, query, orderBy, limit, startAfter, doc, updateDoc, setDoc, getDoc, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, addDoc, getDocs, query, orderBy, limit, startAfter, doc, updateDoc, setDoc, getDoc, deleteDoc, where, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 const PostService = {
@@ -396,12 +396,107 @@ const MessageService = {
     // NOVA FUNÇÃO: Apagar mensagem específica
     async deleteMessage(messageId) {
         await deleteDoc(doc(window.db, "messages", messageId));
+    },
+    // --- NOVO: MENSAGENS DE COMUNIDADE ---
+    listenToCommunityMessages(communityId, callback) {
+        // MÁGICA 1: Tiramos o 'orderBy' para o Firebase não bloquear a busca!
+        const q = query(collection(window.db, "community_messages"), where("communityId", "==", communityId));
+        return onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            // MÁGICA 2: Ordenamos as mensagens pela hora usando o próprio JavaScript!
+            msgs.sort((a, b) => a.timestamp - b.timestamp);
+            callback(msgs);
+        });
+    },
+    async sendCommunityMessage(sender, communityId, text, fileUrl = null, type = 'text') {
+        await addDoc(collection(window.db, "community_messages"), {
+            sender, communityId, text: text || "", fileUrl: fileUrl, type: type, timestamp: Date.now()
+        });
+    },
+    async deleteCommunityMessage(messageId) {
+        await deleteDoc(doc(window.db, "community_messages", messageId));
+    },
+    // Ouve todas as mensagens recebidas pelo usuário logado (Global Inbox)
+    listenToInbox(username, callback) {
+        const q = query(collection(window.db, "messages"), where("receiver", "==", username));
+        return onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs.map(d => d.data());
+            callback(msgs);
+        });
+    },
+
+    // Ouve mensagens de todas as comunidades que o usuário participa
+    listenToAllJoinedCommunities(joinedIds, callback) {
+        if (!joinedIds || joinedIds.length === 0) return () => {};
+        const q = query(collection(window.db, "community_messages"), where("communityId", "in", joinedIds));
+        return onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs.map(d => d.data());
+            callback(msgs);
+        });
     }
 };
 
-function escapeHTML(str) { return str.replace(/[&<>"']/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[tag] || tag)); }
+// ==========================================
+// NOVO: SERVIÇO DE COMUNIDADES COMPLETO E ÚNICO
+// ==========================================
+const CommunityService = {
+    async createCommunity(name, desc, isPrivate, code, ownerUsername) {
+        const docRef = await addDoc(collection(window.db, "communities"), {
+            name: name, description: desc || "", isPrivate: isPrivate, code: isPrivate ? code : "", owner: ownerUsername, members: [ownerUsername], createdAt: Date.now(), avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10B981&color=fff`
+        });
+        return docRef.id;
+    },
+    async joinCommunity(communityIdOrCode, username) {
+        const q = query(collection(window.db, "communities"), where("code", "==", communityIdOrCode));
+        const snap = await getDocs(q);
+        let commDoc = null;
+        if (!snap.empty) { commDoc = snap.docs[0]; } else {
+            try { const directRef = await getDoc(doc(window.db, "communities", communityIdOrCode)); if (directRef.exists()) commDoc = directRef; } catch (e) { }
+        }
+        if (!commDoc) throw new Error("Comunidade não encontrada ou código incorreto.");
+        const data = commDoc.data();
+        if (data.members.includes(username)) throw new Error("Você já está nesta comunidade!");
+        await updateDoc(doc(window.db, "communities", commDoc.id), { members: arrayUnion(username) });
+        return data.name;
+    },
+    async getMyCommunities(username) {
+        const q = query(collection(window.db, "communities"), where("members", "array-contains", username));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+    async getAllCommunities() {
+        const snap = await getDocs(collection(window.db, "communities"));
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+    async getCommunity(id) {
+        const d = await getDoc(doc(window.db, "communities", id));
+        return d.exists() ? { id: d.id, ...d.data() } : null;
+    },
+// NOVO: 6. Salvar mudanças (Nome, Foto, Senha)
+    async updateCommunity(communityId, updates) {
+        await updateDoc(doc(window.db, "communities", communityId), updates);
+    },
 
+    // NOVO: 7. Sair do Grupo
+    async leaveCommunity(communityId, username) {
+        const commRef = doc(window.db, "communities", communityId);
+        const commSnap = await getDoc(commRef);
+        if (commSnap.exists()) {
+            const members = commSnap.data().members || [];
+            const newMembers = members.filter(m => m !== username);
+            await updateDoc(commRef, { members: newMembers });
+        }
+    },
+
+    // NOVO: 8. Apagar Grupo (Só o Dono)
+    async deleteCommunity(communityId) {
+        await deleteDoc(doc(window.db, "communities", communityId));
+    }
+};
+
+// Exportações globais para a janela
 window.PostService = PostService;
 window.AuthService = AuthService;
 window.MessageService = MessageService;
-window.escapeHTML = escapeHTML;
+window.CommunityService = CommunityService;
+window.escapeHTML = function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])); };

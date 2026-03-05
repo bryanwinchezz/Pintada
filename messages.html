@@ -72,15 +72,42 @@
 
         <main class="messages-container">
             <div class="contacts-panel">
-                <div class="contacts-header">
-                    <h3>Mensagens</h3>
-                    <button class="icon-btn" id="edit-chats-btn" title="Excluir conversas"><span
-                            class="material-symbols-outlined">edit_square</span></button>
+                <div class="contacts-header" style="display: flex; flex-direction: column; padding: 0;">
+                    <div class="contacts-title-row"
+                        style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; width: 100%; box-sizing: border-box;">
+                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">Mensagens</h3>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="icon-btn open-modal-btn" data-modal="modal-create-community"
+                                title="Nova Comunidade">
+                                <span class="material-symbols-outlined"
+                                    style="color: #10B981; font-size: 22px;">group_add</span>
+                            </button>
+                            <button class="icon-btn" id="edit-chats-btn" title="Apagar conversas">
+                                <span class="material-symbols-outlined"
+                                    style="font-size: 22px; color: #EF4444;">delete</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="messages-tabs"
+                        style="display: flex; width: 100%; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); background: var(--card-bg);">
+                        <button class="msg-tab active" id="tab-chats"
+                            style="flex: 1; padding: 8px; border: none; background: transparent; color: #D97A00; font-weight: bold; border-bottom: 3px solid #D97A00; cursor: pointer; transition: 0.2s; font-size: 0.9rem;">Chats</button>
+                        <button class="msg-tab" id="tab-communities"
+                            style="flex: 1; padding: 8px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; border-bottom: 3px solid transparent; cursor: pointer; transition: 0.2s; font-size: 0.9rem;">Comunidades</button>
+                    </div>
                 </div>
+
                 <button id="confirm-delete-chats-btn"
-                    style="display: none; background: #EF4444; color: white; border: none; padding: 10px; font-weight: bold; cursor: pointer; width: 100%;">Apagar
+                    style="display: none; background: #EF4444; color: white; border: none; padding: 10px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.9rem;">Apagar
                     Selecionados</button>
+
                 <div class="contacts-list" id="contacts-list-render">
+                    <p style="text-align: center; color: var(--text-muted); padding: 20px; width: 100%;">Carregando
+                        chats...</p>
+                </div>
+
+                <div class="contacts-list" id="communities-list-render" style="display: none;">
                 </div>
             </div>
 
@@ -119,6 +146,128 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <div class="modal-overlay" id="modal-create-community">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Criar Comunidade</h2>
+                <button class="icon-btn close-modal-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-create-community" class="settings-form">
+                    <div class="form-group">
+                        <label>Nome da Comunidade <span class="req">*</span></label>
+                        <input type="text" id="comm-name" required placeholder="Ex: Fãs de Minecraft">
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <textarea id="comm-desc" rows="2" placeholder="Sobre o que é este grupo?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Comunidade</label>
+                        <select id="comm-type"
+                            onchange="document.getElementById('code-area').style.display = this.value === 'fechada' ? 'block' : 'none'">
+                            <option value="aberta">Aberta (Qualquer um pode entrar)</option>
+                            <option value="fechada">Fechada (Requer código de acesso)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="code-area" style="display: none;">
+                        <label>Código de Acesso <span class="req">*</span></label>
+                        <input type="text" id="comm-code" placeholder="Crie uma senha para entrar">
+                        <small style="color: var(--text-muted);">Passe esse código para quem você quiser
+                            convidar.</small>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn-primary" style="width: 100%;">Criar Comunidade</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-join-community">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Entrar em Comunidade</h2>
+                <button class="icon-btn close-modal-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>ID ou Código Secreto</label>
+                    <input type="text" id="join-comm-code" placeholder="Cole o código fornecido pelo criador">
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-join-community" class="btn-primary"
+                        style="width: 100%; background: #10B981;">Procurar e Entrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-community-info">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Dados do Grupo</h2>
+                <button class="icon-btn close-modal-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <div
+                    style="text-align: center; margin-bottom: 20px; position: relative; display: inline-block; left: 50%; transform: translateX(-50%);">
+                    <img id="comm-info-avatar" src=""
+                        style="width: 100px; height: 100px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border-color);">
+                    <input type="file" id="comm-avatar-input" accept="image/*" hidden>
+                    <div id="comm-avatar-overlay" onclick="document.getElementById('comm-avatar-input').click()"
+                        style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); border-radius: 12px; cursor: pointer; align-items: center; justify-content: center;">
+                        <span class="material-symbols-outlined"
+                            style="color: white; font-size: 32px;">photo_camera</span>
+                    </div>
+                </div>
+
+                <form id="form-update-community" class="settings-form">
+                    <div class="form-group"><label>Nome</label><input type="text" id="comm-info-name" disabled></div>
+                    <div class="form-group"><label>Descrição</label><textarea id="comm-info-desc" rows="2"
+                            disabled></textarea></div>
+
+                    <div class="form-group" id="comm-info-type-group" style="display: none;">
+                        <label>Privacidade</label>
+                        <select id="comm-info-type"
+                            onchange="document.getElementById('comm-info-code-group').style.display = this.value === 'fechada' ? 'block' : 'none'">
+                            <option value="aberta">Aberta (Livre)</option>
+                            <option value="fechada">Fechada (Com Senha)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="comm-info-code-group" style="display: none;">
+                        <label>Senha do Grupo</label>
+                        <input type="text" id="comm-info-code" placeholder="Crie uma senha"
+                            style="color: #EF4444; font-weight: bold;">
+                    </div>
+
+                    <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                        <h4
+                            style="font-size: 0.9rem; margin-bottom: 10px; display: flex; justify-content: space-between; color: var(--text-main);">
+                            Membros <span id="comm-members-count"
+                                style="font-weight: normal; color: var(--text-muted);">0</span>
+                        </h4>
+                        <div id="comm-members-list"
+                            style="max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                        </div>
+                    </div>
+
+                    <div id="comm-actions-area"
+                        style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                        <button type="submit" id="comm-info-footer" class="btn-primary"
+                            style="display: none; width: 100%;">Salvar Alterações</button>
+                        <button type="button" id="btn-leave-comm" class="btn-outline"
+                            style="color: #EF4444; border-color: #EF4444; width: 100%;">Sair do Grupo</button>
+                        <button type="button" id="btn-delete-comm" class="btn-primary"
+                            style="background: #EF4444; border: none; display: none; width: 100%;">Excluir
+                            Comunidade</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <nav class="mobile-bottom-nav">
