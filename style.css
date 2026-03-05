@@ -1817,7 +1817,7 @@ body {
 @media (max-width: 768px) {
 
     /* TRAVA A TELA NAS MENSAGENS PARA SUMIR O FUNDO PRETO */
-    body:has(.messages-layout) {
+    body.messages-page {
         padding-bottom: 0 !important;
         overflow: hidden !important;
         background-color: var(--bg-color) !important;
@@ -2532,17 +2532,19 @@ body {
 /* 1. Trava de estouro e flexibilidade das colunas */
 #chat-history-render,
 div:has(> #chat-history-render),
-.chat-main-area, 
+.chat-main-area,
 .chat-area {
     flex-grow: 1 !important;
-    min-width: 0 !important; /* Impede que links gigantes estiquem a tela */
+    min-width: 0 !important;
+    /* Impede que links gigantes estiquem a tela */
     display: flex;
     flex-direction: column;
 }
 
 /* 2. Configuração das Bolhas de Mensagem */
 .chat-bubble {
-    max-width: 85% !important; /* Ajustado para 85% para não colar na parede */
+    max-width: 85% !important;
+    /* Ajustado para 85% para não colar na parede */
     width: fit-content !important;
     word-break: break-word !important;
     overflow-wrap: anywhere !important;
@@ -2561,9 +2563,11 @@ div:has(> #chat-history-render),
     width: 6px !important;
     height: 6px !important;
 }
+
 ::-webkit-scrollbar-track {
     background: transparent !important;
 }
+
 ::-webkit-scrollbar-thumb {
     background-color: var(--brand-color) !important;
     border-radius: 10px !important;
@@ -2574,35 +2578,44 @@ div:has(> #chat-history-render),
    ============================================================ */
 
 .chat-input-area {
-    height: 75px !important; /* Altura fixa para não pular */
+    height: 75px !important;
+    /* Altura fixa para não pular */
     display: flex !important;
     align-items: center !important;
-    border-top: 2px solid #F4B41A !important; /* Linha Laranja sempre presente */
+    border-top: 2px solid #F4B41A !important;
+    /* Linha Laranja sempre presente */
     box-sizing: border-box !important;
     flex-shrink: 0 !important;
     transition: background-color 0.2s ease;
 }
 
-#chat-input-box, 
+#chat-input-box,
 .chat-input-area .chat-input {
     height: 45px !important;
     margin: 0 !important;
 }
 
 /* Cores por Tema */
-body:not([data-theme="dark"]) .chat-input-area { background-color: #ffffff !important; }
-body[data-theme="dark"] .chat-input-area { background-color: #16181c !important; }
+body:not([data-theme="dark"]) .chat-input-area {
+    background-color: #ffffff !important;
+}
+
+body[data-theme="dark"] .chat-input-area {
+    background-color: #16181c !important;
+}
 
 
 /* ============================================================
    CONFIGURAÇÃO PARA PC (ECRÃS MAIORES)
    ============================================================ */
 @media (min-width: 769px) {
+
     .contacts-list,
     #contacts-list-render,
     div:has(> #contacts-list-render) {
         flex-shrink: 0 !important;
-        width: 320px !important; /* Largura fixa ideal para PC */
+        width: 320px !important;
+        /* Largura fixa ideal para PC */
         min-width: 320px !important;
         border-right: 1px solid var(--border-color);
         display: flex !important;
@@ -2612,7 +2625,8 @@ body[data-theme="dark"] .chat-input-area { background-color: #16181c !important;
     .contact-item {
         padding: 8px 12px !important;
         display: flex !important;
-        flex-direction: row !important; /* No PC mantém foto ao lado do nome */
+        flex-direction: row !important;
+        /* No PC mantém foto ao lado do nome */
         align-items: center !important;
         gap: 12px;
     }
@@ -2630,37 +2644,43 @@ body[data-theme="dark"] .chat-input-area { background-color: #16181c !important;
    ========================================== */
 
 /* ISSO É O QUE FALTA: Travar a base do site */
-html, body {
+/* Trava a base do site APENAS na página de mensagens */
+html.messages-page, body.messages-page {
     height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: hidden !important; /* Impede a página inteira de rolar */
+    overflow: hidden !important;
 }
 
 /* 1. O contêiner principal do chat ocupando apenas o que sobra da tela */
-.chat-container, 
+.chat-container,
 .chat-main-area {
     display: flex !important;
     flex-direction: column !important;
-    height: 100vh !important; /* Força a altura da visão do monitor */
+    height: 100vh !important;
+    /* Força a altura da visão do monitor */
     overflow: hidden !important;
 }
 
 /* 2. Área de mensagens: Só ela tem permissão para rolar */
 #chat-history-render {
     flex-grow: 1 !important;
-    overflow-y: auto !important; 
+    overflow-y: auto !important;
     display: flex;
     flex-direction: column;
-    min-height: 0 !important; /* Essencial para o flex-grow funcionar */
+    min-height: 0 !important;
+    /* Essencial para o flex-grow funcionar */
 }
 
 /* 3. A BARRA DE INPUT: Pregada no fundo, imóvel */
 .chat-input-area {
-    flex-shrink: 0 !important;   /* Proíbe de ser esmagada */
-    height: 70px !important;     /* Altura enxuta */
+    flex-shrink: 0 !important;
+    /* Proíbe de ser esmagada */
+    height: 70px !important;
+    /* Altura enxuta */
     background-color: var(--card-bg);
-    border-top: 2px solid #F4B41A !important; /* Sua linha laranja */
+    border-top: 2px solid #F4B41A !important;
+    /* Sua linha laranja */
     display: flex !important;
     align-items: center !important;
     box-sizing: border-box !important;
@@ -2670,6 +2690,7 @@ html, body {
 body:not([data-theme="dark"]) .chat-input-area {
     background-color: #ffffff !important;
 }
+
 body:not([data-theme="dark"]) #chat-input-box {
     background-color: #f3f4f6 !important;
     color: #111827 !important;
@@ -2679,29 +2700,35 @@ body:not([data-theme="dark"]) #chat-input-box {
    CONFIGURAÇÃO PARA TELEMÓVEL (ENXUTO E HORIZONTAL)
    ============================================================ */
 @media (max-width: 768px) {
+
     .contacts-list,
     #contacts-list-render {
         width: 100% !important;
         min-width: 0 !important;
         display: flex !important;
-        flex-direction: row !important; /* Lista horizontal estilo Stories */
+        flex-direction: row !important;
+        /* Lista horizontal estilo Stories */
         overflow-x: auto !important;
         overflow-y: hidden !important;
-        padding: 5px 2px !important; /* Enxugado verticalmente */
+        padding: 5px 2px !important;
+        /* Enxugado verticalmente */
         gap: 8px !important;
         -webkit-overflow-scrolling: touch;
     }
 
     .contact-item {
-        flex-direction: column !important; /* Foto em cima, Nome em baixo */
+        flex-direction: column !important;
+        /* Foto em cima, Nome em baixo */
         align-items: center !important;
-        min-width: 75px !important; /* Compactado lateralmente */
+        min-width: 75px !important;
+        /* Compactado lateralmente */
         padding: 2px 4px !important;
         text-align: center !important;
     }
 
     .contact-item .contact-avatar {
-        width: 45px !important; /* Foto menor para o layout subir */
+        width: 45px !important;
+        /* Foto menor para o layout subir */
         height: 45px !important;
         border-radius: 50% !important;
         object-fit: cover;
@@ -2709,7 +2736,8 @@ body:not([data-theme="dark"]) #chat-input-box {
     }
 
     .contact-info {
-        margin-top: 2px !important; /* Cola o nome na foto */
+        margin-top: 2px !important;
+        /* Cola o nome na foto */
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -2720,7 +2748,8 @@ body:not([data-theme="dark"]) #chat-input-box {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 1px !important; /* Nome e verificado bem próximos */
+        gap: 1px !important;
+        /* Nome e verificado bem próximos */
     }
 
     .contact-name {
@@ -2732,7 +2761,8 @@ body:not([data-theme="dark"]) #chat-input-box {
     }
 
     .contact-handle {
-        display: none !important; /* Esconde o @ para economizar espaço no mobile */
+        display: none !important;
+        /* Esconde o @ para economizar espaço no mobile */
     }
 }
 
