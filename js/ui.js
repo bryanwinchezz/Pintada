@@ -6,6 +6,15 @@
 // 0. ESCUDO DE AUTENTICAÇÃO (PROTEÇÃO DE PÁGINAS)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+
+    // ==========================================
+    // CORREÇÃO: PERMITIR SELECIONAR A MESMA IMAGEM DUAS VEZES
+    // ==========================================
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('click', function() {
+            this.value = ''; // Esvazia o input sempre que clica, forçando o navegador a ler a imagem de novo!
+        });
+    });
     // Descobre em que página o utilizador está no momento
     let currentPage = window.location.pathname.split('/').pop();
 
@@ -487,9 +496,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('avatar-upload')) document.getElementById('avatar-upload').addEventListener('change', (e) => processImageUpload(e.target.files[0], 'avatar'));
     if (document.getElementById('banner-upload')) document.getElementById('banner-upload').addEventListener('change', (e) => processImageUpload(e.target.files[0], 'banner'));
 
-    document.addEventListener('click', (e) => {
+document.addEventListener('click', (e) => {
         const modalAdjust = document.getElementById('modal-adjust-image');
-        if (e.target.id === 'cancel-adjust-btn' || e.target.id === 'cancel-adjust-btn-2') modalAdjust.classList.remove('active');
+        
+        // 1. Verifica se clicou no Cancelar OU no X (ícone close)
+        const clickedCancel = e.target.id === 'cancel-adjust-btn' || e.target.id === 'cancel-adjust-btn-2';
+        const clickedX = e.target.classList.contains('material-symbols-outlined') && e.target.textContent.trim() === 'close' && e.target.closest('#modal-adjust-image');
+
+        if (clickedCancel || clickedX) {
+            modalAdjust.classList.remove('active');
+            
+            // MÁGICA 1: Limpa o input de arquivo para você conseguir selecionar a mesma foto novamente
+            document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
+        }
+
+        // 2. Verifica se clicou em Confirmar
         if (e.target.id === 'confirm-adjust-btn') {
             if (cropper) {
                 const canvas = cropper.getCroppedCanvas({ width: 500 });
@@ -503,9 +524,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
             modalAdjust.classList.remove('active');
+            
+            // MÁGICA 2: Limpa o input aqui também para não bugar a próxima seleção
+            document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
         }
     });
-
     const saveHobbiesBtn = document.getElementById('save-hobbies-btn');
     if (saveHobbiesBtn) {
         const activeUser = window.AuthService.getCurrentUser();
