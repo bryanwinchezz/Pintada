@@ -2526,77 +2526,42 @@ body {
 }
 
 /* ==========================================
-   CORREÇÃO DA BARRA DE MENSAGENS NO TEMA CLARO
+   TRAVA DE LAYOUT DO CHAT (VERSÃO PC) - DEFINITIVO 2.0
    ========================================== */
-[data-theme="light"] .chat-input-area {
-    background-color: #ffffff !important;
-    border-top: 1px solid #e5e7eb !important;
+
+/* 1. O ESCUDO DA BARRA LATERAL: Usando as suas classes exatas! */
+.contacts-list,
+#contacts-list-render,
+div:has(> #contacts-list-render) {
+    flex-shrink: 0 !important; /* Proíbe a lista de contatos de encolher */
+    min-width: 320px !important; /* Garante o espaço perfeito para os nomes */
+    width: 320px !important;
 }
 
-[data-theme="light"] .chat-input-area .chat-input {
-    background-color: #f3f4f6 !important;
-    color: #111827 !important;
-    border: 1px solid #d1d5db !important;
+/* 2. A DISCIPLINA DO CHAT: Obriga o lado direito (mensagens) a ceder espaço */
+/* O comando :has() é um truque moderno que encontra a coluna certa automaticamente */
+#chat-history-render,
+div:has(> #chat-history-render),
+.chat-main-area, 
+.chat-area {
+    flex-grow: 1 !important;
+    min-width: 0 !important; /* A MÁGICA: Impede a coluna direita de ficar gulosa */
 }
 
-[data-theme="light"] .chat-input-area .chat-input::placeholder {
-    color: #6b7280 !important;
+/* 3. FORÇA A QUEBRA DO LINK GIGANTE NA BOLHA */
+.chat-bubble {
+    max-width: 75% !important;
+    width: fit-content !important;
 }
 
-/* Força os ícones (Foto, Áudio, Enviar) a ficarem escuros no tema claro */
-[data-theme="light"] .chat-input-area .icon-btn,
-[data-theme="light"] .chat-input-area .material-symbols-outlined {
-    color: #4b5563 !important;
-}
-
-/* Mantém o botão de gravar áudio vermelho quando ativo */
-[data-theme="light"] .chat-input-area .icon-btn[style*="color: rgb(239, 68, 68)"],
-[data-theme="light"] .chat-input-area .icon-btn[style*="color: #EF4444"] {
-    color: #EF4444 !important;
-}
-
-/* Efeito Hover nos botões no tema claro */
-[data-theme="light"] .chat-input-area .icon-btn:hover {
-    color: var(--brand-color) !important;
-}
-
-/* ==========================================
-   POLIMENTO DA BARRA DE MENSAGENS NO TEMA ESCURO
-   ========================================== */
-[data-theme="dark"] .chat-input-area {
-    background-color: #16181c !important;
-    /* Fundo escuro elegante */
-    border-top: 1px solid #2f3336 !important;
-}
-
-[data-theme="dark"] .chat-input-area .chat-input {
-    background-color: #202327 !important;
-    /* Caixa de texto levemente destacada */
-    color: #ffffff !important;
-    /* Texto em branco puro para leitura */
-    border: 1px solid #383a3f !important;
-}
-
-[data-theme="dark"] .chat-input-area .chat-input::placeholder {
-    color: #71767b !important;
-    /* Placeholder num cinza confortável */
-}
-
-/* Ícones (Foto, Áudio, Enviar) com contraste ideal no escuro */
-[data-theme="dark"] .chat-input-area .icon-btn,
-[data-theme="dark"] .chat-input-area .material-symbols-outlined {
-    color: #8b98a5 !important;
-}
-
-/* Mantém o botão de gravar áudio vermelho quando ativo, livre de interferências */
-[data-theme="dark"] .chat-input-area .icon-btn[style*="color: rgb(239, 68, 68)"],
-[data-theme="dark"] .chat-input-area .icon-btn[style*="color: #EF4444"] {
-    color: #EF4444 !important;
-}
-
-/* Efeito Hover nos botões brilhando com a cor da marca */
-[data-theme="dark"] .chat-input-area .icon-btn:hover {
-    color: var(--brand-color) !important;
+.chat-bubble a, 
+.chat-bubble .message-content,
+.chat-bubble div[style*="word-break"] {
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
+    white-space: pre-wrap !important;
+    display: inline-block;
+    max-width: 100%;
 }
 
 /* ==========================================

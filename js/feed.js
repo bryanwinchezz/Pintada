@@ -738,8 +738,10 @@ document.getElementById('post-audio-btn')?.addEventListener('click', async () =>
         mediaRecorder.stop();
         // Desliga o hardware do microfone!
         mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        audioBtn.style.color = "var(--text-muted)";
-        audioBtn.textContent = "mic";
+
+        // CORREÇÃO: Usar o micIcon em vez de audioBtn
+        micIcon.style.color = "var(--text-muted)";
+        micIcon.textContent = "mic";
     }
 });
 

@@ -650,7 +650,7 @@ window.openConnectionsModal = async function (type, targetUsername, userData) {
         const followingUsernames = userData.followingList || [];
         list = allUsers.filter(u => followingUsernames.includes(u.username));
     } else {
-        // Pessoas que seguem o usuário (procura na lista dos outros se o nome dele está lá)
+        // Pessoas que seguem o usuário
         list = allUsers.filter(u => u.followingList && u.followingList.includes(targetUsername));
     }
 
@@ -659,16 +659,33 @@ window.openConnectionsModal = async function (type, targetUsername, userData) {
         return;
     }
 
-    // Desenha a lista
-    body.innerHTML = list.map(u => `
+    // Desenha a lista com as MOLDURAS e SELOS DE VERIFICAÇÃO!
+    body.innerHTML = list.map(u => {
+        // Puxa o selo (se tiver)
+        const badgeHTML = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(u.badge) : '';
+        // Puxa a moldura salva ou a padrão preta
+        const userBorder = u.profileBorder || 'moldura-padrao';
+        // Puxa a foto ou a letra inicial
+        const avatarUrl = u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=F4B41A&color=fff`;
+
+        return `
         <div style="display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='transparent'" onclick="window.location.href='profile.html?user=${u.username}'">
-            <img src="${u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=F4B41A&color=fff`}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
-            <div>
-                <strong style="color: var(--text-main); display: block; font-size: 0.95rem;">${window.escapeHTML(u.name)}</strong>
-                <span style="color: var(--text-muted); font-size: 0.85rem;">@${u.username}</span>
+            
+            <div style="position: relative; display: flex; justify-content: center; align-items: center;">
+                <img src="${avatarUrl}" class="${userBorder}" style="width: 48px; height: 48px; min-width: 48px; border-radius: 50%; object-fit: cover; border: none;">
             </div>
+            
+            <div style="flex-grow: 1; min-width: 0; overflow: hidden;">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <strong style="color: var(--text-main); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${window.escapeHTML(u.name)}</strong>
+                    ${badgeHTML}
+                </div>
+                <span style="color: var(--text-muted); font-size: 0.85rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@${u.username}</span>
+            </div>
+            
         </div>
-    `).join('');
+        `;
+    }).join('');
 };
 
 // ==========================================

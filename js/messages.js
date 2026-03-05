@@ -450,7 +450,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Inicia a gravação
                     mediaRecorder.start();
                     audioBtn.style.color = "#EF4444";
-                    audioBtn.textContent = "stop_circle";
+                    // Preserva a tag do ícone do Google
+                    audioBtn.innerHTML = '<span class="material-symbols-outlined">stop_circle</span>';
 
                 } catch (err) {
                     console.error("Erro no microfone:", err);
@@ -462,7 +463,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Desliga o hardware do microfone!
                 mediaRecorder.stream.getTracks().forEach(track => track.stop());
                 audioBtn.style.color = "var(--text-muted)";
-                audioBtn.textContent = "mic";
+                // Devolve o ícone do microfone corretamente
+                audioBtn.innerHTML = '<span class="material-symbols-outlined">mic</span>';
             }
         };
     }
