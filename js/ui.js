@@ -61,9 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!el) return;
                 let dot = el.querySelector('.msg-dot');
                 if (!dot) {
+                    // Prepara o botão para segurar a bolinha no lugar certo
+                    el.style.position = 'relative';
+
                     dot = document.createElement('span');
                     dot.className = 'msg-dot';
-                    dot.style.cssText = 'background: #EF4444; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 5px;';
+                    // MÁGICA: Posição absoluta faz a bolinha flutuar no canto superior direito do ícone
+                    dot.style.cssText = 'position: absolute; top: 4px; right: calc(50% - 14px); background: #EF4444; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--card-bg);';
                     el.appendChild(dot);
                 }
             };

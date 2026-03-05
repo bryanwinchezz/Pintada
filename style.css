@@ -2,6 +2,8 @@
    1. VARIÁVEIS GLOBAIS
    ========================================= */
 
+@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+
 :root {
     --brand-gradient: linear-gradient(135deg, #F7B51D 0%, #F5A300 25%, #F07A00 60%, #E85C0D 85%, #D94A0C 100%);
     --nav-height: 70px;
@@ -60,7 +62,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Noto Color Emoji', "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     background-color: var(--bg-color);
     color: var(--text-main);
     -webkit-font-smoothing: antialiased;
@@ -2286,14 +2288,17 @@ body {
    ========================================= */
 @media (max-width: 500px) {
 
-/* 1. Força os ícones a ficarem na mesma linha e diminui o tamanho */
+    /* 1. Força os ícones a ficarem na mesma linha e diminui o tamanho */
     .create-post-tools {
-        gap: 3px !important; /* Espaço menor entre eles */
+        gap: 3px !important;
+        /* Espaço menor entre eles */
         border-bottom: none !important;
         padding-bottom: 0 !important;
         margin-bottom: 8px !important;
-        flex-wrap: nowrap !important; /* Proíbe de cair para a linha de baixo */
-        overflow-x: auto; /* Se a tela for absurdamente pequena, ele desliza pro lado em vez de quebrar */
+        flex-wrap: nowrap !important;
+        /* Proíbe de cair para a linha de baixo */
+        overflow-x: auto;
+        /* Se a tela for absurdamente pequena, ele desliza pro lado em vez de quebrar */
     }
 
     .tool-btn {
@@ -2302,7 +2307,7 @@ body {
 
     /* Diminui o tamanho do ícone para caber tudo perfeitamente */
     .tool-btn .material-symbols-outlined {
-        font-size: 21px !important; 
+        font-size: 21px !important;
     }
 
     /* 2. Força a área do contador e do botão para uma linha nova */
@@ -2649,7 +2654,8 @@ body[data-theme="dark"] .chat-input-area {
 
 /* ISSO É O QUE FALTA: Travar a base do site */
 /* Trava a base do site APENAS na página de mensagens */
-html.messages-page, body.messages-page {
+html.messages-page,
+body.messages-page {
     height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -2704,12 +2710,16 @@ body:not([data-theme="dark"]) #chat-input-box {
    MELHORIAS: CHAT MOBILE (ÍCONES QUADRADOS E SEM BARRA DE ROLAGEM)
    ========================================== */
 @media (max-width: 768px) {
+
     /* 1. Esconde a barra de rolagem visual, mas mantém o deslize por toque */
     .contacts-list,
     #contacts-list-render {
-        -ms-overflow-style: none !important;  /* IE and Edge */
-        scrollbar-width: none !important;  /* Firefox */
+        -ms-overflow-style: none !important;
+        /* IE and Edge */
+        scrollbar-width: none !important;
+        /* Firefox */
     }
+
     .contacts-list::-webkit-scrollbar,
     #contacts-list-render::-webkit-scrollbar {
         display: none !important;
@@ -2721,7 +2731,8 @@ body:not([data-theme="dark"]) #chat-input-box {
     .contact-item .contact-avatar {
         width: 48px !important;
         height: 48px !important;
-        border-radius: 12px !important; /* Aqui tira o formato bolinha (50%) */
+        border-radius: 12px !important;
+        /* Aqui tira o formato bolinha (50%) */
         object-fit: cover;
     }
 }
