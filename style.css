@@ -2286,19 +2286,23 @@ body {
    ========================================= */
 @media (max-width: 500px) {
 
-    /* 1. Reduz o espaço entre os ícones para eles não ficarem tão separados */
+/* 1. Força os ícones a ficarem na mesma linha e diminui o tamanho */
     .create-post-tools {
-        gap: 8px !important;
+        gap: 3px !important; /* Espaço menor entre eles */
         border-bottom: none !important;
-        /* Remove a linha bugada no meio */
         padding-bottom: 0 !important;
         margin-bottom: 8px !important;
-        flex-wrap: wrap;
-        /* Permite quebrar linha se for muito estreito */
+        flex-wrap: nowrap !important; /* Proíbe de cair para a linha de baixo */
+        overflow-x: auto; /* Se a tela for absurdamente pequena, ele desliza pro lado em vez de quebrar */
     }
 
     .tool-btn {
-        padding: 4px 6px !important;
+        padding: 3px !important;
+    }
+
+    /* Diminui o tamanho do ícone para caber tudo perfeitamente */
+    .tool-btn .material-symbols-outlined {
+        font-size: 21px !important; 
     }
 
     /* 2. Força a área do contador e do botão para uma linha nova */
@@ -2694,6 +2698,32 @@ body:not([data-theme="dark"]) .chat-input-area {
 body:not([data-theme="dark"]) #chat-input-box {
     background-color: #f3f4f6 !important;
     color: #111827 !important;
+}
+
+/* ==========================================
+   MELHORIAS: CHAT MOBILE (ÍCONES QUADRADOS E SEM BARRA DE ROLAGEM)
+   ========================================== */
+@media (max-width: 768px) {
+    /* 1. Esconde a barra de rolagem visual, mas mantém o deslize por toque */
+    .contacts-list,
+    #contacts-list-render {
+        -ms-overflow-style: none !important;  /* IE and Edge */
+        scrollbar-width: none !important;  /* Firefox */
+    }
+    .contacts-list::-webkit-scrollbar,
+    #contacts-list-render::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    /* 2. Deixa as fotos dos contatos pequenas, quadradas e arredondadas (estilo Feed) */
+    .contact-item .contact-avatar {
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 12px !important; /* Aqui tira o formato bolinha (50%) */
+        object-fit: cover;
+    }
 }
 
 /* ============================================================

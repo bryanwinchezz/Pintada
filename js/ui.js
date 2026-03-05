@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // CORREÇÃO: PERMITIR SELECIONAR A MESMA IMAGEM DUAS VEZES
     // ==========================================
     document.querySelectorAll('input[type="file"]').forEach(input => {
-        input.addEventListener('click', function() {
+        input.addEventListener('click', function () {
             this.value = ''; // Esvazia o input sempre que clica, forçando o navegador a ler a imagem de novo!
         });
     });
@@ -269,7 +269,6 @@ async function loadUserDataUI() {
     if (document.getElementById('edit-pronouns')) document.getElementById('edit-pronouns').value = user.pronouns || "";
     if (document.getElementById('edit-relationship')) document.getElementById('edit-relationship').value = user.relationship || "";
 
-    // === CORREÇÃO DA FOTO NA NAVBAR E CONFIGURAÇÕES ===
     const targetAvatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=F4B41A&color=fff`;
     document.querySelectorAll('.profile-page-avatar, #settings-avatar-preview').forEach(img => {
         img.src = targetAvatarUrl;
@@ -278,6 +277,12 @@ async function loadUserDataUI() {
         // Adiciona a moldura escolhida ou a padrão preta!
         img.classList.add(user.profileBorder || 'moldura-padrao');
         img.style.border = 'none';
+
+        // NOVO: Clique para abrir a foto de perfil em tela cheia
+        if (img.classList.contains('profile-page-avatar')) {
+            img.style.cursor = 'pointer';
+            img.onclick = () => window.openImageModal(targetAvatarUrl);
+        }
     });
 
     const activeUserData = await window.AuthService.getUserData(activeUsername);
@@ -294,7 +299,20 @@ async function loadUserDataUI() {
     }
 
     const bannerUrl = user.banner || 'var(--brand-gradient)';
-    if (document.getElementById('profile-page-banner')) document.getElementById('profile-page-banner').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
+    const profileBanner = document.getElementById('profile-page-banner');
+    if (profileBanner) {
+        profileBanner.style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
+
+        // NOVO: Clique para abrir o banner se o usuário tiver um
+        if (user.banner) {
+            profileBanner.style.cursor = 'pointer';
+            profileBanner.onclick = () => window.openImageModal(user.banner);
+        } else {
+            profileBanner.style.cursor = 'default';
+            profileBanner.onclick = null;
+        }
+    }
+
     if (document.getElementById('settings-banner-preview')) document.getElementById('settings-banner-preview').style.background = user.banner ? `url(${user.banner}) center/cover` : bannerUrl;
 
     // RENDERIZAÇÃO DAS TAGS DE INFORMAÇÕES
@@ -496,16 +514,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('avatar-upload')) document.getElementById('avatar-upload').addEventListener('change', (e) => processImageUpload(e.target.files[0], 'avatar'));
     if (document.getElementById('banner-upload')) document.getElementById('banner-upload').addEventListener('change', (e) => processImageUpload(e.target.files[0], 'banner'));
 
-document.addEventListener('click', (e) => {
+    document.addEventListener('click', (e) => {
         const modalAdjust = document.getElementById('modal-adjust-image');
-        
+
         // 1. Verifica se clicou no Cancelar OU no X (ícone close)
         const clickedCancel = e.target.id === 'cancel-adjust-btn' || e.target.id === 'cancel-adjust-btn-2';
         const clickedX = e.target.classList.contains('material-symbols-outlined') && e.target.textContent.trim() === 'close' && e.target.closest('#modal-adjust-image');
 
         if (clickedCancel || clickedX) {
             modalAdjust.classList.remove('active');
-            
+
             // MÁGICA 1: Limpa o input de arquivo para você conseguir selecionar a mesma foto novamente
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
         }
@@ -524,7 +542,7 @@ document.addEventListener('click', (e) => {
                 }
             }
             modalAdjust.classList.remove('active');
-            
+
             // MÁGICA 2: Limpa o input aqui também para não bugar a próxima seleção
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
         }

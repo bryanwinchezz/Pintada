@@ -492,31 +492,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // ==========================================
+    // DELETAR MENSAGEM ESPECÍFICA (CORRIGIDO)
+    // ==========================================
+    if (chatHistoryContainer) {
+        chatHistoryContainer.addEventListener('click', async (e) => {
+            // O closest() procura o botão mesmo que você clique no centro do ícone
+            const deleteBtn = e.target.closest('.delete-msg-btn');
+
+            if (deleteBtn) {
+                const msgId = deleteBtn.getAttribute('data-msg-id');
+
+                if (confirm("Quer mesmo apagar esta mensagem para todos?")) {
+                    try {
+                        await window.MessageService.deleteMessage(msgId);
+                        safeToast("Mensagem apagada.", "success");
+                    } catch (err) {
+                        console.error("Erro ao apagar:", err);
+                        safeToast("Erro ao apagar a mensagem.", "error");
+                    }
+                }
+            }
+        });
+    }
+
     // Inicialização
     renderContacts();
     if (activeContactId) loadChatRealTime();
 }); // <-- AQUI FECHA O DOMContentLoaded CORRETAMENTE
 
-// ==========================================
-// DELETAR MENSAGEM ESPECÍFICA (CORRIGIDO)
-// ==========================================
-if (chatHistoryContainer) {
-    chatHistoryContainer.addEventListener('click', async (e) => {
-        // O closest() procura o botão mesmo que você clique no centro do ícone
-        const deleteBtn = e.target.closest('.delete-msg-btn');
-
-        if (deleteBtn) {
-            const msgId = deleteBtn.getAttribute('data-msg-id');
-
-            if (confirm("Quer mesmo apagar esta mensagem para todos?")) {
-                try {
-                    await window.MessageService.deleteMessage(msgId);
-                    safeToast("Mensagem apagada.", "success");
-                } catch (err) {
-                    console.error("Erro ao apagar:", err);
-                    safeToast("Erro ao apagar a mensagem.", "error");
-                }
-            }
-        }
-    });
-}
