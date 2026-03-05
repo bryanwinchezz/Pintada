@@ -125,7 +125,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const primeiroNome = window.escapeHTML(c.name.trim().split(' ')[0]);
 
             return `
-                <div class="contact-item ${c.username === activeContactId && !isDeleteMode ? 'active' : ''}" data-id="${c.username}" style="cursor: pointer; padding: 6px; min-width: 75px; text-align: center;">
+                <div class="contact-item ${c.username === activeContactId && !isDeleteMode ? 'active' : ''}" 
+         data-id="${c.username}" 
+         style="cursor: pointer; padding: 4px; min-width: 70px; text-align: center;">
                     ${checkboxHTML}
                     <div style="position: relative; display: flex; justify-content: center;">
                         <img src="${c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=F4B41A&color=fff`}" class="contact-avatar" style="margin: 0 auto;">

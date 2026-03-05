@@ -2526,16 +2526,65 @@ body {
 }
 
 /* ==========================================
-   TRAVA DE LAYOUT DO CHAT (VERSÃO PC) - DEFINITIVO 2.0
+   TRAVA DE LAYOUT DO CHAT RESPONSIVA (PC vs MOBILE)
    ========================================== */
 
-/* 1. O ESCUDO DA BARRA LATERAL: Usando as suas classes exatas! */
-.contacts-list,
-#contacts-list-render,
-div:has(> #contacts-list-render) {
-    flex-shrink: 0 !important; /* Proíbe a lista de contatos de encolher */
-    min-width: 320px !important; /* Garante o espaço perfeito para os nomes */
-    width: 320px !important;
+/* 1. CONFIGURAÇÃO PARA PC (Ecrãs maiores que 768px) */
+@media (min-width: 769px) {
+    .contacts-list,
+    #contacts-list-render,
+    div:has(> #contacts-list-render) {
+        flex-shrink: 0 !important;
+        width: 320px !important;
+        min-width: 320px !important;
+        border-right: 1px solid var(--border-color);
+        display: flex !important;
+        flex-direction: column !important; /* Lista vertical no PC */
+    }
+}
+
+/* 2. CONFIGURAÇÃO PARA TELEMÓVEL (Ecrãs até 768px) */
+@media (max-width: 768px) {
+    .contacts-list,
+    #contacts-list-render {
+        width: 100% !important;
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: row !important; /* Força a lista a ficar na horizontal */
+        overflow-x: auto !important;    /* Permite deslizar para o lado */
+        overflow-y: hidden !important;
+        padding: 10px 5px !important;
+        gap: 8px !important;
+        -webkit-overflow-scrolling: touch; /* Suaviza o scroll no iPhone */
+    }
+
+    /* Ajuste de cada contacto individual no Mobile */
+    .contact-item {
+        flex-direction: column !important; /* Foto em cima, Nome em baixo */
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 85px !important; /* Espaço para o nome não ser cortado */
+        text-align: center !important;
+        padding: 5px !important;
+    }
+
+    /* Garante que a área do nome e @ seja visível */
+    .contact-info {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        margin-top: 6px !important;
+        width: 100% !important;
+    }
+    
+}
+
+/* 3. DISCIPLINA DO CHAT (Comum a ambos) */
+#chat-history-render,
+div:has(> #chat-history-render),
+.chat-main-area {
+    flex-grow: 1 !important;
+    min-width: 0 !important; /* Impede o estouro do Flexbox por links ou textos longos */
 }
 
 /* 2. A DISCIPLINA DO CHAT: Obriga o lado direito (mensagens) a ceder espaço */
@@ -2550,7 +2599,7 @@ div:has(> #chat-history-render),
 
 /* 3. FORÇA A QUEBRA DO LINK GIGANTE NA BOLHA */
 .chat-bubble {
-    max-width: 75% !important;
+    max-width: 100% !important;
     width: fit-content !important;
 }
 
@@ -2565,71 +2614,86 @@ div:has(> #chat-history-render),
 }
 
 /* ==========================================
-   CORES DA BARRA DE MENSAGENS (CLARO E ESCURO)
+   CAIXA DE MENSAGENS IMÓVEL (ESTÁTICA)
    ========================================== */
+.chat-input-area {
+    /* Define uma altura fixa para a caixa nunca mudar de tamanho */
+    height: 75px !important; 
+    display: flex !important;
+    align-items: center !important;
+    
+    /* A LINHA LARANJA SAGRADA: Sempre presente, em ambos os modos */
+    border-top: 2px solid #F4B41A !important; 
+    box-sizing: border-box !important;
+    
+    /* Remove transições de tamanho que causam o efeito de "pulo" */
+    transition: background-color 0.2s ease, color 0.2s ease !important;
+}
 
-/* 1. TEMA CLARO (Aplica APENAS quando o tema escuro está desligado) */
+/* Garante que o input interno também não mude de tamanho */
+#chat-input-box, 
+.chat-input-area .chat-input {
+    height: 45px !important;
+    margin: 0 !important;
+}
+
+/* TEMA CLARO */
 body:not([data-theme="dark"]) .chat-input-area {
     background-color: #ffffff !important;
-    border-top: 1px solid #e5e7eb !important;
-    transition: all 0.3s ease;
 }
 
-body:not([data-theme="dark"]) #chat-input-box,
-body:not([data-theme="dark"]) .chat-input-area .chat-input {
-    background-color: #f3f4f6 !important;
-    color: #111827 !important;
-    border: 1px solid #d1d5db !important;
-    transition: all 0.3s ease;
-}
-
-body:not([data-theme="dark"]) #chat-input-box::placeholder,
-body:not([data-theme="dark"]) .chat-input-area .chat-input::placeholder {
-    color: #6b7280 !important;
-}
-
-body:not([data-theme="dark"]) .chat-input-area .icon-btn,
-body:not([data-theme="dark"]) .chat-input-area .material-symbols-outlined {
-    color: #4b5563 !important; 
-    transition: color 0.3s ease;
-}
-
-
-/* 2. TEMA ESCURO (Aplica APENAS quando a Lua está ativada) */
+/* TEMA ESCURO */
 body[data-theme="dark"] .chat-input-area {
     background-color: #16181c !important;
-    border-top: 1px solid #2f3336 !important;
-    transition: all 0.3s ease;
 }
 
-body[data-theme="dark"] #chat-input-box,
-body[data-theme="dark"] .chat-input-area .chat-input {
-    background-color: #202327 !important;
-    color: #ffffff !important;
-    border: 1px solid #383a3f !important;
-    transition: all 0.3s ease;
+/* ==========================================
+   ENXUGANDO A LISTA DE CONTATOS (MOBILE & PC)
+   ========================================== */
+
+/* Reduz a altura da lista no Mobile */
+@media (max-width: 768px) {
+    #contacts-list-render {
+        padding: 5px 2px !important; /* Menos espaço no topo e base */
+        height: auto !important;
+    }
+
+    .contact-item {
+        padding: 2px 4px !important; /* Enxuga o espaço interno do item */
+        min-width: 70px !important;  /* Diminui a largura lateral de cada um */
+    }
+
+    /* Diminui o tamanho das fotos para o layout subir */
+    .contact-item .contact-avatar {
+        width: 45px !important;  /* Antes era ~56px */
+        height: 45px !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Cola o nome mais perto da foto */
+    .contact-info {
+        margin-top: 2px !important; /* Estava 6px, reduzimos para 2px */
+    }
+
+    .contact-name {
+        font-size: 0.75rem !important; /* Fonte levemente menor */
+    }
+    
+    .contact-handle {
+        display: none !important; /* Opcional: Esconde o @ no mobile para economizar altura */
+    }
 }
 
-body[data-theme="dark"] #chat-input-box::placeholder,
-body[data-theme="dark"] .chat-input-area .chat-input::placeholder {
-    color: #71767b !important;
-}
-
-body[data-theme="dark"] .chat-input-area .icon-btn,
-body[data-theme="dark"] .chat-input-area .material-symbols-outlined {
-    color: #8b98a5 !important;
-    transition: color 0.3s ease;
-}
-
-
-/* 3. EXCEÇÕES DE COR (Para ambos os temas) */
-.chat-input-area .icon-btn[style*="color: rgb(239, 68, 68)"],
-.chat-input-area .icon-btn[style*="color: #EF4444"] {
-    color: #EF4444 !important;
-}
-
-.chat-input-area .icon-btn:hover {
-    color: var(--brand-color) !important;
+/* Ajuste fino para o PC também não ficar "espaçado" demais */
+@media (min-width: 769px) {
+    .contact-item {
+        padding: 8px 12px !important; /* Compacta a lista vertical do PC */
+    }
+    
+    .contact-item .contact-avatar {
+        width: 48px !important;
+        height: 48px !important;
+    }
 }
 
 
