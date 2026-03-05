@@ -2626,41 +2626,53 @@ body[data-theme="dark"] .chat-input-area { background-color: #16181c !important;
 }
 
 /* ==========================================
-   TRAVA DE ESTRUTURA DO CHAT (IMPEDE O SALTO)
+   TRAVA GLOBAL DE VIEWPORT (IMPEDE O PULO)
    ========================================== */
 
-/* 1. O contêiner principal do chat deve ocupar a altura toda sem rolar a página inteira */
+/* ISSO É O QUE FALTA: Travar a base do site */
+html, body {
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important; /* Impede a página inteira de rolar */
+}
+
+/* 1. O contêiner principal do chat ocupando apenas o que sobra da tela */
 .chat-container, 
 .chat-main-area {
     display: flex !important;
     flex-direction: column !important;
-    height: 100% !important;
-    max-height: 100vh !important;
-    overflow: hidden !important; /* Impede que o chat inteiro role e esconda a barra */
+    height: 100vh !important; /* Força a altura da visão do monitor */
+    overflow: hidden !important;
 }
 
-/* 2. O histórico de mensagens "come" o espaço que sobra e empurra a barra para o fundo */
+/* 2. Área de mensagens: Só ela tem permissão para rolar */
 #chat-history-render {
     flex-grow: 1 !important;
-    overflow-y: auto !important; /* Só as mensagens rolam */
-    min-width: 0 !important;
+    overflow-y: auto !important; 
     display: flex;
     flex-direction: column;
+    min-height: 0 !important; /* Essencial para o flex-grow funcionar */
 }
 
-/* 3. A BARRA DE INPUT: Altura fixa e imutável para não "pular" */
+/* 3. A BARRA DE INPUT: Pregada no fundo, imóvel */
 .chat-input-area {
-    flex-shrink: 0 !important;   /* Proíbe o navegador de diminuir a barra */
-    height: 75px !important;     /* Altura travada */
-    box-sizing: border-box !important; 
+    flex-shrink: 0 !important;   /* Proíbe de ser esmagada */
+    height: 70px !important;     /* Altura enxuta */
+    background-color: var(--card-bg);
+    border-top: 2px solid #F4B41A !important; /* Sua linha laranja */
     display: flex !important;
     align-items: center !important;
-    
-    /* Linha Laranja Lacre: Mesma espessura sempre para evitar saltos de 1px */
-    border-top: 2px solid #F4B41A !important; 
-    
-    /* MÁGICA: Só transita a COR, nunca o tamanho ou posição */
-    transition: background-color 0.2s ease !important; 
+    box-sizing: border-box !important;
+}
+
+/* GARANTE O CONTRASTE NO MODO BRANCO */
+body:not([data-theme="dark"]) .chat-input-area {
+    background-color: #ffffff !important;
+}
+body:not([data-theme="dark"]) #chat-input-box {
+    background-color: #f3f4f6 !important;
+    color: #111827 !important;
 }
 
 /* ============================================================
