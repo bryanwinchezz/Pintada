@@ -2565,6 +2565,75 @@ div:has(> #chat-history-render),
 }
 
 /* ==========================================
+   CORES DA BARRA DE MENSAGENS (CLARO E ESCURO)
+   ========================================== */
+
+/* 1. TEMA CLARO (Padrão - Cores para fundo branco) */
+body .chat-input-area {
+    background-color: #ffffff !important;
+    border-top: 1px solid #e5e7eb !important;
+    transition: all 0.3s ease;
+}
+
+body #chat-input-box,
+body .chat-input-area .chat-input {
+    background-color: #f3f4f6 !important;
+    color: #111827 !important;
+    border: 1px solid #d1d5db !important;
+    transition: all 0.3s ease;
+}
+
+body #chat-input-box::placeholder,
+body .chat-input-area .chat-input::placeholder {
+    color: #6b7280 !important;
+}
+
+/* Força os ícones a ficarem cinza escuro no fundo branco */
+body .chat-input-area .icon-btn,
+body .chat-input-area .material-symbols-outlined {
+    color: #4b5563 !important; 
+    transition: color 0.3s ease;
+}
+
+
+/* 2. TEMA ESCURO (Ativado quando clica na Lua) */
+body[data-theme="dark"] .chat-input-area {
+    background-color: #16181c !important;
+    border-top: 1px solid #2f3336 !important;
+}
+
+body[data-theme="dark"] #chat-input-box,
+body[data-theme="dark"] .chat-input-area .chat-input {
+    background-color: #202327 !important;
+    color: #ffffff !important;
+    border: 1px solid #383a3f !important;
+}
+
+body[data-theme="dark"] #chat-input-box::placeholder,
+body[data-theme="dark"] .chat-input-area .chat-input::placeholder {
+    color: #71767b !important;
+}
+
+/* Força os ícones a ficarem cinza claro no fundo escuro */
+body[data-theme="dark"] .chat-input-area .icon-btn,
+body[data-theme="dark"] .chat-input-area .material-symbols-outlined {
+    color: #8b98a5 !important;
+}
+
+
+/* 3. EXCEÇÕES DE COR (Para ambos os temas) */
+/* O botão de gravar áudio deve ficar sempre vermelho quando está a gravar */
+.chat-input-area .icon-btn[style*="color: rgb(239, 68, 68)"],
+.chat-input-area .icon-btn[style*="color: #EF4444"] {
+    color: #EF4444 !important;
+}
+
+/* Efeito ao passar o rato (Hover brilha com a cor da marca) */
+.chat-input-area .icon-btn:hover {
+    color: var(--brand-color) !important;
+}
+
+/* ==========================================
    MOLDURAS DE PERFIL (COM PADRÃO PRETO E NOVAS CORES)
    ========================================== */
 .moldura-padrao {
