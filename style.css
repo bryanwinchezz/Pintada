@@ -2525,219 +2525,165 @@ body {
     text-decoration: underline;
 }
 
-/* ==========================================
-   TRAVA DE LAYOUT DO CHAT RESPONSIVA (PC vs MOBILE)
-   ========================================== */
+/* ============================================================
+   ESTRUTURA GLOBAL DO CHAT E BOLHAS (PC & MOBILE)
+   ============================================================ */
 
-/* 1. CONFIGURAÇÃO PARA PC (Ecrãs maiores que 768px) */
-@media (min-width: 769px) {
-    .contacts-list,
-    #contacts-list-render,
-    div:has(> #contacts-list-render) {
-        flex-shrink: 0 !important;
-        width: 320px !important;
-        min-width: 320px !important;
-        border-right: 1px solid var(--border-color);
-        display: flex !important;
-        flex-direction: column !important; /* Lista vertical no PC */
-    }
-}
-
-/* 2. CONFIGURAÇÃO PARA TELEMÓVEL (Ecrãs até 768px) */
-@media (max-width: 768px) {
-    .contacts-list,
-    #contacts-list-render {
-        width: 100% !important;
-        min-width: 0 !important;
-        display: flex !important;
-        flex-direction: row !important; /* Força a lista a ficar na horizontal */
-        overflow-x: auto !important;    /* Permite deslizar para o lado */
-        overflow-y: hidden !important;
-        padding: 10px 5px !important;
-        gap: 8px !important;
-        -webkit-overflow-scrolling: touch; /* Suaviza o scroll no iPhone */
-    }
-
-    /* Ajuste de cada contacto individual no Mobile */
-    .contact-item {
-        flex-direction: column !important; /* Foto em cima, Nome em baixo */
-        align-items: center !important;
-        justify-content: center !important;
-        min-width: 85px !important; /* Espaço para o nome não ser cortado */
-        text-align: center !important;
-        padding: 5px !important;
-    }
-
-    /* Garante que a área do nome e @ seja visível */
-    .contact-info {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        margin-top: 6px !important;
-        width: 100% !important;
-    }
-    
-}
-
-/* 3. DISCIPLINA DO CHAT (Comum a ambos) */
-#chat-history-render,
-div:has(> #chat-history-render),
-.chat-main-area {
-    flex-grow: 1 !important;
-    min-width: 0 !important; /* Impede o estouro do Flexbox por links ou textos longos */
-}
-
-/* 2. A DISCIPLINA DO CHAT: Obriga o lado direito (mensagens) a ceder espaço */
-/* O comando :has() é um truque moderno que encontra a coluna certa automaticamente */
+/* 1. Trava de estouro e flexibilidade das colunas */
 #chat-history-render,
 div:has(> #chat-history-render),
 .chat-main-area, 
 .chat-area {
     flex-grow: 1 !important;
-    min-width: 0 !important; /* A MÁGICA: Impede a coluna direita de ficar gulosa */
+    min-width: 0 !important; /* Impede que links gigantes estiquem a tela */
+    display: flex;
+    flex-direction: column;
 }
 
-/* 3. FORÇA A QUEBRA DO LINK GIGANTE NA BOLHA */
+/* 2. Configuração das Bolhas de Mensagem */
 .chat-bubble {
-    max-width: 100% !important;
+    max-width: 85% !important; /* Ajustado para 85% para não colar na parede */
     width: fit-content !important;
-}
-
-.chat-bubble a, 
-.chat-bubble .message-content,
-.chat-bubble div[style*="word-break"] {
-    word-break: break-all !important;
+    word-break: break-word !important;
     overflow-wrap: anywhere !important;
     white-space: pre-wrap !important;
+}
+
+.chat-bubble a {
+    word-break: break-all !important;
     display: inline-block;
     max-width: 100%;
+    color: #1D9BF0;
 }
 
-/* ==========================================
-   CAIXA DE MENSAGENS IMÓVEL (ESTÁTICA)
-   ========================================== */
+/* 3. Scrollbar Moderna (Tira a "parede cinza" no topo) */
+::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+}
+::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+::-webkit-scrollbar-thumb {
+    background-color: var(--brand-color) !important;
+    border-radius: 10px !important;
+}
+
+/* ============================================================
+   CAIXA DE MENSAGENS (ESTÁTICA E TEMA)
+   ============================================================ */
+
 .chat-input-area {
-    /* Define uma altura fixa para a caixa nunca mudar de tamanho */
-    height: 75px !important; 
+    height: 75px !important; /* Altura fixa para não pular */
     display: flex !important;
     align-items: center !important;
-    
-    /* A LINHA LARANJA SAGRADA: Sempre presente, em ambos os modos */
-    border-top: 2px solid #F4B41A !important; 
+    border-top: 2px solid #F4B41A !important; /* Linha Laranja sempre presente */
     box-sizing: border-box !important;
-    
-    /* Remove transições de tamanho que causam o efeito de "pulo" */
-    transition: background-color 0.2s ease, color 0.2s ease !important;
+    flex-shrink: 0 !important;
+    transition: background-color 0.2s ease;
 }
 
-/* Garante que o input interno também não mude de tamanho */
 #chat-input-box, 
 .chat-input-area .chat-input {
     height: 45px !important;
     margin: 0 !important;
 }
 
-/* TEMA CLARO */
-body:not([data-theme="dark"]) .chat-input-area {
-    background-color: #ffffff !important;
-}
+/* Cores por Tema */
+body:not([data-theme="dark"]) .chat-input-area { background-color: #ffffff !important; }
+body[data-theme="dark"] .chat-input-area { background-color: #16181c !important; }
 
-/* TEMA ESCURO */
-body[data-theme="dark"] .chat-input-area {
-    background-color: #16181c !important;
-}
-
-/* ==========================================
-   ENXUGANDO A LISTA DE CONTATOS (MOBILE & PC)
-   ========================================== */
-
-/* Reduz a altura da lista no Mobile */
-@media (max-width: 768px) {
-    #contacts-list-render {
-        padding: 5px 2px !important; /* Menos espaço no topo e base */
-        height: auto !important;
-    }
-
-    .contact-item {
-        padding: 2px 4px !important; /* Enxuga o espaço interno do item */
-        min-width: 70px !important;  /* Diminui a largura lateral de cada um */
-    }
-
-    /* Diminui o tamanho das fotos para o layout subir */
-    .contact-item .contact-avatar {
-        width: 45px !important;  /* Antes era ~56px */
-        height: 45px !important;
-        margin-bottom: 0 !important;
-    }
-
-    /* Cola o nome mais perto da foto */
-    .contact-info {
-        margin-top: 2px !important; /* Estava 6px, reduzimos para 2px */
-    }
-
-    .contact-name {
-        font-size: 0.75rem !important; /* Fonte levemente menor */
-    }
-    
-    .contact-handle {
-        display: none !important; /* Opcional: Esconde o @ no mobile para economizar altura */
-    }
-}
-
-/* Ajuste fino para o PC também não ficar "espaçado" demais */
+/* ============================================================
+   CONFIGURAÇÃO PARA PC (ECRÃS MAIORES)
+   ============================================================ */
 @media (min-width: 769px) {
-    .contact-item {
-        padding: 8px 12px !important; /* Compacta a lista vertical do PC */
+    .contacts-list,
+    #contacts-list-render,
+    div:has(> #contacts-list-render) {
+        flex-shrink: 0 !important;
+        width: 320px !important; /* Largura fixa ideal para PC */
+        min-width: 320px !important;
+        border-right: 1px solid var(--border-color);
+        display: flex !important;
+        flex-direction: column !important;
     }
-    
+
+    .contact-item {
+        padding: 8px 12px !important;
+        display: flex !important;
+        flex-direction: row !important; /* No PC mantém foto ao lado do nome */
+        align-items: center !important;
+        gap: 12px;
+    }
+
     .contact-item .contact-avatar {
         width: 48px !important;
         height: 48px !important;
+        border-radius: 50% !important;
+        object-fit: cover;
     }
 }
 
-/* ==========================================
-   CAIXA DE MENSAGENS 100% ESTÁTICA (FIX)
-   ========================================== */
+/* ============================================================
+   CONFIGURAÇÃO PARA TELEMÓVEL (ENXUTO E HORIZONTAL)
+   ============================================================ */
+@media (max-width: 768px) {
+    .contacts-list,
+    #contacts-list-render {
+        width: 100% !important;
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: row !important; /* Lista horizontal estilo Stories */
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        padding: 5px 2px !important; /* Enxugado verticalmente */
+        gap: 8px !important;
+        -webkit-overflow-scrolling: touch;
+    }
 
-/* 1. Garante que o contêiner principal do chat ocupe a tela toda sem rolar a página inteira */
-.chat-main-area, 
-.chat-container, 
-#chat-history-render {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    overflow: hidden !important; /* Impede que o chat inteiro role e esconda a barra */
+    .contact-item {
+        flex-direction: column !important; /* Foto em cima, Nome em baixo */
+        align-items: center !important;
+        min-width: 75px !important; /* Compactado lateralmente */
+        padding: 2px 4px !important;
+        text-align: center !important;
+    }
+
+    .contact-item .contact-avatar {
+        width: 45px !important; /* Foto menor para o layout subir */
+        height: 45px !important;
+        border-radius: 50% !important;
+        object-fit: cover;
+        margin-bottom: 0 !important;
+    }
+
+    .contact-info {
+        margin-top: 2px !important; /* Cola o nome na foto */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .contact-name-wrapper {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 1px !important; /* Nome e verificado bem próximos */
+    }
+
+    .contact-name {
+        font-size: 0.75rem !important;
+        max-width: 60px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .contact-handle {
+        display: none !important; /* Esconde o @ para economizar espaço no mobile */
+    }
 }
-
-/* 2. Força a história do chat a ocupar o espaço que sobra, empurrando a barra para o fundo */
-#chat-history-render {
-    flex-grow: 1 !important;
-    overflow-y: auto !important; /* Só as mensagens rolam */
-    min-width: 0 !important;
-}
-
-/* 3. TRAVA A BARRA DE INPUT: Altura fixa e bordas iguais para não "pular" */
-.chat-input-area {
-    flex-shrink: 0 !important; /* Impede que a barra seja esmagada ou suma */
-    height: 75px !important;    /* Altura fixa obrigatória */
-    box-sizing: border-box !important; /* Garante que a borda não aumente a altura */
-    display: flex !important;
-    align-items: center !important;
-    border-top: 2px solid #F4B41A !important; /* Sua borda laranja sempre presente */
-    transition: background-color 0.2s ease !important; /* Muda a COR, mas não o TAMANHO */
-}
-
-/* TEMA CLARO */
-body:not([data-theme="dark"]) .chat-input-area {
-    background-color: #ffffff !important;
-}
-
-/* TEMA ESCURO */
-body[data-theme="dark"] .chat-input-area {
-    background-color: #16181c !important;
-}
-
 
 /* ==========================================
    MOLDURAS DE PERFIL (COM PADRÃO PRETO E NOVAS CORES)
