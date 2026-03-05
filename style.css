@@ -2561,6 +2561,45 @@ body {
 }
 
 /* ==========================================
+   POLIMENTO DA BARRA DE MENSAGENS NO TEMA ESCURO
+   ========================================== */
+[data-theme="dark"] .chat-input-area {
+    background-color: #16181c !important;
+    /* Fundo escuro elegante */
+    border-top: 1px solid #2f3336 !important;
+}
+
+[data-theme="dark"] .chat-input-area .chat-input {
+    background-color: #202327 !important;
+    /* Caixa de texto levemente destacada */
+    color: #ffffff !important;
+    /* Texto em branco puro para leitura */
+    border: 1px solid #383a3f !important;
+}
+
+[data-theme="dark"] .chat-input-area .chat-input::placeholder {
+    color: #71767b !important;
+    /* Placeholder num cinza confortável */
+}
+
+/* Ícones (Foto, Áudio, Enviar) com contraste ideal no escuro */
+[data-theme="dark"] .chat-input-area .icon-btn,
+[data-theme="dark"] .chat-input-area .material-symbols-outlined {
+    color: #8b98a5 !important;
+}
+
+/* Mantém o botão de gravar áudio vermelho quando ativo, livre de interferências */
+[data-theme="dark"] .chat-input-area .icon-btn[style*="color: rgb(239, 68, 68)"],
+[data-theme="dark"] .chat-input-area .icon-btn[style*="color: #EF4444"] {
+    color: #EF4444 !important;
+}
+
+/* Efeito Hover nos botões brilhando com a cor da marca */
+[data-theme="dark"] .chat-input-area .icon-btn:hover {
+    color: var(--brand-color) !important;
+}
+
+/* ==========================================
    MOLDURAS DE PERFIL (COM PADRÃO PRETO E NOVAS CORES)
    ========================================== */
 .moldura-padrao {
