@@ -16,31 +16,48 @@
         <span class="material-symbols-outlined"
             style="font-size: 48px; color: #EF4444; margin-bottom: 10px;">admin_panel_settings</span>
         <h2 style="margin-bottom: 5px; color: var(--text-main);">Painel de Controle</h2>
-        <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">Área restrita. Gerenciamento de
-            Selos.</p>
+        <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">Área restrita. Gestão da
+            Plataforma.</p>
 
-        <div class="form-group" style="text-align: left; margin-bottom: 20px;">
-            <label>Buscar Usuário (Exato)</label>
+        <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 25px;">
+            <div
+                style="flex: 1; background: var(--hover-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+                <div id="admin-total-users" style="font-size: 1.8rem; font-weight: bold; color: var(--text-main);">...
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Contas Criadas</div>
+            </div>
+            <div id="btn-show-online"
+                style="flex: 1; background: var(--hover-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; cursor: pointer; transition: 0.2s;"
+                onmouseover="this.style.borderColor='#10B981'"
+                onmouseout="this.style.borderColor='var(--border-color)'">
+                <div id="admin-online-users" style="font-size: 1.8rem; font-weight: bold; color: #10B981;">...</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Online Agora</div>
+            </div>
+        </div>
+
+        <div class="form-group" style="text-align: left; margin-bottom: 15px;">
+            <label>Procurar Utilizador (sem o @)</label>
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="admin-search-input" placeholder="Digite o @ do usuário...">
-                <button id="admin-search-btn" class="btn-primary">Buscar</button>
+                <input type="text" id="admin-search-input" placeholder="Ex: bryan" style="flex-grow: 1;">
+                <button id="admin-search-btn" class="btn-primary" style="padding: 0 20px;">Procurar</button>
             </div>
         </div>
 
         <div id="admin-result-area"
-            style="display: none; background: var(--hover-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); text-align: left;">
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+            style="display: none; background: var(--hover-bg); padding: 15px; border-radius: 12px; text-align: left; border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
                 <img id="admin-user-avatar" src=""
-                    style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                    style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
                 <div>
-                    <h3 id="admin-user-name"
-                        style="color: var(--text-main); margin: 0; display: flex; align-items: center;"></h3>
-                    <span id="admin-user-handle" style="color: var(--text-muted); font-size: 0.9rem;"></span>
+                    <div id="admin-user-name"
+                        style="font-weight: bold; color: var(--text-main); font-size: 1.1rem; display: flex; align-items: center; gap: 5px;">
+                    </div>
+                    <div id="admin-user-handle" style="color: var(--text-muted); font-size: 0.9rem;"></div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>Tipo de Selo</label>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Selo de Verificação</label>
                 <select id="admin-badge-select">
                     <option value="none">Nenhum (Remover Selo)</option>
                     <option value="blue">Azul (Padrão)</option>
@@ -62,6 +79,23 @@
         <a href="index.html"
             style="display: block; margin-top: 20px; color: var(--text-muted); text-decoration: none;">&larr; Voltar
             para a Pintada</a>
+    </div>
+
+    <div id="modal-users-list"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div
+            style="background: var(--card-bg); width: 100%; max-width: 450px; border-radius: 12px; display: flex; flex-direction: column; max-height: 80vh; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <div
+                style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: var(--text-main); margin: 0; font-size: 1.1rem;">Status dos Utilizadores</h3>
+                <span class="material-symbols-outlined" id="close-users-modal"
+                    style="cursor: pointer; color: var(--text-muted);">close</span>
+            </div>
+            <div id="users-list-render"
+                style="padding: 15px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; text-align: left;">
+                <p style="text-align: center; color: var(--text-muted);">A carregar dados da rede... 🐆</p>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="js/firebase-config.js"></script>
