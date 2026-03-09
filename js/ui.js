@@ -358,7 +358,7 @@ async function loadUserDataUI() {
         Array.from(img.classList).forEach(c => { if (c.startsWith('moldura-')) img.classList.remove(c); });
         // Adiciona a moldura escolhida ou a padrão preta!
         // Adiciona a moldura escolhida de forma segura!
-        const molduraEscolhida = userData.profileBorder || 'moldura-padrao';
+        const molduraEscolhida = user.profileBorder || 'moldura-padrao';
         if (molduraEscolhida && molduraEscolhida.trim() !== '') {
             img.classList.add(molduraEscolhida.trim());
         }
@@ -380,7 +380,7 @@ async function loadUserDataUI() {
             img.classList.remove('skeleton');
             Array.from(img.classList).forEach(c => { if (c.startsWith('moldura-')) img.classList.remove(c); });
             // Adiciona a moldura escolhida de forma segura!
-            const molduraEscolhida = userData.profileBorder || 'moldura-padrao';
+            const molduraEscolhida = activeUserData.profileBorder || 'moldura-padrao';
             if (molduraEscolhida && molduraEscolhida.trim() !== '') {
                 img.classList.add(molduraEscolhida.trim());
             }
@@ -1195,76 +1195,80 @@ if (logoutSettingsBtn) {
 // ==========================================
 // LOGICA DE NOTIFICAÇÕES (CHATS E COMUNIDADES)
 // ==========================================
-if (activeUser) {
-    const addDot = (el) => {
-        if (!el || el.querySelector('.msg-dot')) return;
-        const dot = document.createElement('span');
-        dot.className = 'msg-dot';
-        el.appendChild(dot);
-    };
+document.addEventListener('DOMContentLoaded', () => {
+    const activeUser = window.AuthService ? window.AuthService.getCurrentUser() : null;
+    
+    if (activeUser) {
+        const addDot = (el) => {
+            if (!el || el.querySelector('.msg-dot')) return;
+            const dot = document.createElement('span');
+            dot.className = 'msg-dot';
+            el.appendChild(dot);
+        };
 
-    const storageKeyPrivate = `pintada_msg_count_${activeUser}`;
-    const storageKeyComm = `pintada_comm_msg_count_${activeUser}`;
-    const hiddenChatsKey = `pintada_hidden_chats_${activeUser}`;
+        const storageKeyPrivate = `pintada_msg_count_${activeUser}`;
+        const storageKeyComm = `pintada_comm_msg_count_${activeUser}`;
+        const hiddenChatsKey = `pintada_hidden_chats_${activeUser}`;
 
-    // 1. MONITORAR MENSAGENS PRIVADAS, DESOCULTAR E JOGAR PRO TOPO
-    window.MessageService.listenToInbox(activeUser, (allMsgs) => {
-        const currentCount = allMsgs.length;
-        const storedCount = parseInt(localStorage.getItem(storageKeyPrivate) || "0");
+        // 1. MONITORAR MENSAGENS PRIVADAS, DESOCULTAR E JOGAR PRO TOPO
+        window.MessageService.listenToInbox(activeUser, (allMsgs) => {
+            const currentCount = allMsgs.length;
+            const storedCount = parseInt(localStorage.getItem(storageKeyPrivate) || "0");
 
-        let hiddenChats = JSON.parse(localStorage.getItem(hiddenChatsKey)) || [];
-        let recentChats = JSON.parse(localStorage.getItem(`pintada_recent_chats_${activeUser}`)) || [];
-        let mudou = false;
+            let hiddenChats = JSON.parse(localStorage.getItem(hiddenChatsKey)) || [];
+            let recentChats = JSON.parse(localStorage.getItem(`pintada_recent_chats_${activeUser}`)) || [];
+            let mudou = false;
 
-        allMsgs.forEach(msg => {
-            // Se a pessoa mandou mensagem e estava oculta, volta pra lista
-            if (hiddenChats.includes(msg.sender)) {
-                hiddenChats = hiddenChats.filter(id => id !== msg.sender);
-                mudou = true;
+            allMsgs.forEach(msg => {
+                // Se a pessoa mandou mensagem e estava oculta, volta pra lista
+                if (hiddenChats.includes(msg.sender)) {
+                    hiddenChats = hiddenChats.filter(id => id !== msg.sender);
+                    mudou = true;
+                }
+                
+                // Se for uma mensagem NOVA, joga o remetente pro topo da lista!
+                if (currentCount > storedCount) {
+                    recentChats = recentChats.filter(id => id !== msg.sender);
+                    recentChats.push(msg.sender);
+                    mudou = true;
+                }
+            });
+
+            if (mudou) {
+                localStorage.setItem(hiddenChatsKey, JSON.stringify(hiddenChats));
+                localStorage.setItem(`pintada_recent_chats_${activeUser}`, JSON.stringify(recentChats));
+                
+                // Reorganiza a tela na mesma hora, sem precisar dar F5!
+                if (window.location.pathname.includes('messages.html')) {
+                    if (typeof window.renderContacts === 'function') window.renderContacts();
+                }
             }
 
-            // Se for uma mensagem NOVA, joga o remetente pro topo da lista!
+            // Adiciona a bolinha no menu se a mensagem for nova
             if (currentCount > storedCount) {
-                recentChats = recentChats.filter(id => id !== msg.sender);
-                recentChats.push(msg.sender);
-                mudou = true;
+                document.querySelectorAll('a[href="messages.html"], .mobile-item[href="messages.html"]').forEach(addDot);
             }
         });
 
-        if (mudou) {
-            localStorage.setItem(hiddenChatsKey, JSON.stringify(hiddenChats));
-            localStorage.setItem(`pintada_recent_chats_${activeUser}`, JSON.stringify(recentChats));
-
-            // Reorganiza a tela na mesma hora, sem precisar dar F5!
-            if (window.location.pathname.includes('messages.html')) {
-                if (typeof window.renderContacts === 'function') window.renderContacts();
-            }
-        }
-
-        // Adiciona a bolinha no menu se a mensagem for nova
-        if (currentCount > storedCount) {
-            document.querySelectorAll('a[href="messages.html"], .mobile-item[href="messages.html"]').forEach(addDot);
-        }
-    });
-
-    // 2. MONITORAR COMUNIDADES
-    const checkCommNotifs = async () => {
-        try {
-            const myComms = await window.CommunityService.getMyCommunities(activeUser);
-            const commIds = myComms.map(c => c.id);
-            if (commIds.length > 0) {
-                window.MessageService.listenToAllJoinedCommunities(commIds, (commMsgs) => {
-                    const currentCommCount = commMsgs.length;
-                    const storedCommCount = parseInt(localStorage.getItem(storageKeyComm) || "0");
-                    if (currentCommCount > storedCommCount) {
-                        document.querySelectorAll('a[href="messages.html"], .mobile-item[href="messages.html"]').forEach(addDot);
-                    }
-                });
-            }
-        } catch (e) { console.error("Erro notif comm:", e); }
-    };
-    checkCommNotifs();
-}
+        // 2. MONITORAR COMUNIDADES
+        const checkCommNotifs = async () => {
+            try {
+                const myComms = await window.CommunityService.getMyCommunities(activeUser);
+                const commIds = myComms.map(c => c.id);
+                if (commIds.length > 0) {
+                    window.MessageService.listenToAllJoinedCommunities(commIds, (commMsgs) => {
+                        const currentCommCount = commMsgs.length;
+                        const storedCommCount = parseInt(localStorage.getItem(storageKeyComm) || "0");
+                        if (currentCommCount > storedCommCount) {
+                            document.querySelectorAll('a[href="messages.html"], .mobile-item[href="messages.html"]').forEach(addDot);
+                        }
+                    });
+                }
+            } catch (e) { console.error("Erro notif comm:", e); }
+        };
+        checkCommNotifs();
+    }
+});
 
 // ==========================================
 // MONITOR DE NOTIFICAÇÕES GLOBAIS (BOLINHA VERMELHA)
