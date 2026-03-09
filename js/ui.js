@@ -49,48 +49,130 @@ function showToast(message, type = 'success') {
 }
 window.showToast = showToast;
 
-// SISTEMA DE NOTIFICAÇÃO GLOBAL (Bolinha Vermelha no Menu)
+// ==========================================
+// SISTEMA DE NOTIFICAÇÃO GLOBAL (Bolinha Vermelha no PC e Mobile)
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const activeUsername = window.AuthService ? window.AuthService.getCurrentUser() : null;
-    if (activeUsername && window.MessageService) {
+    if (!activeUsername) return;
+
+    // 1. BOLINHA DE MENSAGENS PRIVADAS
+    if (window.MessageService) {
         window.MessageService.listenToAllMyMessages(activeUsername, (count) => {
-            const menuMsgs = Array.from(document.querySelectorAll('.menu-item')).find(el => el.href && el.href.includes('messages.html'));
-            const mobileMsgs = Array.from(document.querySelectorAll('.mobile-item')).find(el => el.href && el.href.includes('messages.html'));
-
-            const addDot = (el) => {
-                if (!el || el.querySelector('.msg-dot')) return;
-                const dot = document.createElement('span');
-                dot.className = 'msg-dot';
-                dot.style.background = '#EF4444'; // Vermelho notificação
-                dot.style.borderRadius = '50%';
-                el.appendChild(dot);
-            };
-
-            const removeDot = (el) => {
-                if (!el) return;
-                let dot = el.querySelector('.msg-dot');
-                if (dot) dot.remove();
-            };
-
+            const msgLinks = document.querySelectorAll('a[href*="messages.html"], .mobile-item[href*="messages.html"]');
             const isMessagesPage = window.location.pathname.includes('messages.html');
+            const savedCount = parseInt(localStorage.getItem(`pintada_msg_count_${activeUsername}`)) || 0;
+
+            // Guarda a contagem real na memória para usarmos no clique
+            localStorage.setItem(`pintada_msg_count_realtime_${activeUsername}`, count);
 
             if (isMessagesPage) {
-                // Se está na aba de mensagens, atualiza a memória para o número atual de mensagens e limpa a bolinha
                 localStorage.setItem(`pintada_msg_count_${activeUsername}`, count);
-                removeDot(menuMsgs);
-                removeDot(mobileMsgs);
+                msgLinks.forEach(el => {
+                    let dot = el.querySelector('.msg-dot');
+                    if (dot) dot.remove();
+                });
+            } else if (count > savedCount) {
+                // MENSAGEM NOVA! Apaga a memória de "chat lido" para a bolinha aparecer nos contatos
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('pintada_chat_read_')) localStorage.removeItem(key);
+                });
+
+                msgLinks.forEach(el => {
+                    if (!el.querySelector('.msg-dot')) {
+                        el.style.position = 'relative';
+                        el.insertAdjacentHTML('beforeend', '<span class="msg-dot" style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; background: #EF4444; border-radius: 50%; border: 2px solid var(--card-bg);"></span>');
+                    }
+                });
             } else {
-                // Se está em outra aba, só mostra a bolinha se o número de mensagens for MAIOR que o que está na memória
-                const savedCount = parseInt(localStorage.getItem(`pintada_msg_count_${activeUsername}`)) || 0;
-                if (count > savedCount) {
-                    addDot(menuMsgs);
-                    addDot(mobileMsgs);
-                } else {
-                    removeDot(menuMsgs);
-                    removeDot(mobileMsgs);
-                }
+                msgLinks.forEach(el => {
+                    let dot = el.querySelector('.msg-dot');
+                    if (dot) dot.remove();
+                });
             }
         });
+    }
+
+    // 2. BOLINHA DE NOTIFICAÇÕES GERAIS
+    const isNotifPage = window.location.pathname.includes('notifications.html');
+    const notifLinks = document.querySelectorAll('a[href*="notifications.html"], .mobile-item[href*="notifications.html"]');
+
+    if (isNotifPage) {
+        localStorage.setItem(`pintada_notif_time_${activeUsername}`, Date.now());
+        notifLinks.forEach(el => {
+            let dot = el.querySelector('.notif-dot');
+            if (dot) dot.remove();
+        });
+    } else {
+        setInterval(async () => {
+            try {
+                const lastCheck = parseInt(localStorage.getItem(`pintada_notif_time_${activeUsername}`)) || 0;
+                const posts = await window.PostService.getPosts();
+                let hasNew = false;
+
+                for (let p of posts) {
+                    if (p.timestamp > lastCheck && p.content && p.content.includes(`@${activeUsername}`)) hasNew = true;
+                    if (p.authorUsername === activeUsername && p.likesData) {
+                        for (let user in p.likesData) {
+                            if (user !== activeUsername && p.likesData[user] > lastCheck) hasNew = true;
+                        }
+                    }
+                    if (p.comments) {
+                        for (let c of p.comments) {
+                            if (c.timestamp > lastCheck && c.authorUsername !== activeUsername) {
+                                if (p.authorUsername === activeUsername || c.text.includes(`@${activeUsername}`)) hasNew = true;
+                            }
+                        }
+                    }
+                    if (hasNew) break;
+                }
+
+                if (hasNew) {
+                    notifLinks.forEach(el => {
+                        if (!el.querySelector('.notif-dot')) {
+                            el.style.position = 'relative';
+                            el.insertAdjacentHTML('beforeend', '<span class="notif-dot" style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; background: #EF4444; border-radius: 50%; border: 2px solid var(--card-bg);"></span>');
+                        }
+                    });
+                }
+            } catch (e) { }
+        }, 10000);
+    }
+});
+
+// ==========================================
+// DESTRUIDOR DE BOLINHAS (Limpeza ao clicar)
+// ==========================================
+document.addEventListener('click', (e) => {
+    const activeUsername = window.AuthService ? window.AuthService.getCurrentUser() : null;
+
+    // 1. Apaga a bolinha do chat clicado e avisa o sistema que foi lido
+    const chatLink = e.target.closest('li, .contact-item, div[onclick*="loadChatRealTime"]');
+    if (chatLink) {
+        const onclickAttr = chatLink.getAttribute('onclick');
+        if (onclickAttr) {
+            const match = onclickAttr.match(/'([^']+)'/);
+            if (match && match[1]) {
+                // Grava que ESTE usuário foi lido!
+                localStorage.setItem('pintada_chat_read_' + match[1], 'true');
+            }
+        }
+
+        const dot = chatLink.querySelector('.msg-dot-chat, span[style*="background: #EF4444"]');
+        if (dot) dot.remove();
+    }
+
+    // 2. Limpa bolinhas da barra inferior ao clicar nos ícones
+    const navBtn = e.target.closest('a[href*="messages.html"], a[href*="notifications.html"], .mobile-item');
+    if (navBtn) {
+        const navDot = navBtn.querySelector('.msg-dot, .notif-dot');
+        if (navDot) navDot.remove();
+
+        // Se clicou nas mensagens, sincroniza a contagem para não voltar a bolinha do nada
+        if (navBtn.href && navBtn.href.includes('messages.html') && activeUsername) {
+            const realCount = localStorage.getItem(`pintada_msg_count_realtime_${activeUsername}`) || 0;
+            localStorage.setItem(`pintada_msg_count_${activeUsername}`, realCount);
+        }
     }
 });
 
@@ -221,7 +303,9 @@ async function loadUserDataUI() {
         el.innerHTML = `${window.escapeHTML(user.name || "Utilizador")} ${badgeHTML}`;
     });
     document.querySelectorAll('.profile-handle').forEach(el => { el.textContent = `@${user.username}`; });
-    document.querySelectorAll('.profile-bio').forEach(el => { el.textContent = user.bio || ""; });
+    document.querySelectorAll('.profile-bio').forEach(el => {
+        el.innerHTML = window.escapeHTML(user.bio || "").replace(/\n/g, '<br>');
+    });
 
     // === CORREÇÃO DOS SEGUIDORES: MATEMÁTICA REAL ===
     const allNetworkUsers = await window.AuthService.getUsers();
@@ -273,7 +357,11 @@ async function loadUserDataUI() {
         // MÁGICA: Apaga qualquer moldura antiga automaticamente
         Array.from(img.classList).forEach(c => { if (c.startsWith('moldura-')) img.classList.remove(c); });
         // Adiciona a moldura escolhida ou a padrão preta!
-        img.classList.add(user.profileBorder || 'moldura-padrao');
+        // Adiciona a moldura escolhida de forma segura!
+        const molduraEscolhida = userData.profileBorder || 'moldura-padrao';
+        if (molduraEscolhida && molduraEscolhida.trim() !== '') {
+            img.classList.add(molduraEscolhida.trim());
+        }
         img.style.border = 'none';
 
         // NOVO: Clique para abrir a foto de perfil em tela cheia
@@ -291,7 +379,11 @@ async function loadUserDataUI() {
             img.src = myAvatarUrl;
             img.classList.remove('skeleton');
             Array.from(img.classList).forEach(c => { if (c.startsWith('moldura-')) img.classList.remove(c); });
-            img.classList.add(activeUserData.profileBorder || 'moldura-padrao');
+            // Adiciona a moldura escolhida de forma segura!
+            const molduraEscolhida = userData.profileBorder || 'moldura-padrao';
+            if (molduraEscolhida && molduraEscolhida.trim() !== '') {
+                img.classList.add(molduraEscolhida.trim());
+            }
             img.style.border = 'none';
         });
     }
@@ -392,7 +484,7 @@ async function loadUserDataUI() {
                     <button class="btn-outline msg-btn" onclick="window.location.href='messages.html?chat=${targetUsername}'" style="padding: 8px 20px; border-radius: 9999px;">
                         Mensagem
                     </button>
-                    <button class="icon-btn" onclick="window.shareProfile('${targetUsername}')" title="Compartilhar Perfil" style="background: var(--hover-bg); border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+                    <button class="icon-btn" onclick="window.shareProfile('${targetUsername}')" title="Compartilhar Perfil" style="background: var(--hover-bg); border-radius: 50%; width: 38px; height: 38px; min-width: 38px; min-height: 38px; flex-shrink: 0; padding: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
                         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-main);">share</span>
                     </button>
                 `;
@@ -1042,7 +1134,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     img.classList.remove('skeleton');
                     // MÁGICA: Apaga qualquer moldura antiga automaticamente
                     Array.from(img.classList).forEach(c => { if (c.startsWith('moldura-')) img.classList.remove(c); });
-                    img.classList.add(userData.profileBorder || 'moldura-padrao');
+                    // Adiciona a moldura escolhida de forma segura!
+                    const molduraEscolhida = userData.profileBorder || 'moldura-padrao';
+                    if (molduraEscolhida && molduraEscolhida.trim() !== '') {
+                        img.classList.add(molduraEscolhida.trim());
+                    }
                     img.style.border = 'none';
                 });
 
@@ -1111,29 +1207,41 @@ if (activeUser) {
     const storageKeyComm = `pintada_comm_msg_count_${activeUser}`;
     const hiddenChatsKey = `pintada_hidden_chats_${activeUser}`;
 
-    // 1. MONITORAR MENSAGENS PRIVADAS E "DESOCULTAR" CHATS
+    // 1. MONITORAR MENSAGENS PRIVADAS, DESOCULTAR E JOGAR PRO TOPO
     window.MessageService.listenToInbox(activeUser, (allMsgs) => {
         const currentCount = allMsgs.length;
         const storedCount = parseInt(localStorage.getItem(storageKeyPrivate) || "0");
 
         let hiddenChats = JSON.parse(localStorage.getItem(hiddenChatsKey)) || [];
+        let recentChats = JSON.parse(localStorage.getItem(`pintada_recent_chats_${activeUser}`)) || [];
         let mudou = false;
 
         allMsgs.forEach(msg => {
+            // Se a pessoa mandou mensagem e estava oculta, volta pra lista
             if (hiddenChats.includes(msg.sender)) {
                 hiddenChats = hiddenChats.filter(id => id !== msg.sender);
+                mudou = true;
+            }
+
+            // Se for uma mensagem NOVA, joga o remetente pro topo da lista!
+            if (currentCount > storedCount) {
+                recentChats = recentChats.filter(id => id !== msg.sender);
+                recentChats.push(msg.sender);
                 mudou = true;
             }
         });
 
         if (mudou) {
             localStorage.setItem(hiddenChatsKey, JSON.stringify(hiddenChats));
+            localStorage.setItem(`pintada_recent_chats_${activeUser}`, JSON.stringify(recentChats));
+
+            // Reorganiza a tela na mesma hora, sem precisar dar F5!
             if (window.location.pathname.includes('messages.html')) {
                 if (typeof window.renderContacts === 'function') window.renderContacts();
-                else location.reload();
             }
         }
 
+        // Adiciona a bolinha no menu se a mensagem for nova
         if (currentCount > storedCount) {
             document.querySelectorAll('a[href="messages.html"], .mobile-item[href="messages.html"]').forEach(addDot);
         }
@@ -1157,3 +1265,95 @@ if (activeUser) {
     };
     checkCommNotifs();
 }
+
+// ==========================================
+// MONITOR DE NOTIFICAÇÕES GLOBAIS (BOLINHA VERMELHA)
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    const activeUser = window.AuthService ? window.AuthService.getCurrentUser() : null;
+    if (!activeUser || window.location.pathname.includes('notifications.html')) return;
+
+    setTimeout(async () => {
+        try {
+            const lastRead = parseInt(localStorage.getItem(`pintada_notif_read_${activeUser}`)) || 0;
+            let hasNew = false;
+
+            // Puxa as últimas postagens para ver se foi mencionado ou tem comentários novos
+            const recentPosts = await window.PostService.getPosts();
+            for (let p of recentPosts) {
+                if (p.timestamp > lastRead && p.content && p.content.includes(`@${activeUser}`)) hasNew = true;
+                if (p.comments) {
+                    for (let c of p.comments) {
+                        if (c.timestamp > lastRead && (c.text.includes(`@${activeUser}`) || p.authorUsername === activeUser)) hasNew = true;
+                    }
+                }
+                if (hasNew) break;
+            }
+
+            if (hasNew) {
+                document.querySelectorAll('a[href="notifications.html"], .mobile-item[href="notifications.html"]').forEach(el => {
+                    if (!el.querySelector('.notif-dot')) {
+                        const dot = document.createElement('span');
+                        dot.className = 'notif-dot';
+                        dot.style.cssText = 'background:#EF4444; border-radius:50%; width:10px; height:10px; position:absolute; top:5px; right:5px;';
+                        el.style.position = 'relative';
+                        el.appendChild(dot);
+                    }
+                });
+            }
+        } catch (e) { console.log("Erro ao checar notificações", e); }
+    }, 2000); // Aguarda 2s para não pesar o carregamento inicial
+});
+
+// ==========================================
+// AUTO-EXPANSÃO DE TEXTAREAS (BIO, POSTAGENS, ETC)
+// ==========================================
+document.addEventListener('input', function (e) {
+    if (e.target.tagName.toLowerCase() === 'textarea') {
+        e.target.style.height = 'auto'; // Reseta a altura
+        e.target.style.height = (e.target.scrollHeight) + 'px'; // Define a nova altura baseada no conteúdo
+    }
+}, false);
+
+document.addEventListener('DOMContentLoaded', () => {
+    const bioInput = document.getElementById('edit-bio');
+    if (bioInput) {
+        bioInput.addEventListener('input', function () {
+            this.style.height = 'auto'; // Reseta o tamanho
+            this.style.height = this.scrollHeight + 'px'; // Estica pro tamanho do texto
+        });
+    }
+});
+
+// ==========================================
+// DESTRUIDOR DE BOLINHAS (Limpeza ao clicar)
+// ==========================================
+document.addEventListener('click', (e) => {
+    const activeUsername = window.AuthService ? window.AuthService.getCurrentUser() : null;
+
+    // 1. Apaga a bolinha do chat clicado e avisa o sistema que foi lido
+    const chatLink = e.target.closest('.contact-item');
+    if (chatLink) {
+        // Puxa o ID da pessoa através do data-id (AQUI ESTAVA O ERRO!)
+        const userId = chatLink.getAttribute('data-id');
+        if (userId) {
+            localStorage.setItem('pintada_chat_read_' + userId, 'true');
+        }
+
+        // Destrói o visual da bolinha na mesma hora
+        const dot = chatLink.querySelector('span[style*="background: #EF4444"]');
+        if (dot) dot.remove();
+    }
+
+    // 2. Limpa bolinhas da barra inferior ao clicar nos ícones
+    const navBtn = e.target.closest('a[href*="messages.html"], a[href*="notifications.html"], .mobile-item');
+    if (navBtn) {
+        const navDot = navBtn.querySelector('.msg-dot, .notif-dot');
+        if (navDot) navDot.remove();
+
+        if (navBtn.href && navBtn.href.includes('messages.html') && activeUsername) {
+            const realCount = localStorage.getItem(`pintada_msg_count_realtime_${activeUsername}`) || 0;
+            localStorage.setItem(`pintada_msg_count_${activeUsername}`, realCount);
+        }
+    }
+});

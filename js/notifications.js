@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    localStorage.setItem(`pintada_notif_read_${activeUsername}`, Date.now());
+
     const notifArea = document.getElementById('notifications-render-area');
     if (!notifArea) return;
 

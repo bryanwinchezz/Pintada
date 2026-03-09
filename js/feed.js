@@ -80,10 +80,10 @@ function generatePostHTML(post, currentUser) {
     // Verifica se há Imagem ou GIF
     // Dentro de generatePostHTML, na parte da mediaHTML:
     if (post.image) {
-        mediaHTML = `<div class="post-media-container" style="margin-top: 12px;">
+        mediaHTML = `<div class="post-media-container" style="margin-top: 12px; position: relative; z-index: 10;">
                     <img src="${post.image}" 
                          onclick="window.openImageModal('${post.image}')" 
-                         style="border-radius: 12px; max-width: 100%; border: 1px solid var(--border-color); cursor: pointer; display: block;">
+                         style="border-radius: 12px; width: 100%; max-height: 500px; object-fit: cover; object-position: center; border: 1px solid var(--border-color); cursor: pointer; display: block;">
                  </div>`;
     } else if (post.gif) {
         mediaHTML = `<div class="post-media-container" style="margin-top: 12px;">

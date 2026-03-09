@@ -3069,3 +3069,45 @@ body:not([data-theme="dark"]) #chat-input-box {
     background-clip: content-box, border-box !important;
     padding: 0 !important;
 }
+
+/* CORREÇÃO: Hífen automático em quebra de palavras para Posts, Chats e Bio */
+.post-content p, 
+.comment-content p, 
+.chat-bubble, 
+.profile-bio {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    -webkit-hyphens: auto !important;
+    -ms-hyphens: auto !important;
+    hyphens: auto !important;
+}
+
+/* CORREÇÃO FIXA: Garante que a barra de digitar mensagem NUNCA suma no celular */
+.chat-input-area, 
+.comment-input-area {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background-color: var(--card-bg) !important;
+    z-index: 100 !important;
+    flex-shrink: 0 !important;
+    min-height: 60px;
+}
+
+/* BLINDAGEM MÁXIMA: Impede o botão de compartilhar de ficar oval no perfil */
+.profile-header button[style*="border-radius: 50%"],
+.profile-actions button[style*="border-radius: 50%"],
+button[onclick*="share"] {
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    flex-shrink: 0 !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}

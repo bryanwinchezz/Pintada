@@ -20,12 +20,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     let hiddenChats = JSON.parse(localStorage.getItem(`pintada_hidden_chats_${chatUser}`)) || [];
     let recentChats = JSON.parse(localStorage.getItem(`pintada_recent_chats_${chatUser}`)) || [];
 
-    // 2. SE ABRIU UM CHAT NOVO, SALVA NA MEMÓRIA
+    // 2. SE ABRIU UM CHAT NOVO OU ANTIGO, JOGA ELE PRO TOPO
     if (activeContactId) {
-        if (!recentChats.includes(activeContactId)) {
-            recentChats.push(activeContactId);
-            localStorage.setItem(`pintada_recent_chats_${chatUser}`, JSON.stringify(recentChats));
-        }
+        recentChats = recentChats.filter(id => id !== activeContactId); // Tira da posição velha
+        recentChats.push(activeContactId); // Joga no final do array (que é o Topo da tela)
+        localStorage.setItem(`pintada_recent_chats_${chatUser}`, JSON.stringify(recentChats));
+
         if (hiddenChats.includes(activeContactId)) {
             hiddenChats = hiddenChats.filter(id => id !== activeContactId);
             localStorage.setItem(`pintada_hidden_chats_${chatUser}`, JSON.stringify(hiddenChats));
@@ -116,9 +116,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // RENDERIZAR OS CONTATOS NA TELA
     // ==========================================
     window.renderContacts = () => {
+        // Reorganiza a lista: Chats que estão no 'recentChats' (do mais novo pro mais velho) vão pro topo
+        contacts.sort((a, b) => {
+            const indexA = recentChats.indexOf(a.username);
+            const indexB = recentChats.indexOf(b.username);
+            if (indexA > -1 && indexB > -1) return indexB - indexA; // Ambos recentes: o mais novo ganha
+            if (indexA > -1) return -1; // Só A é recente
+            if (indexB > -1) return 1;  // Só B é recente
+            return 0; // Nenhum é recente, mantém ordem alfabética/seguir
+        });
         if (!contactListContainer) return;
         contactListContainer.innerHTML = contacts.map(c => {
             const checkboxHTML = isDeleteMode ? `<input type="checkbox" style="width:18px; height:18px; margin-right:8px; flex-shrink: 0;" class="delete-chat-cb" data-id="${c.username}" ${selectedChatsToDelete.has(c.username) ? 'checked' : ''}>` : '';
+            const isReadLocally = localStorage.getItem('pintada_chat_read_' + c.username) === 'true';
+            const isUnread = c.username !== activeContactId && recentChats[recentChats.length - 1] === c.username && !isReadLocally;
+            const unreadDotHTML = isUnread && !isDeleteMode ? `<span style="position: absolute; top: 0; right: 0; width: 12px; height: 12px; background: #EF4444; border-radius: 50%; border: 2px solid var(--card-bg);"></span>` : '';
 
             // Selo ligeiramente menor para encaixar perfeito no Mobile
             const seloPequeno = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(c.badge).replace('1.15em', '0.95em') : '';
@@ -133,6 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ${checkboxHTML}
                     <div style="position: relative; display: flex; justify-content: center;">
                         <img src="${c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=F4B41A&color=fff`}" class="contact-avatar" style="margin: 0 auto;">
+                        ${unreadDotHTML}
                     </div>
                     <div class="contact-info" style="margin-top: 6px; overflow: hidden;">
                         <div class="contact-name-wrapper" style="display: flex; align-items: center; justify-content: center; gap: 2px;">
@@ -156,10 +169,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     window.history.pushState({}, '', `messages.html?chat=${id}`);
                     activeContactId = id;
 
-                    if (!recentChats.includes(id)) {
-                        recentChats.push(id);
-                        localStorage.setItem(`pintada_recent_chats_${chatUser}`, JSON.stringify(recentChats));
-                    }
+                    // TRAVA A BOLINHA NA MEMÓRIA IMEDIATAMENTE!
+                    localStorage.setItem('pintada_chat_read_' + id, 'true');
+
+                    // MÁGICA: Tira a pessoa da posição antiga e joga pro topo da lista!
+                    recentChats = recentChats.filter(chatId => chatId !== id);
+                    recentChats.push(id);
+                    localStorage.setItem(`pintada_recent_chats_${chatUser}`, JSON.stringify(recentChats));
 
                     renderContacts();
                     loadChatRealTime();
@@ -205,15 +221,40 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (currentStatusUnsubscribe) currentStatusUnsubscribe();
 
             currentStatusUnsubscribe = window.AuthService.listenToUserStatus(activeContactId, (isOnline, lastSeen) => {
+                // Verifica se esteve online nos últimos 5 minutos
                 const isReallyOnline = isOnline && lastSeen && (Date.now() - lastSeen < 300000);
+
                 if (isReallyOnline) {
                     contactStatusEl.textContent = "Online agora";
                     contactStatusEl.style.color = "#10B981";
                 } else {
                     contactStatusEl.style.color = "var(--text-muted)";
-                    if (!lastSeen) { contactStatusEl.textContent = "Offline"; return; }
+
+                    // Se a pessoa nunca teve o status registrado
+                    if (!lastSeen) {
+                        contactStatusEl.textContent = "Offline";
+                        return;
+                    }
+
+                    // Pega as datas para comparar
                     const date = new Date(lastSeen);
-                    contactStatusEl.textContent = `Visto por último às ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                    const hoje = new Date();
+                    const ontem = new Date();
+                    ontem.setDate(hoje.getDate() - 1);
+
+                    const horas = date.getHours().toString().padStart(2, '0');
+                    const min = date.getMinutes().toString().padStart(2, '0');
+
+                    // Lógica inteligente de exibição
+                    if (date.toDateString() === hoje.toDateString()) {
+                        contactStatusEl.textContent = `Visto por último hoje às ${horas}:${min}`;
+                    } else if (date.toDateString() === ontem.toDateString()) {
+                        contactStatusEl.textContent = `Visto por último ontem às ${horas}:${min}`;
+                    } else {
+                        const dia = date.getDate().toString().padStart(2, '0');
+                        const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+                        contactStatusEl.textContent = `Visto por último dia ${dia}/${mes} às ${horas}:${min}`;
+                    }
                 }
             });
         }
@@ -541,7 +582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ==========================================
     // LÓGICA DO MODAL DA COMUNIDADE (NOVO)
     // ==========================================
-window.openCommunityInfoModal = async function (commId) {
+    window.openCommunityInfoModal = async function (commId) {
         const comm = await window.CommunityService.getCommunity(commId);
         if (!comm) return;
 
