@@ -3150,3 +3150,113 @@ button[onclick*="share"] {
     background-clip: content-box, border-box !important;
     padding: 0 !important;
 }
+
+/* ==========================================
+   MOLDURAS DE IMAGENS
+   ========================================== */
+
+/* Exemplo 1: Moldura de Fogo (Precisa de pouco espaço para não sumir) */
+.moldura-img-fogo {
+    background-image: url('https://i.pinimg.com/736x/ee/40/f7/ee40f7f92a0d820ecd3e0f1750d3e66c.jpg') !important;
+    --moldura-padding-feed: 4px;
+    /* Ajuste fino para o feed */
+    --moldura-padding-perfil: 14px;
+    /* Ajuste fino para o perfil */
+    border: none !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+}
+
+/* A sua moldura de teste atualizada */
+.moldura-img-flor {
+    border: none !important;
+    background-image: url('https://png.pngtree.com/png-clipart/20210718/original/pngtree-rose-red-flower-islamic-mandala-facebook-avatar-border-png-image_6533428.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+
+    /* Ajuste aqui os valores dessa moldura específica: */
+    --moldura-padding-feed: 4px;
+    --moldura-padding-perfil: 14px;
+}
+
+.moldura-img-st {
+    background-image: url('molduras/moldura-st.png') !important;
+    
+    /* MÁGICA: Aumenta a imagem da moldura para além dos limites da foto */
+    background-size: 140% 130% !important; 
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    /* Ajuste de espaço para o rosto não bater na moldura que cresceu */
+    --moldura-padding-feed: 6px; 
+    --moldura-padding-perfil: 14px;
+    border: none !important;
+    background-color: transparent !important;
+}
+
+/* ==========================================
+   FOTOS 100% REDONDAS E MOLDURAS CALIBRADAS
+   ========================================== */
+
+/* 1. BLINDAGEM: Força TODAS as fotos a serem círculos perfeitos sem quebrar o site */
+img[class*="moldura-"],
+.post-avatar,
+.comment-avatar,
+.profile-page-avatar,
+#settings-avatar-preview,
+.nav-brand img,
+.contact-avatar,
+#admin-user-avatar {
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    object-fit: cover !important;
+    box-sizing: border-box !important;
+    /* Impede a borda de aumentar o tamanho total da foto */
+}
+
+/* 2. ARO DAS CORES: Espaço fino e elegante para não esmagar a foto no Feed (3px) */
+img[class*="moldura-"] {
+    padding: 0px !important;
+    background-color: transparent !important;
+}
+
+/* 3. ARO DAS CORES NO PERFIL: Um pouco maior no Perfil/Configurações (6px) */
+img.profile-page-avatar[class*="moldura-"],
+img#settings-avatar-preview[class*="moldura-"] {
+    padding: 0px !important;
+}
+
+/* ==========================================
+   MOLDURAS DE IMAGEM (LOGICA INDIVIDUAL)
+   ========================================== */
+
+/* Regra Mestra: Puxa o valor da variável --moldura-padding */
+img[class*="moldura-img-"] {
+    padding: var(--moldura-padding-feed, 8px) !important;
+}
+
+/* No Perfil, ela puxa a variável de perfil */
+img.profile-page-avatar[class*="moldura-img-"],
+img#settings-avatar-preview[class*="moldura-img-"] {
+    padding: var(--moldura-padding-perfil, 16px) !important;
+}
+
+/* ==========================================
+   CONTROLAR A GROSSURA DAS MOLDURAS (CORES E GRADIENTES)
+   ========================================== */
+
+/* 1. Grossura no Feed e Comentários (Fotos pequenas) */
+img[class*="moldura-"]:not([class*="moldura-img-"]) {
+    border-width: 4px !important;
+    /* O tamanho original era 4px. Aumenta ou diminui aqui! */
+}
+
+/* 2. Grossura no Perfil e Configurações (Fotos gigantes) */
+img.profile-page-avatar[class*="moldura-"]:not([class*="moldura-img-"]),
+img#settings-avatar-preview[class*="moldura-"]:not([class*="moldura-img-"]) {
+    border-width: 8px !important;
+    /* Na foto gigante do perfil pode ser ainda mais grossa! */
+}
