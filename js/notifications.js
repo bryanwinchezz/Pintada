@@ -60,6 +60,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             myPosts.forEach(post => {
+                // LÓGICA DO RESUMO DA PUBLICAÇÃO (SNIPPET)
+                let postSnippet = "";
+                if (post.content && post.content.trim() !== "") {
+                    postSnippet = `"${post.content.substring(0, 30)}..."`;
+                } else if (post.image || post.gif) {
+                    postSnippet = "uma imagem 📷";
+                } else if (post.audio) {
+                    postSnippet = "um áudio 🎵";
+                } else {
+                    postSnippet = "uma publicação";
+                }
+
                 if (post.likedBy) {
                     post.likedBy.forEach(username => {
                         if (username !== activeUsername) {
@@ -69,9 +81,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 type: 'like',
                                 icon: 'favorite',
                                 color: '#E0245E',
-                                text: `<strong>@${username}</strong> curtiu sua publicação: <em>"${post.content.substring(0, 30)}..."</em>`,
+                                text: `<strong>@${username}</strong> curtiu: <em>${postSnippet}</em>`,
                                 time: formatarDataNotificacao(likeTime),
-                                rawTimestamp: likeTime
+                                rawTimestamp: likeTime,
+                                postId: post.id // Guarda o ID do post para o clique
                             });
                         }
                     });
@@ -81,14 +94,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     post.comments.forEach(comment => {
                         if (comment.authorUsername !== activeUsername) {
                             const cTime = comment.timestamp || post.timestamp;
+                            let commentSnippet = comment.text ? `"${comment.text.substring(0, 25)}..."` : "um comentário";
                             notifications.push({
                                 id: `comment_${post.id}_${cTime}`,
                                 type: 'comment',
                                 icon: 'chat_bubble',
                                 color: '#3B82F6',
-                                text: `<strong>${window.escapeHTML(comment.authorName)}</strong> comentou na sua publicação.`,
+                                text: `<strong>${window.escapeHTML(comment.authorName)}</strong> comentou: <em>${commentSnippet}</em>`,
                                 time: formatarDataNotificacao(cTime),
-                                rawTimestamp: cTime
+                                rawTimestamp: cTime,
+                                postId: post.id // Guarda o ID do post para o clique
                             });
                         }
                     });
@@ -107,7 +122,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             color: '#1D9BF0',
                             text: `<strong>${window.escapeHTML(post.authorName)}</strong> mencionou você numa publicação.`,
                             time: formatarDataNotificacao(post.timestamp),
-                            rawTimestamp: post.timestamp
+                            rawTimestamp: post.timestamp,
+                            postId: post.id // <-- ISSO FAZ O CLIQUE FUNCIONAR!
                         });
                     }
                 }
@@ -123,9 +139,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     type: 'reply',
                                     icon: 'reply',
                                     color: '#F4B41A', // Laranja Pintada
-                                    text: `<strong>${window.escapeHTML(comment.authorName)}</strong> respondeu a você num comentário.`,
+                                    text: `<strong>${window.escapeHTML(comment.authorName)}</strong> mencionou você num comentário.`,
                                     time: formatarDataNotificacao(cTime),
-                                    rawTimestamp: cTime
+                                    rawTimestamp: cTime,
+                                    postId: post.id // <-- ISSO FAZ O CLIQUE FUNCIONAR!
                                 });
                             }
                         }
@@ -143,7 +160,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         color: '#8B5CF6',
                         text: `<strong>@${u.username}</strong> começou a seguir você.`,
                         time: formatarDataNotificacao(followTime),
-                        rawTimestamp: followTime
+                        rawTimestamp: followTime,
+                        targetUser: u.username
                     });
                 }
             });
@@ -171,7 +189,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 <div id="notifs-list-container">
                     ${notifications.map(n => `
-                        <div class="notification-card" style="display: flex; gap: 15px; background: var(--card-bg); padding: 16px; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 12px; align-items: center; transition: 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateX(5px)'; this.style.borderColor='${n.color}'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-color)'">
+                        <div class="notification-card" onclick="if(!event.target.classList.contains('notif-checkbox')) { if('${n.postId}' !== 'undefined') window.location.href='post.html?id=${n.postId}'; else if('${n.targetUser}' !== 'undefined') window.location.href='profile.html?user=${n.targetUser}'; }" style="display: flex; gap: 15px; background: var(--card-bg); padding: 16px; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 12px; align-items: center; transition: 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateX(5px)'; this.style.borderColor='${n.color}'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-color)'">
                             <input type="checkbox" class="notif-checkbox" data-id="${n.id}" style="display: ${isDeleteMode ? 'block' : 'none'}; width: 18px; height: 18px; accent-color: var(--brand-color); cursor: pointer; transition: 0.3s;">
                             
                             <div style="background: ${n.color}20; width: 48px; height: 48px; min-width: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">

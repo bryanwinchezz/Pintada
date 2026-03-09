@@ -27,10 +27,11 @@ function generatePostHTML(post, currentUser) {
     // === GERA O HTML DO SELO (Se o autor do post tiver um) ===
     const badgeHTML = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(post.authorBadge) : '';
 
-    // Função mágica que acha o @ e transforma em link azul
+    // Função mágica que acha o @ e a # e transforma em links clicáveis
     const formatText = (text) => {
-        let formatted = text.replace(/@(\w+)/g, '<a href="profile.html?user=$1" class="mention-text">@$1</a>');
-        formatted = formatted.replace(/#(\w+)/g, '<span style="color: #1D9BF0; font-weight: 500;">#$1</span>');
+        let formatted = text.replace(/@(\w+)/g, '<a href="profile.html?user=$1" class="mention-text" style="color: #1d9bf0; font-weight: 600; text-decoration: none;">@$1</a>');
+        // AGORA É UM LINK REAL QUE REDIRECIONA PARA A BUSCA:
+        formatted = formatted.replace(/#([a-zA-Z0-9_À-ÿ]+)/g, '<a href="index.html?hashtag=$1" style="color: #1D9BF0; font-weight: 500; text-decoration: none;">#$1</a>');
         return formatted;
     };
 
@@ -245,10 +246,40 @@ async function renderAllFeeds() {
     const createAvatar = document.querySelector('.create-post-header .post-avatar');
     if (createAvatar) createAvatar.src = currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=F4B41A&color=fff`;
 
-    // Renderiza a Home Instantaneamente
-    if (homeArea) homeArea.innerHTML = allPosts.map(p => generatePostHTML(p, currentUser)).join('');
-
+    // === SISTEMA DE FILTRO POR HASHTAG (BUSCA EXATA) ===
     const urlParams = new URLSearchParams(window.location.search);
+    const hashtagFilter = urlParams.get('hashtag');
+
+    if (homeArea) {
+        if (hashtagFilter) {
+            // A hashtag exata que queremos encontrar (em minúsculas para não dar erro)
+            const exactTagToFind = `#${hashtagFilter.toLowerCase()}`;
+
+            const filteredPosts = allPosts.filter(p => {
+                if (!p.content) return false;
+
+                // Extrai APENAS as hashtags reais da publicação usando a mesma regra do Trending
+                const tagsNoPost = p.content.match(/#[a-zA-Z0-9_À-ÿ]+/gi) || [];
+
+                // Checa se alguma das hashtags do post é EXATAMENTE igual à clicada
+                return tagsNoPost.some(tag => tag.toLowerCase() === exactTagToFind);
+            });
+
+            // Renderiza o cabeçalho de aviso e as publicações filtradas
+            homeArea.innerHTML = `
+                <div style="padding: 15px; background: var(--brand-gradient); color: white; border-radius: 12px; margin-bottom: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                    <span>A mostrar resultados para #${hashtagFilter}</span>
+                    <a href="index.html" style="color: white; text-decoration: underline; font-size: 0.9rem;">Ver tudo</a>
+                </div>
+            ` + (filteredPosts.length > 0
+                    ? filteredPosts.map(p => generatePostHTML(p, currentUser)).join('')
+                    : `<p style="text-align:center; color:var(--text-muted); padding:20px;">Nenhuma publicação encontrada com a hashtag exata #${hashtagFilter}.</p>`);
+        } else {
+            // Renderiza a Home Instantaneamente (Comportamento normal)
+            homeArea.innerHTML = allPosts.map(p => generatePostHTML(p, currentUser)).join('');
+        }
+    }
+
     const viewedUsername = urlParams.get('user') || currentUser.username;
     const activeTab = document.querySelector('.profile-tab.active');
 
@@ -289,29 +320,60 @@ async function renderAllFeeds() {
 window.renderTrendingTopics = async function () {
     const trendingContainer = document.querySelector('.sidebar-right .widget');
     if (!trendingContainer) return;
-    const allPosts = await window.PostService.getPosts();
+
+    const allPosts = await window.PostService.getAllPostsForTrending();
+
     let hashtagCounts = {};
+    let originalCasing = {}; // Guarda a forma original (Maiúscula/Minúscula) para ficar bonito na tela
 
     allPosts.forEach(post => {
-        // Pega todas as hashtags que o utilizador digitou no post
         const words = post.content.match(/#[a-zA-Z0-9_À-ÿ]+/gi) || [];
 
-        // O SEGREDO AQUI: O 'Set' remove as duplicadas DENTRO da mesma publicação
-        const uniqueWords = [...new Set(words)];
+        // 1. Transforma tudo em minúsculas para agrupar #Pintada e #pintada
+        const lowerWords = words.map(w => w.toLowerCase());
 
-        uniqueWords.forEach(w => {
+        // 2. Remove as duplicadas dentro do MESMO post (se a pessoa usar #Pintada duas vezes na mesma frase)
+        const uniqueLowerWords = [...new Set(lowerWords)];
+
+        // 3. Salva a forma bonita original
+        words.forEach(w => {
+            if (!originalCasing[w.toLowerCase()]) {
+                originalCasing[w.toLowerCase()] = w;
+            }
+        });
+
+        // 4. Soma a matemática
+        uniqueLowerWords.forEach(w => {
             hashtagCounts[w] = (hashtagCounts[w] || 0) + 1;
         });
     });
 
+    // Ordena do maior para o menor
     const sortedHashtags = Object.entries(hashtagCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
 
-    // Pequena correção gramatical: se for 1, escreve "publicação", se for mais, escreve "publicações"
     let topics = sortedHashtags.length > 0
-        ? sortedHashtags.map(h => ({ category: 'Em Alta na Pintada', title: h[0], stats: `${h[1]} ${h[1] === 1 ? 'publicação' : 'publicações'}` }))
-        : [{ category: 'Bem-vindo', title: '#NovaPintada', stats: 'Recomendado' }];
+        ? sortedHashtags.map(h => {
+            const lowerTag = h[0];
+            const count = h[1];
+            const displayTag = originalCasing[lowerTag]; // Puxa o #Pintada (Bonito)
 
-    trendingContainer.innerHTML = `<h3 class="widget-title">O que está acontecendo</h3>` + topics.map(t => `<div class="trending-item"><span class="trending-meta">${t.category}</span><h4 class="trending-title" style="color: #D97A00;">${t.title}</h4><span class="trending-stats">${t.stats}</span></div>`).join('');
+            return {
+                category: 'Em Alta na Pintada',
+                title: displayTag,
+                rawTag: displayTag.replace('#', ''),
+                stats: `${count} ${count === 1 ? 'publicação' : 'publicações'}`
+            };
+        })
+        : [{ category: 'Bem-vindo', title: '#NovaPintada', rawTag: 'NovaPintada', stats: 'Recomendado' }];
+
+    // Renderiza o clique
+    trendingContainer.innerHTML = `<h3 class="widget-title">O que está acontecendo</h3>` + topics.map(t => `
+        <div class="trending-item" onclick="window.location.href='index.html?hashtag=${t.rawTag}'" style="cursor: pointer; transition: 0.2s; border-radius: 8px;" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='transparent'">
+            <span class="trending-meta">${t.category}</span>
+            <h4 class="trending-title" style="color: #D97A00;">${t.title}</h4>
+            <span class="trending-stats">${t.stats}</span>
+        </div>
+    `).join('');
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -820,13 +882,11 @@ document.getElementById('publish-btn')?.addEventListener('click', async () => {
 // ==========================================
 window.addEventListener('scroll', async () => {
     const homeArea = document.getElementById('posts-render-area');
-    // Só roda na Home, e ignora se estiver na página de um post só
     if (!homeArea || window.location.pathname.includes('post.html')) return;
 
-    // Deteta se o utilizador rolou quase até o fim da página
     if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
 
-        if (window.isFetchingMorePosts) return; // Evita puxar 20x ao mesmo tempo
+        if (window.isFetchingMorePosts) return;
         window.isFetchingMorePosts = true;
 
         const activeUsername = window.AuthService.getCurrentUser();
@@ -839,24 +899,45 @@ window.addEventListener('scroll', async () => {
 
         try {
             const currentUser = await window.AuthService.getUserData(activeUsername);
-            // Avisa o Firebase: "Mande mais!"
-            const morePosts = await window.PostService.getPosts(true);
+            let morePosts = await window.PostService.getPosts(true);
+
+            // ==========================================
+            // MÁGICA: O SCROLL AGORA RESPEITA A HASHTAG!
+            // ==========================================
+            const urlParams = new URLSearchParams(window.location.search);
+            const hashtagFilter = urlParams.get('hashtag');
+
+            if (hashtagFilter) {
+                const exactTagToFind = `#${hashtagFilter.toLowerCase()}`;
+                morePosts = morePosts.filter(p => {
+                    if (!p.content) return false;
+                    const tagsNoPost = p.content.match(/#[a-zA-Z0-9_À-ÿ]+/gi) || [];
+                    return tagsNoPost.some(tag => tag.toLowerCase() === exactTagToFind);
+                });
+            }
 
             document.getElementById(loaderId)?.remove();
 
-            if (morePosts.length > 0) {
-                // Junta os novos posts aos antigos na tela
-                homeArea.insertAdjacentHTML('beforeend', morePosts.map(p => generatePostHTML(p, currentUser)).join(''));
+            // ESCUDO DE DUPLICATAS: Checa todos os IDs que já estão desenhados na tela
+            const existingIds = Array.from(homeArea.querySelectorAll('.post-card')).map(card => card.getAttribute('data-post-id'));
+
+            // Só deixa passar os posts que ainda NÃO estão na tela
+            const uniqueMorePosts = morePosts.filter(p => !existingIds.includes(String(p.id)));
+
+            if (uniqueMorePosts.length > 0) {
+                homeArea.insertAdjacentHTML('beforeend', uniqueMorePosts.map(p => generatePostHTML(p, currentUser)).join(''));
+            } else if (morePosts.length > 0) {
+                // Se barrou posts porque eram duplicados, avisa o sistema que já terminou a busca desta rodada
+                window.isFetchingMorePosts = false;
             } else {
                 if (!document.getElementById('no-more-posts')) {
-                    homeArea.insertAdjacentHTML('beforeend', `<p id="no-more-posts" style="text-align:center; padding: 20px; color: var(--text-muted);">Você chegou ao fim! Não há mais publicações.</p>`);
+                    homeArea.insertAdjacentHTML('beforeend', `<p id="no-more-posts" style="text-align:center; padding: 20px; color: var(--text-muted);">Você chegou ao fim das publicações!</p>`);
                 }
             }
         } catch (error) {
             console.error("Erro no Scroll:", error);
             document.getElementById(loaderId)?.remove();
         } finally {
-            // Aguarda 1 segundo antes de permitir carregar mais
             setTimeout(() => window.isFetchingMorePosts = false, 1000);
         }
     }

@@ -107,7 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(async () => {
             try {
                 const lastCheck = parseInt(localStorage.getItem(`pintada_notif_time_${activeUsername}`)) || 0;
-                const posts = await window.PostService.getPosts();
+
+                // CORREÇÃO: Usa a função especial que não estraga a paginação (scroll infinito) do Feed!
+                const posts = await window.PostService.getAllPostsForTrending();
+
                 let hasNew = false;
 
                 for (let p of posts) {

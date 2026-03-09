@@ -36,6 +36,12 @@ const PostService = {
 
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     },
+    async getAllPostsForTrending() {
+        // MÁGICA: Busca as últimas 100 publicações só para calcular o Trending perfeitamente, sem estragar a paginação do Feed!
+        const q = query(collection(window.db, "posts"), orderBy("timestamp", "desc"), limit(100));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => doc.data());
+    },
     async getMyPosts(username) {
         // Busca APENAS os posts onde o autor é o usuário logado
         const snapshot = await getDocs(query(collection(window.db, "posts"), where("authorUsername", "==", username)));
