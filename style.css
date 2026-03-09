@@ -2707,7 +2707,12 @@ body {
 
 /* NOTIFICAÇÃO NO PC: Fica elegantemente ao lado do texto da aba */
 @media (min-width: 769px) {
-    .sidebar-link, .nav-item { position: relative; }
+
+    .sidebar-link,
+    .nav-item {
+        position: relative;
+    }
+
     .msg-dot {
         position: absolute !important;
         right: 15px !important;
@@ -2720,6 +2725,7 @@ body {
 
 /* INTERFACE MOBILE: Notificação e Botões de Gestão */
 @media (max-width: 768px) {
+
     /* Mostra os botões de Criar Grupo e Lixeira no topo do chat mobile */
     .contacts-title-row {
         display: flex !important;
@@ -2727,15 +2733,21 @@ body {
         padding: 8px 15px !important;
         gap: 10px;
     }
-    .contacts-title-row h3 { display: none; } /* Ganha espaço escondendo o texto "Mensagens" */
+
+    .contacts-title-row h3 {
+        display: none;
+    }
+
+    /* Ganha espaço escondendo o texto "Mensagens" */
 
     /* Notificação no telemóvel: Fica centralizada abaixo do ícone */
-    .mobile-item { 
-        position: relative; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
+    .mobile-item {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
+
     .msg-dot {
         position: absolute !important;
         bottom: 5px !important;
@@ -3020,6 +3032,48 @@ body:not([data-theme="dark"]) #chat-input-box {
     }
 }
 
+/* CORREÇÃO: Hífen automático em quebra de palavras para Posts, Chats e Bio */
+.post-content p,
+.comment-content p,
+.chat-bubble,
+.profile-bio {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    -webkit-hyphens: auto !important;
+    -ms-hyphens: auto !important;
+    hyphens: auto !important;
+}
+
+/* CORREÇÃO FIXA: Garante que a barra de digitar mensagem NUNCA suma no celular */
+.chat-input-area,
+.comment-input-area {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background-color: var(--card-bg) !important;
+    z-index: 100 !important;
+    flex-shrink: 0 !important;
+    min-height: 60px;
+}
+
+/* BLINDAGEM MÁXIMA: Impede o botão de compartilhar de ficar oval no perfil */
+.profile-header button[style*="border-radius: 50%"],
+.profile-actions button[style*="border-radius: 50%"],
+button[onclick*="share"] {
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    flex-shrink: 0 !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+
 /* ==========================================
    MOLDURAS DE PERFIL (COM PADRÃO PRETO E NOVAS CORES)
    ========================================== */
@@ -3070,44 +3124,29 @@ body:not([data-theme="dark"]) #chat-input-box {
     padding: 0 !important;
 }
 
-/* CORREÇÃO: Hífen automático em quebra de palavras para Posts, Chats e Bio */
-.post-content p, 
-.comment-content p, 
-.chat-bubble, 
-.profile-bio {
-    word-wrap: break-word !important;
-    word-break: break-word !important;
-    -webkit-hyphens: auto !important;
-    -ms-hyphens: auto !important;
-    hyphens: auto !important;
-}
-
-/* CORREÇÃO FIXA: Garante que a barra de digitar mensagem NUNCA suma no celular */
-.chat-input-area, 
-.comment-input-area {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    background-color: var(--card-bg) !important;
-    z-index: 100 !important;
-    flex-shrink: 0 !important;
-    min-height: 60px;
-}
-
-/* BLINDAGEM MÁXIMA: Impede o botão de compartilhar de ficar oval no perfil */
-.profile-header button[style*="border-radius: 50%"],
-.profile-actions button[style*="border-radius: 50%"],
-button[onclick*="share"] {
-    border-radius: 50% !important;
-    aspect-ratio: 1 / 1 !important;
-    flex-shrink: 0 !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
-    max-width: 40px !important;
-    max-height: 40px !important;
+/* Moldura Estilo Instagram (Rosa/Laranja/Amarelo) */
+.moldura-insta {
+    border: 4px solid transparent !important;
+    background-image: linear-gradient(var(--card-bg), var(--card-bg)), linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;
+    background-origin: border-box !important;
+    background-clip: content-box, border-box !important;
     padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
+}
+
+/* Moldura Preto e Branco / Prata */
+.moldura-pb {
+    border: 4px solid transparent !important;
+    background-image: linear-gradient(var(--card-bg), var(--card-bg)), linear-gradient(135deg, #111111 0%, #888888 50%, #dddddd 100%) !important;
+    background-origin: border-box !important;
+    background-clip: content-box, border-box !important;
+    padding: 0 !important;
+}
+
+/* Moldura Oceano (Verde Água / Azul) */
+.moldura-ocean {
+    border: 4px solid transparent !important;
+    background-image: linear-gradient(var(--card-bg), var(--card-bg)), linear-gradient(135deg, #02b3e4 0%, #02dfb9 100%) !important;
+    background-origin: border-box !important;
+    background-clip: content-box, border-box !important;
+    padding: 0 !important;
 }

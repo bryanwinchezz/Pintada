@@ -1130,11 +1130,15 @@ window.getBadgeHTML = function (badgeType) {
         'staff': 'color: #8B5CF6;',
         'green': 'color: #10B981;',
         'pink': 'color: #EC4899;',
-        // Preto "brilhante" (Chumbo escuro metálico) para contrastar no Dark Mode
         'black': 'color: #404040; text-shadow: 0px 0px 1px rgba(255,255,255,0.3);',
         'brown': 'color: #A0522D;',
         'rainbow': 'background: linear-gradient(to bottom, #E40303 0%, #E40303 16.6%, #FF8C00 16.6%, #FF8C00 33.3%, #FFED00 33.3%, #FFED00 50%, #008026 50%, #008026 66.6%, #004DFF 66.6%, #004DFF 83.3%, #750787 83.3%, #750787 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;',
-        'owner': 'background: linear-gradient(135deg, #FFDF00 0%, #F4B41A 40%, #8B0000 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;'
+        'owner': 'background: linear-gradient(135deg, #FFDF00 0%, #F4B41A 40%, #8B0000 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;',
+
+        // NOVOS SELOS AQUI:
+        'insta': 'background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;',
+        'pb': 'background: linear-gradient(135deg, #111111 0%, #888888 50%, #dddddd 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;',
+        'ocean': 'background: linear-gradient(135deg, #02b3e4 0%, #02dfb9 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;'
     };
 
     const styleString = styles[badgeType] || styles['blue'];
