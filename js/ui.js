@@ -297,6 +297,32 @@ async function loadUserDataUI() {
     const user = await window.AuthService.getUserData(targetUsername);
     if (!user) { showToast("Perfil não encontrado.", "error"); return; }
 
+    // ==========================================
+    // MÁGICA: Atualiza o título da aba e as Meta Tags para compartilhamento!
+    // ==========================================
+    if (isProfilePage) {
+        document.title = `${user.name} | Pintada`;
+
+        // Tenta achar a meta tag de título de compartilhamento (OG:Title) ou cria uma nova
+        let ogTitle = document.querySelector('meta[property="og:title"]');
+        if (!ogTitle) {
+            ogTitle = document.createElement('meta');
+            ogTitle.setAttribute('property', 'og:title');
+            document.head.appendChild(ogTitle);
+        }
+        ogTitle.setAttribute('content', `Perfil de ${user.name} na Pintada 🐆`);
+
+        // Tenta achar a meta tag de descrição (OG:Description) ou cria uma nova
+        let ogDesc = document.querySelector('meta[property="og:description"]');
+        if (!ogDesc) {
+            ogDesc = document.createElement('meta');
+            ogDesc.setAttribute('property', 'og:description');
+            document.head.appendChild(ogDesc);
+        }
+        ogDesc.setAttribute('content', user.bio ? user.bio : `Venha ver o perfil de ${user.name} na Pintada!`);
+    }
+    // ==========================================
+
     // Preenche textos principais (AGORA COM O SELO!)
     const badgeHTML = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(user.badge) : '';
     document.querySelectorAll('.profile-name').forEach(el => {
@@ -1197,7 +1223,7 @@ if (logoutSettingsBtn) {
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const activeUser = window.AuthService ? window.AuthService.getCurrentUser() : null;
-    
+
     if (activeUser) {
         const addDot = (el) => {
             if (!el || el.querySelector('.msg-dot')) return;
@@ -1225,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     hiddenChats = hiddenChats.filter(id => id !== msg.sender);
                     mudou = true;
                 }
-                
+
                 // Se for uma mensagem NOVA, joga o remetente pro topo da lista!
                 if (currentCount > storedCount) {
                     recentChats = recentChats.filter(id => id !== msg.sender);
@@ -1237,7 +1263,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (mudou) {
                 localStorage.setItem(hiddenChatsKey, JSON.stringify(hiddenChats));
                 localStorage.setItem(`pintada_recent_chats_${activeUser}`, JSON.stringify(recentChats));
-                
+
                 // Reorganiza a tela na mesma hora, sem precisar dar F5!
                 if (window.location.pathname.includes('messages.html')) {
                     if (typeof window.renderContacts === 'function') window.renderContacts();
