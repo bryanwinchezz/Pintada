@@ -3260,3 +3260,33 @@ img#settings-avatar-preview[class*="moldura-"]:not([class*="moldura-img-"]) {
     border-width: 8px !important;
     /* Na foto gigante do perfil pode ser ainda mais grossa! */
 }
+
+/* ==========================================
+   BLINDAGEM DA CAIXA DE MENSAGENS NO MOBILE
+   ========================================== */
+
+/* 1. Força a caixa a ficar presa no fundo, independentemente do tema ou barra do navegador */
+.chat-input-area {
+    position: fixed !important; 
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background-color: var(--card-bg) !important; /* Impede a camuflagem no modo escuro */
+    z-index: 99999 !important; /* Garante que NENHUMA cor de fundo passe por cima dela */
+    border-top: 1px solid var(--border-color) !important;
+    
+    /* Proteção especial para iPhones (Impede que a barra preta do iOS corte a caixa) */
+    padding-bottom: env(safe-area-inset-bottom, 15px) !important; 
+    box-sizing: border-box !important;
+}
+
+/* 2. Dá um espaço extra no histórico de mensagens para a última mensagem não ficar escondida atrás da caixa presa */
+#chat-history-render {
+    padding-bottom: 90px !important; 
+}
+
+/* 3. Usa o Dynamic Viewport (dvh) para a tela principal não quebrar quando a barra do navegador some */
+.messages-layout-container, 
+body {
+    height: 100dvh !important; 
+}
