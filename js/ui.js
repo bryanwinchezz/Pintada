@@ -561,10 +561,8 @@ function initProfileForm() {
 
                 // 3. Monta o pacote com TUDO MISTURADO (Novo + Antigo)
                 const updatedData = {
-                    ...activeUserData, // Traz os hobbies, data de criação, etc!
+                    ...activeUserData, // Copia todos os dados que já existem no banco
                     name: newName,
-                    username: activeUserData.username, // Trava o arroba para não estragar o login!
-                    email: activeUserData.email,       // Trava o email para não estragar o login!
                     bio: newBio,
                     phone: newPhone,
                     website: newWebsite,
@@ -574,6 +572,17 @@ function initProfileForm() {
                     relationship: newRelationship,
                     profileBorder: newBorder
                 };
+
+                // Garante que o @username nunca se perde e não estraga o login
+                updatedData.username = activeUserData.username || activeUsername;
+
+                // 🚨 O ESCUDO DEFINITIVO ANTI-UNDEFINED 🚨
+                // Varre o pacote inteiro e apaga qualquer coisa que seja "undefined"
+                Object.keys(updatedData).forEach(key => {
+                    if (updatedData[key] === undefined) {
+                        delete updatedData[key];
+                    }
+                });
 
                 // Imagens (Se recortou alguma nova)
                 if (window.tempAvatarBase64) updatedData.avatar = window.tempAvatarBase64;
