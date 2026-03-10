@@ -38,12 +38,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 3. JUNTA QUEM VOCÊ SEGUE COM SEUS CHATS RECENTES
     let contactUsernames = new Set([...(currentUserData.followingList || []), ...recentChats]);
 
-    // 4. FILTRA E PREPARA A LISTA DA BARRA LATERAL
+// 4. FILTRA E PREPARA A LISTA DA BARRA LATERAL
     let contacts = allUsers.filter(u =>
         contactUsernames.has(u.username) &&
         u.username !== chatUser &&
         !hiddenChats.includes(u.username)
     );
+
+    // ==================================================================
+    // MÁGICA: ORDENA OS CONTACTOS ANTES DE ESCOLHER QUEM FICA ATIVO
+    // ==================================================================
+    contacts.sort((a, b) => {
+        const indexA = recentChats.indexOf(a.username);
+        const indexB = recentChats.indexOf(b.username);
+        if (indexA > -1 && indexB > -1) return indexB - indexA; // Ambos recentes: o mais novo ganha
+        if (indexA > -1) return -1; // Só A é recente
+        if (indexB > -1) return 1;  // Só B é recente
+        return 0; // Nenhum é recente
+    });
 
     if (contacts.length === 0 && !activeContactId) {
         if (contactListContainer) contactListContainer.innerHTML = "<p style='padding:20px; color:var(--text-muted); text-align: center; font-size: 0.9rem;'>Siga alguém ou pesquise perfis para conversar!</p>";
@@ -52,16 +64,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Agora o contacts[0] é sempre a sua conversa mais recente!
     if (!activeContactId && contacts.length > 0) activeContactId = contacts[0].username;
 
-    // ==========================================
     // 👻 O EXORCISTA DE NOTIFICAÇÕES FANTASMAS 👻
-    // Ao abrir a tela, obriga a memória a saber que o chat visível foi lido!
-    // ==========================================
+    // Ao abrir a tela, obriga a memória a saber que este chat visível foi lido!
     if (activeContactId) {
         localStorage.setItem('pintada_chat_read_' + activeContactId, 'true');
-        
-        // Remove a bolinha visualmente logo no arranque se ela lá estiver
         setTimeout(() => {
             const activeContactDiv = document.querySelector(`.contact-item[data-id="${activeContactId}"]`);
             if (activeContactDiv) {
