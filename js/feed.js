@@ -28,10 +28,14 @@ function generatePostHTML(post, currentUser) {
     const badgeHTML = typeof window.getBadgeHTML === 'function' ? window.getBadgeHTML(post.authorBadge) : '';
 
     // Função mágica que acha o @ e a # e transforma em links clicáveis
+// Função mágica que acha o @ e a # e transforma em links clicáveis
     const formatText = (text) => {
-        let formatted = text.replace(/@(\w+)/g, '<a href="profile.html?user=$1" class="mention-text" style="color: #1d9bf0; font-weight: 600; text-decoration: none;">@$1</a>');
+        // CORREÇÃO: Usamos 'rgb(29, 155, 240)' em vez de '#1d9bf0' para a hashtag não tentar engolir o código de cor!
+        let formatted = text.replace(/@(\w+)/g, '<a href="profile.html?user=$1" class="mention-text" style="color: rgb(29, 155, 240); font-weight: 600; text-decoration: none;">@$1</a>');
+        
         // AGORA É UM LINK REAL QUE REDIRECIONA PARA A BUSCA:
-        formatted = formatted.replace(/#([a-zA-Z0-9_À-ÿ]+)/g, '<a href="index.html?hashtag=$1" style="color: #1D9BF0; font-weight: 500; text-decoration: none;">#$1</a>');
+        formatted = formatted.replace(/#([a-zA-Z0-9_À-ÿ]+)/g, '<a href="index.html?hashtag=$1" style="color: rgb(29, 155, 240); font-weight: 500; text-decoration: none;">#$1</a>');
+        
         return formatted;
     };
 

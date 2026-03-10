@@ -3262,31 +3262,38 @@ img#settings-avatar-preview[class*="moldura-"]:not([class*="moldura-img-"]) {
 }
 
 /* ==========================================
-   BLINDAGEM DA CAIXA DE MENSAGENS NO MOBILE
+   CORREÇÕES MOBILE: CAIXA DE MENSAGENS E ROLAGEM
    ========================================== */
+/* ==========================================
+   CORREÇÕES MOBILE: CAIXA DE MENSAGENS E ROLAGEM
+   ========================================== */
+@media (max-width: 768px) {
+    /* 1. Caixa de mensagens colada no fundo sem espaço cinza! */
+    .chat-input-area {
+        position: fixed !important; 
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        background-color: var(--card-bg) !important;
+        z-index: 99999 !important; 
+        border-top: 1px solid var(--border-color) !important;
+        
+        /* A MÁGICA AQUI: Zera o espaço fantasma */
+        padding-bottom: 0px !important; 
+        margin-bottom: 0px !important;
+    }
 
-/* 1. Força a caixa a ficar presa no fundo, independentemente do tema ou barra do navegador */
-.chat-input-area {
-    position: fixed !important; 
-    bottom: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    background-color: var(--card-bg) !important; /* Impede a camuflagem no modo escuro */
-    z-index: 99999 !important; /* Garante que NENHUMA cor de fundo passe por cima dela */
-    border-top: 1px solid var(--border-color) !important;
-    
-    /* Proteção especial para iPhones (Impede que a barra preta do iOS corte a caixa) */
-    padding-bottom: env(safe-area-inset-bottom, 15px) !important; 
-    box-sizing: border-box !important;
-}
+    #chat-history-render {
+        padding-bottom: 80px !important; 
+    }
 
-/* 2. Dá um espaço extra no histórico de mensagens para a última mensagem não ficar escondida atrás da caixa presa */
-#chat-history-render {
-    padding-bottom: 90px !important; 
-}
+    .messages-layout-container {
+        height: 100dvh !important; 
+        overflow: hidden !important;
+    }
 
-/* 3. Usa o Dynamic Viewport (dvh) para a tela principal não quebrar quando a barra do navegador some */
-.messages-layout-container, 
-body {
-    height: 100dvh !important; 
+    /* 2. O scroll perfeito: aplica o espaço só no Feed e Perfil! */
+    #posts-render-area, .profile-container {
+        padding-bottom: 85px !important;
+    }
 }

@@ -55,6 +55,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!activeContactId && contacts.length > 0) activeContactId = contacts[0].username;
 
     // ==========================================
+    // 👻 O EXORCISTA DE NOTIFICAÇÕES FANTASMAS 👻
+    // Ao abrir a tela, obriga a memória a saber que o chat visível foi lido!
+    // ==========================================
+    if (activeContactId) {
+        localStorage.setItem('pintada_chat_read_' + activeContactId, 'true');
+        
+        // Remove a bolinha visualmente logo no arranque se ela lá estiver
+        setTimeout(() => {
+            const activeContactDiv = document.querySelector(`.contact-item[data-id="${activeContactId}"]`);
+            if (activeContactDiv) {
+                const dot = activeContactDiv.querySelector('span[style*="background: #EF4444"]');
+                if (dot) dot.remove();
+            }
+        }, 100);
+    }
+
+    // ==========================================
     // FUNÇÃO DE RENDERIZAR CONTEÚDO (MÍDIAS E LINKS)
     // ==========================================
     function renderContent(m) {
