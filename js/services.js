@@ -159,12 +159,30 @@ const AuthService = {
         });
     },
     async login(identifier, password) {
-        const users = await this.getUsers();
-        const userData = users.find(u => u.email === identifier || u.username === identifier);
-        if (!userData) throw new Error("Utilizador não encontrado.");
-        await signInWithEmailAndPassword(window.auth, userData.email, password);
-        localStorage.setItem('pintada_active_user', userData.username);
-        return userData;
+        // Limpa os espaços fantasmas que o telemóvel coloca sozinho!
+        identifier = identifier.trim().toLowerCase();
+
+        // Se o utilizador digitou um e-mail (Login Direto - 100x mais rápido)
+        if (identifier.includes('@')) {
+            await signInWithEmailAndPassword(window.auth, identifier, password);
+
+            // Busca apenas o @username dessa pessoa para guardar na memória
+            const q = query(collection(window.db, "users"), where("email", "==", identifier));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                localStorage.setItem('pintada_active_user', snap.docs[0].data().username);
+            }
+            return;
+        }
+
+        // Se o utilizador digitou o @username (ex: bryan)
+        const docSnap = await getDoc(doc(window.db, "users", identifier));
+        if (!docSnap.exists()) {
+            throw new Error("Utilizador não encontrado.");
+        }
+        const email = docSnap.data().email;
+        await signInWithEmailAndPassword(window.auth, email, password);
+        localStorage.setItem('pintada_active_user', identifier);
     },
     async getUsers() {
         const snapshot = await getDocs(collection(window.db, "users"));
@@ -433,7 +451,7 @@ const MessageService = {
 
     // Ouve mensagens de todas as comunidades que o usuário participa
     listenToAllJoinedCommunities(joinedIds, callback) {
-        if (!joinedIds || joinedIds.length === 0) return () => {};
+        if (!joinedIds || joinedIds.length === 0) return () => { };
         const q = query(collection(window.db, "community_messages"), where("communityId", "in", joinedIds));
         return onSnapshot(q, (snapshot) => {
             const msgs = snapshot.docs.map(d => d.data());
@@ -478,7 +496,7 @@ const CommunityService = {
         const d = await getDoc(doc(window.db, "communities", id));
         return d.exists() ? { id: d.id, ...d.data() } : null;
     },
-// NOVO: 6. Salvar mudanças (Nome, Foto, Senha)
+    // NOVO: 6. Salvar mudanças (Nome, Foto, Senha)
     async updateCommunity(communityId, updates) {
         await updateDoc(doc(window.db, "communities", communityId), updates);
     },

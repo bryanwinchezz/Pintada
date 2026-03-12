@@ -935,10 +935,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.textContent = "Criando conta...";
                 submitBtn.disabled = true;
 
+                // ESCUDO ANTI-CELULAR: Remove os espaços acidentais no fim das palavras!
+                const finalEmail = document.getElementById('reg-email').value.trim().toLowerCase();
+                const finalName = document.getElementById('reg-name').value.trim();
+                const finalUsername = username.trim().toLowerCase();
+
                 await window.AuthService.register({
-                    name: document.getElementById('reg-name').value,
-                    username: username,
-                    email: document.getElementById('reg-email').value,
+                    name: finalName,
+                    username: finalUsername,
+                    email: finalEmail,
                     password: password,
                     bio: "Novo membro da Pintada! 🐆",
                     hobbies: {}
@@ -948,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => window.location.href = 'index.html', 1000);
 
             } catch (error) {
-                // Mostra o erro exato na tela (ex: "Nome de usuário já em uso")
+                // Mostra o erro e destrava o botão se algo falhar
                 window.showToast(error.message, "error");
                 submitBtn.textContent = "Criar Conta";
                 submitBtn.disabled = false;
@@ -956,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. Envio do formulário de Login (Já que você não usa mais o script.js)
+    // 3. Envio do formulário de Login
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
@@ -966,13 +971,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.textContent = "Entrando...";
                 submitBtn.disabled = true;
 
-                // Força o identificador a ficar minúsculo caso ele tente logar com o nome de usuário
-                const identifier = document.getElementById('login-identifier').value.toLowerCase();
+                // ESCUDO ANTI-CELULAR: Corta os espaços que o corretor automático do telemóvel coloca
+                const identifier = document.getElementById('login-identifier').value.trim().toLowerCase();
 
-                await window.AuthService.login(
-                    identifier,
-                    document.getElementById('login-password').value
-                );
+                await window.AuthService.login(identifier, document.getElementById('login-password').value);
                 window.location.href = 'index.html';
             } catch (error) {
                 window.showToast("Erro ao fazer login. Verifique os dados.", "error");
